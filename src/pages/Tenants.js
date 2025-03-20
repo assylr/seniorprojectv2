@@ -185,7 +185,7 @@ const Tenants = () => {
             <div className="form-grid">
               <div className="form-group">
                 <label>Name</label>
-                <input 
+                <input className="input"
                   type="text" 
                   value={newTenant.name}
                   onChange={e => setNewTenant({...newTenant, name: e.target.value})}
@@ -194,7 +194,7 @@ const Tenants = () => {
               </div>
               <div className="form-group">
                 <label>Surname</label>
-                <input 
+                <input className="input"
                   type="text" 
                   value={newTenant.surname}
                   onChange={e => setNewTenant({...newTenant, surname: e.target.value})}
@@ -203,7 +203,7 @@ const Tenants = () => {
               </div>
               <div className="form-group">
                 <label>School</label>
-                <input 
+                <input className="input"
                   type="text" 
                   value={newTenant.school}
                   onChange={e => setNewTenant({...newTenant, school: e.target.value})}
@@ -211,7 +211,7 @@ const Tenants = () => {
               </div>
               <div className="form-group">
                 <label>Position</label>
-                <input 
+                <input className="input"
                   type="text" 
                   value={newTenant.position}
                   onChange={e => setNewTenant({...newTenant, position: e.target.value})}
@@ -219,12 +219,12 @@ const Tenants = () => {
               </div>
               <div className="form-group">
                 <label>Building</label>
-                <select
+                <select className ="field"
                   value={newTenant.building_id}
                   onChange={e => setNewTenant({...newTenant, building_id: e.target.value})}
                   required
-                >
-                  <option value="">Select Building</option>
+                > 
+                  <option className ="field" value="">Select Building</option>
                   {buildings.map(building => (
                     <option key={building.building_id} value={building.building_id}>
                       Building {building.building_number}
@@ -234,7 +234,7 @@ const Tenants = () => {
               </div>
               <div className="form-group">
                 <label>Room</label>
-                <select
+                <select className ="field"
                   value={newTenant.room_id}
                   onChange={e => setNewTenant({...newTenant, room_id: e.target.value})}
                   required
@@ -251,9 +251,9 @@ const Tenants = () => {
                   <p className="error-text">No available rooms in this building</p>
                 )}
               </div>
-              <div className="form-group">
+              <div className="form-group" >
                 <label>Tenant Type</label>
-                <select
+                <select className ="field"
                   value={newTenant.tenant_type}
                   onChange={e => setNewTenant({...newTenant, tenant_type: e.target.value})}
                   required
@@ -265,7 +265,7 @@ const Tenants = () => {
               </div>
               <div className="form-group">
                 <label>Mobile</label>
-                <input 
+                <input className="input"
                   type="tel" 
                   value={newTenant.mobile}
                   onChange={e => setNewTenant({...newTenant, mobile: e.target.value})}
@@ -273,7 +273,7 @@ const Tenants = () => {
               </div>
               <div className="form-group">
                 <label>Email</label>
-                <input 
+                <input className="input"
                   type="email" 
                   value={newTenant.email}
                   onChange={e => setNewTenant({...newTenant, email: e.target.value})}
@@ -281,7 +281,7 @@ const Tenants = () => {
               </div>
               <div className="form-group">
                 <label>Arrival Date</label>
-                <input 
+                <input className="input"
                   type="date" 
                   value={newTenant.arrival_date}
                   onChange={e => setNewTenant({...newTenant, arrival_date: e.target.value})}

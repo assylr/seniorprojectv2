@@ -14,10 +14,17 @@ button.primary:hover {
 }
 
 
-.form-group{
+.field{
+  height: 41px;
+  border-radius: 40px;
   width: 200px
 }
 
+.input{
+  width: 192px;
+  height: auto;
+  border-radius: 4px;
+}
 
 
 
