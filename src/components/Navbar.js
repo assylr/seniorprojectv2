@@ -5,6 +5,7 @@ const Navbar = () => {
 
   return (
     <nav>
+      <div className="nav-title">HOUSING MANAGEMENT SYSTEM</div>
       <ul>
         <li>
           <Link to="/" className={location.pathname === "/" ? "active" : ""}>

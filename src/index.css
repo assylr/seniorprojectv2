@@ -16,7 +16,16 @@ body {
 /* Navigation */
 nav {
   background-color: #2d3748;
-  padding: 1rem 2rem;
+  padding: 1rem 4rem;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  justify-content: space-between;
+}
+
+.nav-title {
+  color: white;
+  font-weight: 700;
 }
 
 nav ul {
@@ -24,20 +33,24 @@ nav ul {
   display: flex;
   gap: 2rem;
   margin: 0;
-  padding: 0;
+  padding: 0 2rem;
+  margin-left: auto;
 }
 
 nav a {
   color: white;
   text-decoration: none;
   font-weight: 500;
-  padding: 0.5rem 1rem;
+  padding: 1rem 2rem;
   border-radius: 0.25rem;
   transition: background-color 0.3s;
+  position: relative;
 }
 
 nav a:hover {
   background-color: #4a5568;
+  border-radius: 0.25rem;
+  padding: 0.5rem 2rem;
 }
 
 /* Cards */
