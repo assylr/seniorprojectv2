@@ -24,7 +24,6 @@ const Rooms = () => {
         getTenants(),
         getBuildings()
       ]);
-      console.log('Fetched from API:', { roomsData, tenantsData, buildingsData }); // ✅ Add this
       setRooms(roomsData);
       setTenants(tenantsData);
       setBuildings(buildingsData);
