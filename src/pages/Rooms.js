@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from "react"
+import { getBuildings, getRooms, getTenants } from "../services/api"
 
 const Rooms = () => {
   const initialRooms = [
@@ -65,6 +66,29 @@ const Rooms = () => {
     bedrooms: ''
   });
 
+  useEffect(() => {
+    fetchData();
+  }, []);
+  
+  const fetchData = async () => {
+    try {
+      const [roomsData, tenantsData, buildingsData] = await Promise.all([
+        getRooms(),
+        getTenants(),
+        getBuildings()
+      ]);
+      setRooms(roomsData);
+      setTenants(tenantsData);
+      setBuildings(buildingsData);
+      setLoading(false);
+    } catch (err) {
+      setError("Failed to fetch data");
+      setLoading(false);
+    }
+  };
+  
+
+  // Function to get current tenant for a room
   const getCurrentTenant = (roomId) => {
     return tenants.find(t => t.room_id === roomId && !t.departure_date);
   };
