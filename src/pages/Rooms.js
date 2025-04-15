@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { getRooms, getTenants, getBuildings } from "../services/api";
+import { useEffect, useState } from "react"
+import { getBuildings, getRooms, getTenants } from "../services/api"
 
 const Rooms = () => {
   const [rooms, setRooms] = useState([]);
@@ -16,7 +16,7 @@ const Rooms = () => {
   useEffect(() => {
     fetchData();
   }, []);
-
+  
   const fetchData = async () => {
     try {
       const [roomsData, tenantsData, buildingsData] = await Promise.all([
@@ -24,6 +24,7 @@ const Rooms = () => {
         getTenants(),
         getBuildings()
       ]);
+      console.log('Fetched from API:', { roomsData, tenantsData, buildingsData }); // ✅ Add this
       setRooms(roomsData);
       setTenants(tenantsData);
       setBuildings(buildingsData);
@@ -33,6 +34,7 @@ const Rooms = () => {
       setLoading(false);
     }
   };
+  
 
   // Function to get current tenant for a room
   const getCurrentTenant = (roomId) => {
