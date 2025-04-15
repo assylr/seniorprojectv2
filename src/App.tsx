@@ -1,3 +1,4 @@
+import './styles/index.css';
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Buildings from "./pages/Buildings";
 import Rooms from "./pages/Rooms";
