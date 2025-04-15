@@ -67,7 +67,9 @@ const Rooms = () => {
 
   return (
     <div className="container">
-      <h1>Rooms</h1>
+      <div className="header-actions">
+        <h1>Rooms</h1>
+      </div>
 
       <div className="filters">
         <select 
@@ -107,40 +109,41 @@ const Rooms = () => {
           const currentTenant = getCurrentTenant(room.id);
           
           return (
-            <div key={room.id} className="card">
-              <h3>Room {room.roomNumber}</h3>
-              <div className="room-details">
-                <p>
-                  <strong>Building:</strong> {getBuildingNumber(room.building.id)}
-                </p>
-                <p>
-                  <strong>Floor:</strong> {room.floorNumber}
-                </p>
-                <p>
-                  <strong>Bedrooms:</strong> {room.bedroomCount}
-                </p>
-                <p>
-                  <strong>Area:</strong> {room.totalArea} sqm
-                </p>
-                <span className={`status ${room.available ? 'status-available' : 'status-occupied'}`}>
+            <div key={room.id} className="card room-card">
+              <div className="room-header">
+                <span className="room-number">Room {room.roomNumber}</span>
+                <span className={`status-badge ${room.available ? 'status-available' : 'status-occupied'}`}>
                   {room.available ? 'Available' : 'Occupied'}
                 </span>
-                
-                {currentTenant && (
-                  <div className="occupant-info">
-                    <h4>Current Occupant</h4>
-                    <p>
-                      <strong>Name:</strong> {currentTenant.name} {currentTenant.surname}
-                    </p>
-                    <p>
-                      <strong>Type:</strong> {currentTenant.tenant_type}
-                    </p>
-                    <p>
-                      <strong>Since:</strong> {new Date(currentTenant.arrival_date!).toLocaleDateString()}
-                    </p>
-                  </div>
-                )}
               </div>
+              
+              <div className="room-details">
+                <p>
+                  <strong>Building</strong>
+                  <span>{getBuildingNumber(room.building.id)}</span>
+                </p>
+                <p>
+                  <strong>Floor</strong>
+                  <span>{room.floorNumber}</span>
+                </p>
+                <p>
+                  <strong>Bedrooms</strong>
+                  <span>{room.bedroomCount}</span>
+                </p>
+                <p>
+                  <strong>Area</strong>
+                  <span>{room.totalArea} m²</span>
+                </p>
+              </div>
+
+              {currentTenant && (
+                <div className="room-footer">
+                  <div>
+                    <strong>Current Tenant:</strong>
+                    <div>{currentTenant.name} {currentTenant.surname}</div>
+                  </div>
+                </div>
+              )}
             </div>
           );
         })}
