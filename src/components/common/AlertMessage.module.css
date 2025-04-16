@@ -1,0 +1,67 @@
+/* src/components/common/AlertMessage.module.css */
+.alert {
+    padding: 12px 16px;
+    margin-bottom: 1rem; /* Standard margin */
+    border: 1px solid transparent;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    word-break: break-word; /* Prevent long messages from overflowing */
+}
+
+.message {
+    flex-grow: 1;
+    margin-right: 10px;
+}
+
+/* Type-specific styles (adjust colors to match your theme) */
+.info {
+    color: #0c5460;
+    background-color: #d1ecf1;
+    border-color: #bee5eb;
+}
+
+.success {
+    color: #155724;
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
+
+.warning {
+    color: #856404;
+    background-color: #fff3cd;
+    border-color: #ffeeba;
+}
+
+.error {
+    color: #721c24;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+.closeButton {
+    background: none;
+    border: none;
+    font-size: 1.25rem; /* Make 'x' slightly larger */
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 0 0 10px; /* Padding on the left */
+    color: inherit; /* Inherit color from parent .alert type */
+    opacity: 0.6;
+    transition: opacity 0.15s ease-in-out;
+}
+
+.closeButton:hover {
+    opacity: 1;
+}
+
+/* --- Optional: Add Icons ---
+   You could add background-image SVGs or use an icon library (like react-icons)
+   inside the AlertMessage component based on the type.
+
+   .info::before { content: url('path/to/info-icon.svg'); margin-right: 8px; }
+   .success::before { content: url('path/to/success-icon.svg'); margin-right: 8px; }
+   ...etc
+*/

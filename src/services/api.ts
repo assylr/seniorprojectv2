@@ -1,574 +1,350 @@
-import { Building, Room, Tenant, TenantData, BatchTenantData, BatchCheckOutData, UtilityRate, UtilityReading, UtilityBill, UtilityBillItem, MaintenanceRequest, MaintenanceRequestData, MaintenanceUpdate } from './types';
-import { MOCK_DATA } from './mockData';
-import { v4 as uuidv4 } from 'uuid';
-import { validateTenantData, validateEmail, validatePhone } from './validation';
+import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import {
+    Building, BuildingFormData,
+    Room, RoomFormData,
+    Tenant, TenantFormData,
+    Contract, ContractFormData, // <-- Added Contract types
+    Payment, PaymentFormData,   // <-- Added Payment types
+    BatchTenantData,
+    BatchCheckOutData,
+    UtilityRate,
+    UtilityReading,
+    UtilityBill,
+    MaintenanceRequest, MaintenanceRequestData, MaintenanceRequestFormData, // <-- Added Maintenance Form Data
+    MaintenanceUpdate
+    // Remove imports for mockData, uuid, and potentially validation if handled elsewhere
+} from './types'; // Assuming your revised types.ts is in place
 
-// Initialize localStorage with mock data if empty
-const initializeMockData = (): void => {
-    if (!localStorage.getItem('buildings')) {
-        localStorage.setItem('buildings', JSON.stringify(MOCK_DATA.buildings));
-    }
-    if (!localStorage.getItem('rooms')) {
-        localStorage.setItem('rooms', JSON.stringify(MOCK_DATA.rooms));
-    }
-    if (!localStorage.getItem('tenants')) {
-        localStorage.setItem('tenants', JSON.stringify(MOCK_DATA.tenants));
-    }
-    if (!localStorage.getItem('utilityRates')) {
-        localStorage.setItem('utilityRates', JSON.stringify(MOCK_DATA.utilityRates));
-    }
-    if (!localStorage.getItem('utilityReadings')) {
-        localStorage.setItem('utilityReadings', JSON.stringify(MOCK_DATA.utilityReadings));
-    }
-    if (!localStorage.getItem('utilityBills')) {
-        localStorage.setItem('utilityBills', JSON.stringify(MOCK_DATA.utilityBills));
-    }
-    if (!localStorage.getItem('maintenanceRequests')) {
-        localStorage.setItem('maintenanceRequests', JSON.stringify(MOCK_DATA.maintenanceRequests));
-    }
-    if (!localStorage.getItem('maintenanceUpdates')) {
-        localStorage.setItem('maintenanceUpdates', JSON.stringify(MOCK_DATA.maintenanceUpdates));
-    }
-};
+// --- Axios Instance Setup ---
 
-initializeMockData();
+// 1. Get Base URL from Environment Variable
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+if (!API_BASE_URL) {
+    console.error("Error: VITE_API_BASE_URL is not defined in your environment variables (.env file).");
+    // You might want to throw an error or provide a default fallback for local dev,
+    // but failing loudly is often better during development.
+}
+
+// 2. Create an Axios instance
+const apiClient = axios.create({
+    baseURL: API_BASE_URL,
+    headers: {
+        'Content-Type': 'application/json',
+        // You can add other default headers here if needed
+    },
+    // Optional: Set timeout
+    // timeout: 10000, // 10 seconds
+});
+
+// 3. Axios Request Interceptor (for adding Auth Token)
+apiClient.interceptors.request.use(
+    (config: InternalAxiosRequestConfig) => {
+        // Retrieve the token from where you store it (e.g., localStorage)
+        const token = localStorage.getItem('authToken'); // Adjust 'authToken' key if needed
+
+        if (token) {
+            // Ensure config.headers is defined before setting Authorization
+             if (config.headers) {
+                config.headers.Authorization = `Bearer ${token}`;
+             }
+        }
+        return config;
+    },
+    (error: AxiosError) => {
+        // Handle request configuration errors
+        console.error('Axios request error:', error);
+        return Promise.reject(error);
+    }
+);
+
+// 4. Axios Response Interceptor (Optional: for global error handling)
+apiClient.interceptors.response.use(
+    (response) => {
+        // Any status code within the range of 2xx causes this function to trigger
+        return response;
+    },
+    (error: AxiosError) => {
+        // Any status codes outside the range of 2xx causes this function to trigger
+        console.error('Axios response error:', error.response?.data || error.message);
+
+        if (error.response) {
+            // The request was made and the server responded with a status code
+            // that falls out of the range of 2xx
+            const { status } = error.response;
+
+            if (status === 401) {
+                // Unauthorized: Token expired or invalid
+                console.error('Unauthorized access - 401. Redirecting to login.');
+                // Clear invalid token
+                localStorage.removeItem('authToken'); // Adjust 'authToken' key if needed
+                // Redirect to login page - Ensure you have access to router history or use window.location
+                window.location.href = '/login'; // Simple redirect, adjust if using React Router history
+            } else if (status === 403) {
+                // Forbidden: User does not have permission
+                console.error('Forbidden - 403. User lacks permission.');
+                // You might want to show a notification to the user
+            } else {
+                // Handle other server errors (4xx, 5xx)
+                console.error(`API Error: ${status} - ${error.response.data}`);
+            }
+        } else if (error.request) {
+            // The request was made but no response was received (e.g., network error)
+            console.error('Network error or no response received:', error.request);
+        } else {
+            // Something happened in setting up the request that triggered an Error
+            console.error('Error setting up request:', error.message);
+        }
+
+        // Return a rejected promise to propagate the error to the calling function
+        // You might want to return a more user-friendly error object here
+        return Promise.reject(error.response?.data || new Error(error.message || 'An unknown API error occurred'));
+    }
+);
+
+
+// --- API Functions ---
+// Replace placeholder endpoints (`/buildings`, `/rooms/{id}`, etc.)
+// with your actual backend API endpoints.
+
+// == Buildings ==
 export const getBuildings = async (): Promise<Building[]> => {
-    return JSON.parse(localStorage.getItem('buildings') || '[]') as Building[];
+    const response = await apiClient.get<Building[]>('/buildings'); // <-- Replace '/buildings'
+    return response.data;
 };
 
-export const getRooms = async (): Promise<Room[]> => {
-    return JSON.parse(localStorage.getItem('rooms') || '[]') as Room[];
+export const getBuildingById = async (id: number): Promise<Building> => {
+    const response = await apiClient.get<Building>(`/buildings/${id}`); // <-- Replace '/buildings/{id}'
+    return response.data;
 };
 
+export const createBuilding = async (buildingData: BuildingFormData): Promise<Building> => {
+    const response = await apiClient.post<Building>('/buildings', buildingData); // <-- Replace '/buildings'
+    return response.data;
+};
+
+export const updateBuilding = async (id: number, buildingData: Partial<BuildingFormData>): Promise<Building> => {
+    const response = await apiClient.put<Building>(`/buildings/${id}`, buildingData); // Or PATCH: apiClient.patch(...) <-- Replace '/buildings/{id}'
+    return response.data;
+};
+
+export const deleteBuilding = async (id: number): Promise<void> => {
+    await apiClient.delete(`/buildings/${id}`); // <-- Replace '/buildings/{id}'
+};
+
+// == Rooms ==
+export const getRooms = async (buildingId?: number): Promise<Room[]> => {
+    // Adjust endpoint based on how your backend handles filtering
+    const endpoint = buildingId ? `/rooms?buildingId=${buildingId}` : '/rooms'; // <-- Replace '/rooms' and query param
+    const response = await apiClient.get<Room[]>(endpoint);
+    return response.data;
+};
+
+export const getRoomById = async (id: number): Promise<Room> => {
+    const response = await apiClient.get<Room>(`/rooms/${id}`); // <-- Replace '/rooms/{id}'
+    return response.data;
+};
+
+export const createRoom = async (roomData: RoomFormData): Promise<Room> => {
+    const response = await apiClient.post<Room>('/rooms', roomData); // <-- Replace '/rooms'
+    return response.data;
+};
+
+export const updateRoom = async (id: number, roomData: Partial<RoomFormData>): Promise<Room> => {
+    // Note: Backend should handle updating Building availability if all its rooms become occupied/vacant
+    const response = await apiClient.put<Room>(`/rooms/${id}`, roomData); // Or PATCH <-- Replace '/rooms/{id}'
+    return response.data;
+};
+
+export const deleteRoom = async (id: number): Promise<void> => {
+    await apiClient.delete(`/rooms/${id}`); // <-- Replace '/rooms/{id}'
+};
+
+// == Tenants ==
 export const getTenants = async (): Promise<Tenant[]> => {
-    return JSON.parse(localStorage.getItem('tenants') || '[]') as Tenant[];
+    const response = await apiClient.get<Tenant[]>('/tenants'); // <-- Replace '/tenants'
+    return response.data;
 };
 
-export const updateRoomAvailability = async (roomId: number, isAvailable: boolean): Promise<void> => {
-    const rooms = JSON.parse(localStorage.getItem('rooms') || '[]') as Room[];
-
-    const updatedRooms = rooms.map(room =>
-        room.id === roomId
-            ? { ...room, available: isAvailable }
-            : room
-    );
-
-    localStorage.setItem('rooms', JSON.stringify(updatedRooms));
-
-    const room = rooms.find(r => r.id === roomId);
-    if (room) {
-        const buildings = JSON.parse(localStorage.getItem('buildings') || '[]') as Building[];
-        const updatedBuildings = buildings.map(building => {
-            if (building.id === room.building.id) {
-                const hasAvailableRooms = updatedRooms
-                    .some(r => r.building.id === building.id && r.available);
-                return { ...building, available: hasAvailableRooms };
-            }
-            return building;
-        });
-        localStorage.setItem('buildings', JSON.stringify(updatedBuildings));
-    }
+export const getTenantById = async (id: number): Promise<Tenant> => {
+    const response = await apiClient.get<Tenant>(`/tenants/${id}`); // <-- Replace '/tenants/{id}'
+    return response.data;
 };
 
-export const checkInTenant = async (tenantData: TenantData): Promise<Tenant> => {
-    // Validate input data
-    validateTenantData(tenantData);
-
-    const rooms = JSON.parse(localStorage.getItem('rooms') || '[]') as Room[];
-    const tenants = JSON.parse(localStorage.getItem('tenants') || '[]') as Tenant[];
-
-    // Validate room
-    const room = rooms.find(r => r.id === tenantData.room_id);
-    if (!room) throw new Error('Room not found');
-    if (!room.available) throw new Error('Room is not available');
-
-    // Check for existing active tenant
-    const existingTenant = tenants.find(t =>
-        !t.departure_date &&
-        t.room.id === tenantData.room_id
-    );
-    if (existingTenant) throw new Error('Room already occupied');
-
-    // Create new tenant with secure ID
-    const newTenant: Tenant = {
-        id: parseInt(uuidv4().replace(/-/g, '').slice(0, 8), 16), // Generate numeric ID from UUID
-        name: tenantData.name.trim(),
-        surname: tenantData.surname.trim(),
-        school: tenantData.school?.trim(),
-        position: tenantData.position?.trim(),
-        tenant_type: tenantData.tenant_type,
-        mobile: tenantData.mobile?.trim(),
-        email: tenantData.email?.toLowerCase().trim(),
-        room: room,
-        arrival_date: new Date(),
-        departure_date: null
-    };
-
-    try {
-        // Atomic update
-        const updatedTenants = [...tenants, newTenant];
-        localStorage.setItem('tenants', JSON.stringify(updatedTenants));
-        await updateRoomAvailability(room.id, false);
-        return newTenant;
-    } catch (error) {
-        // Rollback on failure
-        await updateRoomAvailability(room.id, true);
-        throw new Error('Failed to check in tenant due to: ' + error);
-    }
+export const createTenant = async (tenantData: TenantFormData): Promise<Tenant> => {
+    // Validation should happen in the form/component *before* calling this
+    const response = await apiClient.post<Tenant>('/tenants', tenantData); // <-- Replace '/tenants'
+    // Note: Assigning a room is likely handled via Contract creation now.
+    return response.data;
 };
 
-export const checkOutTenant = async (tenantId: number): Promise<void> => {
-    const tenants = JSON.parse(localStorage.getItem('tenants') || '[]') as Tenant[];
-    const tenant = tenants.find(t => t.id === tenantId);
-
-    if (!tenant) {
-        throw new Error('Tenant not found');
-    }
-
-    const updatedTenants = tenants.map(t =>
-        t.id === tenantId
-            ? { ...t, departure_date: new Date() }
-            : t
-    );
-
-    localStorage.setItem('tenants', JSON.stringify(updatedTenants));
-    await updateRoomAvailability(tenant.room.id, true);
+export const updateTenant = async (id: number, tenantData: Partial<TenantFormData>): Promise<Tenant> => {
+    const response = await apiClient.put<Tenant>(`/tenants/${id}`, tenantData); // Or PATCH <-- Replace '/tenants/{id}'
+    return response.data;
 };
 
-// Batch operations
-export const batchCheckInTenants = async (batchData: BatchTenantData[]): Promise<BatchTenantData[]> => {
-    const rooms = JSON.parse(localStorage.getItem('rooms') || '[]') as Room[];
-    const tenants = JSON.parse(localStorage.getItem('tenants') || '[]') as Tenant[];
-    const results: BatchTenantData[] = [...batchData];
-    const successfulCheckIns: Tenant[] = [];
-    const roomsToUpdate: number[] = [];
-
-    // Process each tenant in the batch
-    for (let i = 0; i < results.length; i++) {
-        const tenantData = results[i];
-
-        try {
-            // Skip entries that already have a status (from previous attempts)
-            if (tenantData.status) continue;
-
-            // Validate tenant data
-            if (!tenantData.name?.trim()) throw new Error('Name is required');
-            if (!tenantData.surname?.trim()) throw new Error('Surname is required');
-            if (!tenantData.tenant_type) throw new Error('Tenant type is required');
-            if (!tenantData.room_id) throw new Error('Room is required');
-            if (tenantData.email && !validateEmail(tenantData.email)) throw new Error('Invalid email format');
-            if (tenantData.mobile && !validatePhone(tenantData.mobile)) throw new Error('Invalid phone format');
-
-            // Validate room
-            const room = rooms.find(r => r.id === tenantData.room_id);
-            if (!room) throw new Error('Room not found');
-            if (!room.available) throw new Error('Room is not available');
-
-            // Check for existing active tenant
-            const existingTenant = tenants.find(t =>
-                !t.departure_date &&
-                t.room.id === tenantData.room_id
-            );
-            if (existingTenant) throw new Error('Room already occupied');
-
-            // Create new tenant
-            const newTenant: Tenant = {
-                id: parseInt(uuidv4().replace(/-/g, '').slice(0, 8), 16),
-                name: tenantData.name.trim(),
-                surname: tenantData.surname.trim(),
-                school: tenantData.school?.trim(),
-                position: tenantData.position?.trim(),
-                tenant_type: tenantData.tenant_type,
-                mobile: tenantData.mobile?.trim(),
-                email: tenantData.email?.toLowerCase().trim(),
-                room: room,
-                arrival_date: new Date(),
-                departure_date: null
-            };
-
-            // Mark for success
-            successfulCheckIns.push(newTenant);
-            roomsToUpdate.push(room.id);
-            results[i] = { ...tenantData, status: 'success' };
-
-        } catch (error) {
-            // Mark as error with message
-            results[i] = {
-                ...tenantData,
-                status: 'error',
-                error_message: error instanceof Error ? error.message : String(error)
-            };
-        }
-    }
-
-    // If any successful check-ins, update storage
-    if (successfulCheckIns.length > 0) {
-        const updatedTenants = [...tenants, ...successfulCheckIns];
-        localStorage.setItem('tenants', JSON.stringify(updatedTenants));
-
-        // Update room availability
-        const updatedRooms = rooms.map(room => {
-            if (roomsToUpdate.includes(room.id)) {
-                return { ...room, available: false };
-            }
-            return room;
-        });
-        localStorage.setItem('rooms', JSON.stringify(updatedRooms));
-
-        // Update building availability
-        const buildings = JSON.parse(localStorage.getItem('buildings') || '[]') as Building[];
-        const updatedBuildings = buildings.map(building => {
-            const buildingRooms = updatedRooms.filter(r => r.building.id === building.id);
-            const hasAvailableRooms = buildingRooms.some(r => r.available);
-            return { ...building, available: hasAvailableRooms };
-        });
-        localStorage.setItem('buildings', JSON.stringify(updatedBuildings));
-    }
-
-    return results;
+export const deleteTenant = async (id: number): Promise<void> => {
+    // Be careful: Usually you 'deactivate' or 'check-out' tenants, not hard delete.
+    // This might be an endpoint like PATCH /tenants/{id}/deactivate
+    await apiClient.delete(`/tenants/${id}`); // <-- Replace '/tenants/{id}' or use appropriate endpoint
 };
 
-export const batchCheckOutTenants = async (tenantIds: number[]): Promise<BatchCheckOutData[]> => {
-    const tenants = JSON.parse(localStorage.getItem('tenants') || '[]') as Tenant[];
-    const results: BatchCheckOutData[] = tenantIds.map(id => ({ tenant_id: id, status: 'pending' }));
-    const roomsToUpdate: number[] = [];
 
-    // Process each tenant check-out
-    for (let i = 0; i < results.length; i++) {
-        const { tenant_id } = results[i];
-
-        try {
-            const tenant = tenants.find(t => t.id === tenant_id);
-            if (!tenant) throw new Error('Tenant not found');
-            if (tenant.departure_date) throw new Error('Tenant already checked out');
-
-            // Mark tenant for check-out
-            tenants.forEach(t => {
-                if (t.id === tenant_id) {
-                    t.departure_date = new Date();
-                }
-            });
-
-            roomsToUpdate.push(tenant.room.id);
-            results[i].status = 'success';
-
-        } catch (error) {
-            results[i].status = 'error';
-            results[i].error_message = error instanceof Error ? error.message : String(error);
-        }
-    }
-
-    // Update storage if any successful check-outs
-    if (roomsToUpdate.length > 0) {
-        localStorage.setItem('tenants', JSON.stringify(tenants));
-
-        // Update room availability
-        const rooms = JSON.parse(localStorage.getItem('rooms') || '[]') as Room[];
-        const updatedRooms = rooms.map(room => {
-            if (roomsToUpdate.includes(room.id)) {
-                return { ...room, available: true };
-            }
-            return room;
-        });
-        localStorage.setItem('rooms', JSON.stringify(updatedRooms));
-
-        // Update building availability
-        const buildings = JSON.parse(localStorage.getItem('buildings') || '[]') as Building[];
-        const updatedBuildings = buildings.map(building => {
-            const buildingRooms = updatedRooms.filter(r => r.building.id === building.id);
-            const hasAvailableRooms = buildingRooms.some(r => r.available);
-            return { ...building, available: hasAvailableRooms };
-        });
-        localStorage.setItem('buildings', JSON.stringify(updatedBuildings));
-    }
-
-    return results;
+// == Contracts == (Assuming these types/endpoints exist)
+export const getContracts = async (tenantId?: number): Promise<Contract[]> => {
+    const endpoint = tenantId ? `/contracts?tenantId=${tenantId}` : '/contracts'; // <-- Replace '/contracts' and query param
+    const response = await apiClient.get<Contract[]>(endpoint);
+    return response.data;
 };
 
-export const resetMockData = (): void => {
-    localStorage.setItem('buildings', JSON.stringify(MOCK_DATA.buildings));
-    localStorage.setItem('rooms', JSON.stringify(MOCK_DATA.rooms));
-    localStorage.setItem('tenants', JSON.stringify([]));
-    localStorage.setItem('utilityRates', JSON.stringify(MOCK_DATA.utilityRates));
-    localStorage.setItem('utilityReadings', JSON.stringify([]));
-    localStorage.setItem('utilityBills', JSON.stringify([]));
-    localStorage.setItem('maintenanceRequests', JSON.stringify([]));
-    localStorage.setItem('maintenanceUpdates', JSON.stringify([]));
+export const getContractById = async (id: number): Promise<Contract> => {
+    const response = await apiClient.get<Contract>(`/contracts/${id}`); // <-- Replace '/contracts/{id}'
+    return response.data;
 };
 
-// Utility billing API methods
+export const createContract = async (contractData: ContractFormData): Promise<Contract> => {
+    // Backend should validate room availability and mark it as occupied upon contract creation.
+    const response = await apiClient.post<Contract>('/contracts', contractData); // <-- Replace '/contracts'
+    return response.data;
+};
+
+export const updateContract = async (id: number, contractData: Partial<ContractFormData>): Promise<Contract> => {
+    const response = await apiClient.put<Contract>(`/contracts/${id}`, contractData); // Or PATCH <-- Replace '/contracts/{id}'
+    return response.data;
+};
+
+// Example: Terminate a contract (likely a PATCH operation)
+export const terminateContract = async (id: number, terminationDate: string): Promise<Contract> => {
+     const response = await apiClient.patch<Contract>(`/contracts/${id}/terminate`, { terminationDate }); // <-- Example endpoint
+     return response.data;
+};
+
+// == Payments == (Assuming these types/endpoints exist)
+export const getPayments = async (contractId?: number): Promise<Payment[]> => {
+    const endpoint = contractId ? `/payments?contractId=${contractId}` : '/payments'; // <-- Replace '/payments' and query param
+    const response = await apiClient.get<Payment[]>(endpoint);
+    return response.data;
+};
+
+export const recordPayment = async (paymentData: PaymentFormData): Promise<Payment> => {
+    const response = await apiClient.post<Payment>('/payments', paymentData); // <-- Replace '/payments'
+    return response.data;
+};
+
+// == Batch Operations == (Adapt based on actual backend implementation)
+// These likely need specific backend endpoints
+
+export const batchCheckInTenants = async (batchData: BatchTenantData[]): Promise<any> => { // Return type depends heavily on backend response
+    // Requires a dedicated backend endpoint e.g., POST /tenants/batch-check-in
+    // The complex logic moves to the backend. Frontend just sends the data.
+    console.warn("batchCheckInTenants: Ensure backend endpoint '/tenants/batch' exists and handles this request.");
+    const response = await apiClient.post('/tenants/batch', batchData); // <-- Replace with actual batch endpoint
+    return response.data; // Adjust based on what the backend returns (e.g., results array with status/errors)
+};
+
+export const batchCheckOutTenants = async (tenantIds: number[]): Promise<any> => { // Return type depends heavily on backend response
+    // Requires a dedicated backend endpoint e.g., POST /contracts/batch-terminate or PATCH /tenants/batch-checkout
+    console.warn("batchCheckOutTenants: Ensure backend endpoint exists and handles this request.");
+    const response = await apiClient.post('/tenants/batch-checkout', { tenantIds }); // <-- Replace with actual batch endpoint and payload
+    return response.data; // Adjust based on backend response
+};
+
+
+// == Utility Billing == (Adapt endpoints as needed)
 export const getUtilityRates = async (): Promise<UtilityRate[]> => {
-    return JSON.parse(localStorage.getItem('utilityRates') || '[]') as UtilityRate[];
+    const response = await apiClient.get<UtilityRate[]>('/utility-rates'); // <-- Replace '/utility-rates'
+    return response.data;
 };
 
 export const getUtilityReadings = async (roomId?: number): Promise<UtilityReading[]> => {
-    const readings = JSON.parse(localStorage.getItem('utilityReadings') || '[]') as UtilityReading[];
-    if (roomId) {
-        return readings.filter(reading => reading.roomId === roomId);
-    }
-    return readings;
+    const endpoint = roomId ? `/utility-readings?roomId=${roomId}` : '/utility-readings'; // <-- Replace '/utility-readings'
+    const response = await apiClient.get<UtilityReading[]>(endpoint);
+    return response.data;
 };
 
-export const getUtilityBills = async (tenantId?: number): Promise<UtilityBill[]> => {
-    const bills = JSON.parse(localStorage.getItem('utilityBills') || '[]') as UtilityBill[];
-    if (tenantId) {
-        return bills.filter(bill => bill.tenantId === tenantId);
-    }
-    return bills;
+export const addUtilityReading = async (readingData: Omit<UtilityReading, 'id' | 'previousValue'>): Promise<UtilityReading> => {
+    // Backend should calculate/store previousValue if needed
+    const response = await apiClient.post<UtilityReading>('/utility-readings', readingData); // <-- Replace '/utility-readings'
+    return response.data;
 };
 
-export const addUtilityReading = async (reading: Omit<UtilityReading, 'id'>): Promise<UtilityReading> => {
-    const readings = JSON.parse(localStorage.getItem('utilityReadings') || '[]') as UtilityReading[];
-
-    // Get the previous reading for this room and utility type
-    const previousReadings = readings
-        .filter(r => r.roomId === reading.roomId && r.utilityType === reading.utilityType)
-        .sort((a, b) => new Date(b.readingDate).getTime() - new Date(a.readingDate).getTime());
-
-    const previousValue = previousReadings.length > 0 ? previousReadings[0].value : 0;
-
-    const newReading: UtilityReading = {
-        id: readings.length > 0 ? Math.max(...readings.map(r => r.id)) + 1 : 1,
-        ...reading,
-        previousValue
-    };
-
-    const updatedReadings = [...readings, newReading];
-    localStorage.setItem('utilityReadings', JSON.stringify(updatedReadings));
-
-    return newReading;
+export const getUtilityBills = async (contractId?: number): Promise<UtilityBill[]> => {
+    const endpoint = contractId ? `/utility-bills?contractId=${contractId}` : '/utility-bills'; // <-- Replace '/utility-bills'
+    const response = await apiClient.get<UtilityBill[]>(endpoint);
+    return response.data;
 };
 
-export const generateUtilityBill = async (tenantId: number, billingPeriod: { startDate: Date, endDate: Date }): Promise<UtilityBill> => {
-    const tenants = JSON.parse(localStorage.getItem('tenants') || '[]') as Tenant[];
-    const tenant = tenants.find(t => t.id === tenantId);
-
-    if (!tenant) {
-        throw new Error('Tenant not found');
-    }
-
-    const roomId = tenant.room.id;
-    const baseRent = tenant.room.baseRent || 0;
-
-    // Get utility rates
-    const utilityRates = await getUtilityRates();
-
-    // Get readings for this room within the billing period
-    const allReadings = await getUtilityReadings(roomId);
-    const periodReadings = allReadings.filter(r => {
-        const readingDate = new Date(r.readingDate);
-        return readingDate >= new Date(billingPeriod.startDate) && readingDate <= new Date(billingPeriod.endDate);
-    });
-
-    // Group readings by utility type
-    const readingsByType: Record<string, UtilityReading[]> = {};
-    periodReadings.forEach(reading => {
-        if (!readingsByType[reading.utilityType]) {
-            readingsByType[reading.utilityType] = [];
-        }
-        readingsByType[reading.utilityType].push(reading);
-    });
-
-    // Calculate bill items
-    const items: UtilityBillItem[] = [];
-
-    // Add rent as a bill item
-    items.push({
-        utilityType: 'rent',
-        amount: baseRent
-    });
-
-    // Add utility items
-    let totalAmount = baseRent;
-
-    utilityRates.forEach(rate => {
-        const readings = readingsByType[rate.utilityType] || [];
-
-        if (rate.utilityType === 'internet') {
-            // Internet is a fixed monthly charge
-            const amount = rate.ratePerUnit;
-            items.push({
-                utilityType: rate.utilityType,
-                rate: rate.ratePerUnit,
-                amount
-            });
-            totalAmount += amount;
-        } else if (readings.length > 0) {
-            // Calculate usage and amount for metered utilities
-            const latestReading = readings.sort((a, b) =>
-                new Date(b.readingDate).getTime() - new Date(a.readingDate).getTime()
-            )[0];
-
-            const usage = latestReading.value - (latestReading.previousValue || 0);
-            const baseCharge = rate.baseCharge || 0;
-            const usageCharge = usage * rate.ratePerUnit;
-            const amount = baseCharge + usageCharge;
-
-            items.push({
-                utilityType: rate.utilityType,
-                usage,
-                rate: rate.ratePerUnit,
-                baseCharge,
-                amount
-            });
-
-            totalAmount += amount;
-        }
-    });
-
-    // Create the bill
-    const bills = JSON.parse(localStorage.getItem('utilityBills') || '[]') as UtilityBill[];
-    const dueDate = new Date();
-    dueDate.setDate(dueDate.getDate() + 15); // Due in 15 days
-
-    const newBill: UtilityBill = {
-        id: bills.length > 0 ? Math.max(...bills.map(b => b.id)) + 1 : 1,
-        tenantId,
-        roomId,
-        billingPeriod,
-        issueDate: new Date(),
-        dueDate,
-        items,
-        totalAmount,
-        status: 'pending'
-    };
-
-    const updatedBills = [...bills, newBill];
-    localStorage.setItem('utilityBills', JSON.stringify(updatedBills));
-
-    return newBill;
+export const generateUtilityBill = async (contractId: number, billingPeriod: { startDate: string, endDate: string }): Promise<UtilityBill> => {
+    // Logic moves to backend. Frontend just triggers generation.
+    const response = await apiClient.post<UtilityBill>('/utility-bills/generate', { contractId, billingPeriod }); // <-- Replace endpoint
+    return response.data;
 };
 
-export const updateBillStatus = async (billId: number, status: 'pending' | 'paid' | 'overdue', paymentDate?: Date): Promise<UtilityBill> => {
-    const bills = JSON.parse(localStorage.getItem('utilityBills') || '[]') as UtilityBill[];
-    const bill = bills.find(b => b.id === billId);
-
-    if (!bill) {
-        throw new Error('Bill not found');
-    }
-
-    const updatedBill = {
-        ...bill,
-        status,
-        paymentDate: status === 'paid' ? paymentDate || new Date() : bill.paymentDate
-    };
-
-    const updatedBills = bills.map(b => b.id === billId ? updatedBill : b);
-    localStorage.setItem('utilityBills', JSON.stringify(updatedBills));
-
-    return updatedBill;
+export const updateBillStatus = async (billId: number, status: UtilityBill['status'], paymentDetails?: { paymentDate?: string, paymentId?: number }): Promise<UtilityBill> => {
+    const response = await apiClient.patch<UtilityBill>(`/utility-bills/${billId}/status`, { status, ...paymentDetails }); // <-- Replace endpoint
+    return response.data;
 };
 
-// Maintenance API methods
-export const getMaintenanceRequests = async (filters?: { roomId?: number, tenantId?: number, status?: string }): Promise<MaintenanceRequest[]> => {
-    const requests = JSON.parse(localStorage.getItem('maintenanceRequests') || '[]') as MaintenanceRequest[];
-
-    if (!filters) return requests;
-
-    return requests.filter(req => {
-        if (filters.roomId && req.roomId !== filters.roomId) return false;
-        if (filters.tenantId && req.tenantId !== filters.tenantId) return false;
-        if (filters.status && req.status !== filters.status) return false;
-        return true;
-    });
+// == Maintenance == (Adapt endpoints as needed)
+export const getMaintenanceRequests = async (filters?: { roomId?: number, status?: MaintenanceRequest['status'] }): Promise<MaintenanceRequest[]> => {
+    const response = await apiClient.get<MaintenanceRequest[]>('/maintenance-requests', { params: filters }); // <-- Replace endpoint
+    return response.data;
 };
 
-export const getMaintenanceRequestById = async (requestId: number): Promise<MaintenanceRequest | null> => {
-    const requests = JSON.parse(localStorage.getItem('maintenanceRequests') || '[]') as MaintenanceRequest[];
-    return requests.find(req => req.id === requestId) || null;
+export const getMaintenanceRequestById = async (requestId: number): Promise<MaintenanceRequest> => {
+    const response = await apiClient.get<MaintenanceRequest>(`/maintenance-requests/${requestId}`); // <-- Replace endpoint
+    return response.data;
+};
+
+export const createMaintenanceRequest = async (requestData: MaintenanceRequestFormData): Promise<MaintenanceRequest> => {
+    // Backend should handle creating initial update record if needed
+    const response = await apiClient.post<MaintenanceRequest>('/maintenance-requests', requestData); // <-- Replace endpoint
+    return response.data;
+};
+
+export const updateMaintenanceRequest = async (requestId: number, updateData: Partial<Omit<MaintenanceRequest, 'id' | 'submittedDate' | 'roomId' | 'tenantId'>>): Promise<MaintenanceRequest> => {
+    // Backend should handle creating the MaintenanceUpdate record automatically
+    const response = await apiClient.patch<MaintenanceRequest>(`/maintenance-requests/${requestId}`, updateData); // <-- Replace endpoint
+    return response.data;
 };
 
 export const getMaintenanceUpdates = async (requestId: number): Promise<MaintenanceUpdate[]> => {
-    const updates = JSON.parse(localStorage.getItem('maintenanceUpdates') || '[]') as MaintenanceUpdate[];
-    return updates.filter(update => update.requestId === requestId);
+    const response = await apiClient.get<MaintenanceUpdate[]>(`/maintenance-requests/${requestId}/updates`); // <-- Replace endpoint
+    return response.data;
 };
 
-export const createMaintenanceRequest = async (requestData: MaintenanceRequestData): Promise<MaintenanceRequest> => {
-    const requests = JSON.parse(localStorage.getItem('maintenanceRequests') || '[]') as MaintenanceRequest[];
-    const currentUser = JSON.parse(localStorage.getItem('user_session') || '{}');
 
-    // Validate room exists
-    const rooms = JSON.parse(localStorage.getItem('rooms') || '[]') as Room[];
-    const room = rooms.find(r => r.id === requestData.roomId);
-    if (!room) throw new Error('Room not found');
+// == Authentication == (Separate file recommended, but example here)
+// It's better to move auth-related calls (login, logout, register, getProfile) to a dedicated `auth.ts` service file.
 
-    // Create new request
-    const newRequest: MaintenanceRequest = {
-        id: requests.length > 0 ? Math.max(...requests.map(r => r.id)) + 1 : 1,
-        roomId: requestData.roomId,
-        tenantId: requestData.tenantId || null,
-        category: requestData.category,
-        description: requestData.description,
-        priority: requestData.priority,
-        status: 'pending',
-        submittedDate: new Date(),
-        notes: requestData.notes
-    };
+interface LoginResponse {
+    token: string;
+    user: Tenant; // Or a dedicated User type
+}
 
-    // Save request
-    const updatedRequests = [...requests, newRequest];
-    localStorage.setItem('maintenanceRequests', JSON.stringify(updatedRequests));
-
-    // Create initial update
-    const updates = JSON.parse(localStorage.getItem('maintenanceUpdates') || '[]') as MaintenanceUpdate[];
-    const newUpdate: MaintenanceUpdate = {
-        id: updates.length > 0 ? Math.max(...updates.map(u => u.id)) + 1 : 1,
-        requestId: newRequest.id,
-        status: 'pending',
-        updateDate: new Date(),
-        updatedBy: currentUser.name || 'Admin User',
-        notes: `Maintenance request created: ${requestData.description}`
-    };
-
-    const updatedUpdates = [...updates, newUpdate];
-    localStorage.setItem('maintenanceUpdates', JSON.stringify(updatedUpdates));
-
-    return newRequest;
-};
-
-export const updateMaintenanceRequest = async (
-    requestId: number,
-    updates: {
-        status?: 'pending' | 'assigned' | 'in_progress' | 'completed' | 'cancelled',
-        assignedTo?: string,
-        scheduledDate?: Date,
-        completedDate?: Date,
-        notes?: string
-    },
-    updateNote: string
-): Promise<MaintenanceRequest> => {
-    const requests = JSON.parse(localStorage.getItem('maintenanceRequests') || '[]') as MaintenanceRequest[];
-    const request = requests.find(r => r.id === requestId);
-
-    if (!request) {
-        throw new Error('Maintenance request not found');
+export const login = async (credentials: { email: string, password: string }): Promise<LoginResponse> => {
+    const response = await apiClient.post<LoginResponse>('/auth/login', credentials); // <-- Replace endpoint
+    // IMPORTANT: Store the token after successful login
+    if (response.data.token) {
+        localStorage.setItem('authToken', response.data.token); // Adjust 'authToken' key if needed
+        // Optionally: Set user data in context or local storage
+        // localStorage.setItem('userData', JSON.stringify(response.data.user));
     }
-
-    // Update request
-    const updatedRequest = {
-        ...request,
-        ...updates
-    };
-
-    const updatedRequests = requests.map(r => r.id === requestId ? updatedRequest : r);
-    localStorage.setItem('maintenanceRequests', JSON.stringify(updatedRequests));
-
-    // Create update record
-    const currentUser = JSON.parse(localStorage.getItem('user_session') || '{}');
-    const allUpdates = JSON.parse(localStorage.getItem('maintenanceUpdates') || '[]') as MaintenanceUpdate[];
-
-    const newUpdate: MaintenanceUpdate = {
-        id: allUpdates.length > 0 ? Math.max(...allUpdates.map(u => u.id)) + 1 : 1,
-        requestId: requestId,
-        status: updates.status || request.status,
-        updateDate: new Date(),
-        updatedBy: currentUser.name || 'Admin User',
-        notes: updateNote
-    };
-
-    const updatedUpdates = [...allUpdates, newUpdate];
-    localStorage.setItem('maintenanceUpdates', JSON.stringify(updatedUpdates));
-
-    return updatedRequest;
+    return response.data;
 };
+
+export const logout = async (): Promise<void> => {
+    // Optional: Call backend logout endpoint to invalidate token server-side
+    // await apiClient.post('/auth/logout'); // <-- Replace endpoint
+
+    // ALWAYS remove local token and user data
+    localStorage.removeItem('authToken'); // Adjust 'authToken' key if needed
+    localStorage.removeItem('userData'); // Adjust if you store user data
+
+    // No need to return anything, redirect happens in UI based on auth state change
+};
+
+// --- End of API Functions ---
+
+// Export the configured client if needed elsewhere (though usually not)
+export { apiClient };

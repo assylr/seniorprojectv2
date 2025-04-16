@@ -1,0 +1,48 @@
+/* src/components/common/LoadingSpinner.module.css */
+
+.spinner {
+    display: inline-block; /* Allow it to sit alongside text if needed */
+    border-style: solid;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    border-color: rgba(0, 0, 0, 0.1); /* Light grey track */
+    border-top-color: #3498db; /* Spinner color (adjust as needed) */
+}
+
+/* Default medium size */
+.medium {
+    width: 32px;
+    height: 32px;
+    border-width: 4px;
+}
+
+.small {
+    width: 16px;
+    height: 16px;
+    border-width: 2px;
+}
+
+.large {
+    width: 48px;
+    height: 48px;
+    border-width: 5px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Hide accessibility text visually but keep it for screen readers */
+.visuallyHidden {
+    border: 0;
+    clip: rect(0 0 0 0);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    width: 1px;
+    white-space: nowrap;
+}

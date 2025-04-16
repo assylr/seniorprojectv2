@@ -1,0 +1,112 @@
+/* src/pages/Buildings/components/BuildingCard.module.css */
+.card {
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1.25rem; /* 20px */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.2s ease-in-out;
+    display: flex;
+    flex-direction: column;
+}
+
+.card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.cardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem; /* 12px */
+}
+
+.buildingTypeBadge {
+    background-color: #e7f3ff; /* Light blue */
+    color: #0056b3; /* Darker blue text */
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem; /* 12px */
+    font-weight: 500;
+    text-transform: capitalize;
+}
+
+.cardActions button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem; /* 16px */
+    margin-left: 8px;
+    padding: 4px;
+    color: #6c757d; /* Grey icon color */
+    transition: color 0.2s ease;
+}
+.cardActions button:hover {
+    color: #343a40; /* Darker grey on hover */
+}
+.deleteButton:hover {
+    color: #dc3545; /* Red on hover for delete */
+}
+
+
+.buildingNumber {
+    font-size: 1.25rem; /* 20px */
+    font-weight: 600;
+    margin-bottom: 1rem; /* 16px */
+    color: #333;
+}
+
+.buildingStats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); /* Responsive grid */
+    gap: 0.75rem; /* 12px */
+    margin-bottom: 1.25rem; /* 20px */
+    font-size: 0.875rem; /* 14px */
+}
+
+.buildingStats > div {
+    display: flex;
+    flex-direction: column;
+}
+
+.buildingStats span:first-child {
+    color: #6c757d; /* Grey label */
+    font-size: 0.75rem; /* 12px */
+    margin-bottom: 2px;
+}
+
+.buildingStats span:last-child {
+    font-weight: 500;
+    color: #333;
+}
+
+.occupancySection {
+    margin-top: auto; /* Push to bottom if card height varies */
+}
+
+.occupancyHeader {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.875rem; /* 14px */
+    color: #6c757d;
+    margin-bottom: 4px;
+}
+
+.occupancyPercentage {
+    font-weight: 600;
+    color: #333;
+}
+
+.occupancyBarContainer {
+    background-color: #e9ecef; /* Light grey background */
+    border-radius: 4px;
+    height: 8px;
+    overflow: hidden; /* Ensure bar stays within container */
+}
+
+.occupancyBar {
+    background-color: #007bff; /* Blue occupancy bar */
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s ease-out;
+}
