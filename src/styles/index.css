@@ -1,0 +1,50 @@
+@import './base.css';
+@import './navigation.css';
+@import './cards.css';
+@import './rooms.css';
+@import './buildings.css';
+@import './forms.css';
+@import './buttons.css';
+@import './status.css';
+@import './tenants.css';
+@import './reports.css';
+@import './search.css';
+@import './login.css';
+.status-completed {
+    color: #48bb78;
+  }
+  
+  .status-in-progress {
+    color: #4299e1;
+  }
+  
+  .status-assigned {
+    color: #ed8936;
+  }
+  
+  .status-pending {
+    color: #718096;
+  }
+  
+  .status-cancelled {
+    color: #e53e3e;
+  }
+  
+  .priority-emergency {
+    color: #e53e3e;
+    font-weight: 600;
+  }
+  
+  .priority-high {
+    color: #ed8936;
+    font-weight: 600;
+  }
+  
+  .priority-medium {
+    color: #4299e1;
+  }
+  
+  .priority-low {
+    color: #718096;
+  }
+  
