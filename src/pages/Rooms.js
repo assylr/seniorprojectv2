@@ -2,65 +2,13 @@ import { useEffect, useState } from "react"
 import { getBuildings, getRooms, getTenants } from "../services/api"
 
 const Rooms = () => {
-  const initialRooms = [
-    {
-      room_id: '1',
-      room_number: '101A',
-      building_id: '1',
-      floor_number: '1',
-      bedroom_count: 2,
-      total_area: 50,
-      available: false
-    },
-    {
-      room_id: '2',
-      room_number: '101B',
-      building_id: '1',
-      floor_number: '1',
-      bedroom_count: 1,
-      total_area: 40,
-      available: true
-    },
-    {
-      room_id: '3',
-      room_number: '102A',
-      building_id: '2',
-      floor_number: '1',
-      bedroom_count: 2,
-      total_area: 55,
-      available: false
-    }
-  ];
-
-  const buildings = [
-    { building_id: '1', building_number: '101' },
-    { building_id: '2', building_number: '102' }
-  ];
-
-  const tenants = [
-    {
-      tenant_id: '1',
-      room_id: '1',
-      name: 'John',
-      surname: 'Doe',
-      tenant_type: 'Student',
-      arrival_date: '2023-01-15',
-      departure_date: null
-    },
-    {
-      tenant_id: '2',
-      room_id: '3',
-      name: 'Jane',
-      surname: 'Smith',
-      tenant_type: 'Faculty',
-      arrival_date: '2023-02-01',
-      departure_date: null
-    }
-  ];
-
-  const [rooms] = useState(initialRooms);
+  const [rooms, setRooms] = useState([]);
+  const [buildings, setBuildings] = useState([]);
+  const [tenants, setTenants] = useState([]);
   const [selectedRoom, setSelectedRoom] = useState(null);
-  const [filter, setFilter] = useState({  // Changed this line to include setFilter
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [filter, setFilter] = useState({
     building: '',
     available: '',
     bedrooms: ''
