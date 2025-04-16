@@ -1,78 +1,62 @@
-import './styles/index.css';
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Buildings from "./pages/Buildings";
-import Rooms from "./pages/Rooms";
-import Tenants from "./pages/Tenants";
+// src/App.tsx
+
+// Import base styles first
+import './styles/index.css'; // Global styles
+// import './App.css'; // App-specific styles
+
+import { BrowserRouter as Router, Routes, Route, Outlet, Navigate } from "react-router-dom";
+
+// --- Import Layouts ---
+import AdminLayout from './layouts/AdminLayout';
+
+// --- Import Pages ---
+import BuildingsPage from "./pages/Buildings/BuildingsPage";
+import RoomsPage from "./pages/Rooms/RoomsPage";
+import TenantsPage from "./pages/Tenants/TenantsPage";
 import Reports from "./pages/Reports";
 import UtilityBilling from "./pages/UtilityBilling";
 import Maintenance from "./pages/Maintenance";
-import Login from "./pages/Login";
-import Navbar from "./components/Navbar";
-import ProtectedRoute from "./components/ProtectedRoute";
-import "./App.css";
+import Login from "./pages/Login"; // Keep Login page route if you want to access it directly still
+
+// --- Import Auth/Nav Components ---
+// ProtectedRoute import is no longer strictly needed here unless used elsewhere
+// import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   return (
     <div className="app">
       <Router>
         <Routes>
-          {/* Public routes */}
+          {/* Login Route (still accessible if needed) */}
           <Route path="/login" element={<Login />} />
 
-          {/* Protected routes */}
-          <Route element={<ProtectedRoute />}>
-            <Route path="/" element={
-              <>
-                <Navbar />
-                <main>
-                  <Buildings />
-                </main>
-              </>
-            } />
-            <Route path="/rooms" element={
-              <>
-                <Navbar />
-                <main>
-                  <Rooms />
-                </main>
-              </>
-            } />
-            <Route path="/tenants" element={
-              <>
-                <Navbar />
-                <main>
-                  <Tenants />
-                </main>
-              </>
-            } />
-            <Route path="/utility-billing" element={
-              <>
-                <Navbar />
-                <main>
-                  <UtilityBilling />
-                </main>
-              </>
-            } />
-            <Route path="/maintenance" element={
-              <>
-                <Navbar />
-                <main>
-                  <Maintenance />
-                </main>
-              </>
-            } />
-            <Route path="/reports" element={
-              <>
-                <Navbar />
-                <main>
-                  <Reports />
-                </main>
-              </>
-            } />
-          </Route>
+          {/* --- Main Application Routes (Now Publicly Accessible) --- */}
+          {/* Removed the ProtectedRoute wrapper */}
+          <Route element={<AdminLayout />}> {/* Apply layout directly */}
+            {/* Define Routes within the Admin Layout */}
 
-          {/* Fallback route */}
-          <Route path="*" element={<Login />} />
+            {/* Default route now goes directly to buildings */}
+            <Route index element={<Navigate to="/buildings" replace />} />
+
+            <Route path="buildings" element={<BuildingsPage />} />
+            <Route path="rooms" element={<RoomsPage />} />
+            <Route path="tenants" element={<TenantsPage />} />
+            {/* <Route path="utility-billing" element={<UtilityBilling />} /> */}
+            {/* <Route path="maintenance" element={<Maintenance />} /> */}
+            {/* <Route path="reports" element={<Reports />} /> */}
+
+            {/* Add other application routes here */}
+
+            {/* Catch-all within the main layout */}
+            <Route path="*" element={<div>App Page Not Found</div>} /> {/* Or your NotFoundPage */}
+
+          </Route>{/* End AdminLayout Route */}
+
+          {/* Optional: Top-level catch-all (if you want un-matched routes to go somewhere specific) */}
+          {/* If removed, unmatched routes simply won't render anything */}
+          {/* <Route path="*" element={<Navigate to="/buildings" replace />} /> */}
+
+
         </Routes>
       </Router>
     </div>

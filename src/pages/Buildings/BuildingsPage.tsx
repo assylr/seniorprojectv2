@@ -1,9 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom'; // Import for navigation
-import { getBuildings, getRooms } from '../../services/api'; // Import deleteBuilding
-import { LoadingSpinner, AlertMessage } from '../../components/common'; // Use common components
-import BuildingCard, { BuildingSummary } from './components/BuildingCard'; // Import extracted card
-import styles from './BuildingsPage.module.css'; // Use CSS Modules for page styles
+import { getBuildings, getRooms } from '../../services/api';
+import { LoadingSpinner, AlertMessage } from '../../components/common';
+import BuildingCard, { BuildingSummary } from './components/BuildingCard';
+import styles from './BuildingsPage.module.css';
 
 const BuildingsPage: React.FC = () => {
 
@@ -12,15 +11,12 @@ const BuildingsPage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [sortBy, setSortBy] = useState<keyof BuildingSummary | 'buildingNumber'>('buildingNumber'); // Use keys for type safety
 
-    const navigate = useNavigate(); // Hook for navigation
-
     // --- Data Fetching ---
     useEffect(() => {
         const fetchData = async () => {
             setIsLoading(true);
             setError(null);
             try {
-                // Fetch both buildings and rooms data
                 // TODO: Consider if backend can provide summary data directly in getBuildings response
                 const [buildingsData, roomsData] = await Promise.all([
                     getBuildings(),
@@ -29,10 +25,8 @@ const BuildingsPage: React.FC = () => {
 
                 // Calculate summary data for each building
                 const buildingSummaries = buildingsData.map(building => {
-                    // Ensure using correct property names from refactored types.ts
                     const buildingRooms = roomsData.filter(room => room.buildingId === building.id);
                     const totalRooms = buildingRooms.length;
-                    // Use isAvailable from Room type
                     const occupiedRooms = buildingRooms.filter(room => !room.isAvailable).length;
                     const loadPercentage = totalRooms > 0 ? (occupiedRooms / totalRooms) * 100 : 0;
 
@@ -76,12 +70,6 @@ const BuildingsPage: React.FC = () => {
         });
     }, [buildings, sortBy]); // Recalculate only when buildings or sortBy changes
 
-    // --- Action Handlers ---
-    const handleViewDetails = (id: number) => {
-        console.log("Navigate to view details for building:", id);
-        // navigate(`/buildings/${id}`); // Uncomment when routes are set up
-    };
-
 
     // --- Render Logic ---
     return (
@@ -120,7 +108,7 @@ const BuildingsPage: React.FC = () => {
 
             {/* Data Display */}
             {!isLoading && !error && (
-                 <>
+                <>
                     {sortedBuildings.length === 0 ? (
                          <p className={styles.noDataMessage}>No buildings found.</p>
                     ) : (
@@ -129,7 +117,6 @@ const BuildingsPage: React.FC = () => {
                                 <BuildingCard
                                     key={building.id}
                                     building={building}
-                                    onViewDetails={handleViewDetails}
                                 />
                             ))}
                         </div>

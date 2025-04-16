@@ -1,0 +1,101 @@
+/* src/components/common/Modal.module.css */
+
+/* The Overlay */
+.modalOverlay {
+    position: fixed; /* Stay in place */
+    z-index: 1000; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed, though body scroll is disabled */
+    background-color: rgba(0, 0, 0, 0.5); /* Black w/ opacity */
+    display: flex; /* Use flexbox for centering */
+    align-items: center; /* Vertical centering */
+    justify-content: center; /* Horizontal centering */
+    padding: 1rem; /* Add padding for smaller screens */
+}
+
+/* Modal Dialog Box */
+.modalDialog {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh; /* Limit height */
+    overflow: hidden; /* Prevent content spill */
+    position: relative; /* For potential absolute positioning inside */
+    outline: none; /* Remove default focus outline if needed */
+}
+
+/* Size Variants */
+.small {
+    width: 90%;
+    max-width: 400px;
+}
+.medium { /* Default */
+    width: 90%;
+    max-width: 600px;
+}
+.large {
+    width: 90%;
+    max-width: 800px;
+}
+.xlarge {
+    width: 90%;
+    max-width: 1140px;
+}
+
+
+/* Modal Header */
+.modalHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+    flex-shrink: 0; /* Prevent header from shrinking */
+}
+
+.modalTitle {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.closeButton {
+    background: none;
+    border: none;
+    font-size: 1.75rem; /* Make 'x' larger */
+    line-height: 1;
+    cursor: pointer;
+    padding: 0; /* Reset padding */
+    margin-left: 1rem; /* Space from title */
+    color: #6c757d;
+    opacity: 0.7;
+    transition: opacity 0.15s ease-in-out;
+}
+
+.closeButton:hover {
+    opacity: 1;
+}
+
+/* Modal Body */
+.modalBody {
+    padding: 1.5rem; /* Padding for content */
+    overflow-y: auto; /* Allow vertical scrolling for content */
+    flex-grow: 1; /* Allow body to take up available space */
+}
+
+/* Optional: Modal Footer styles if you add one */
+/*
+.modalFooter {
+    display: flex;
+    justify-content: flex-end;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #e9ecef;
+    flex-shrink: 0;
+}
+*/

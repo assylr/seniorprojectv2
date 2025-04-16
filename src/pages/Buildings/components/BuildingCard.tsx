@@ -1,8 +1,7 @@
 import React from 'react';
-import { Building } from '../../../services/types'; // Use base Building type
+import { Building } from '../../../types/building';
 import styles from './BuildingCard.module.css';
 
-// Define the extended type needed specifically for this card display
 export interface BuildingSummary extends Building {
     totalRooms: number;
     occupiedRooms: number;
@@ -11,12 +10,11 @@ export interface BuildingSummary extends Building {
 
 interface BuildingCardProps {
     building: BuildingSummary;
-    onViewDetails: (id: number) => void; // Placeholder for navigation
+    // onViewDetails: (id: number) => void; // Placeholder for navigation
 }
 
 const BuildingCard: React.FC<BuildingCardProps> = ({
     building,
-    onViewDetails,
 }) => {
     
     return (
@@ -26,10 +24,6 @@ const BuildingCard: React.FC<BuildingCardProps> = ({
                     {/* Capitalize building type */}
                     {building.buildingType.charAt(0).toUpperCase() + building.buildingType.slice(1)}
                 </span>
-                {/* Placeholder Actions */}
-                <div className={styles.cardActions}>
-                     <button onClick={() => onViewDetails(building.id)} title="View Details">👁️</button>
-                 </div>
             </div>
 
             <h2 className={styles.buildingNumber}>Building {building.buildingNumber}</h2>

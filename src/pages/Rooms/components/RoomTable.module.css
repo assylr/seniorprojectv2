@@ -1,0 +1,68 @@
+/* src/pages/Rooms/components/RoomTable.module.css */
+.tableContainer {
+    overflow-x: auto;
+    margin-top: 1.5rem;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+}
+
+.roomTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    background-color: #fff;
+}
+
+.roomTable th,
+.roomTable td {
+    padding: 0.8rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid #dee2e6;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+.roomTable td:nth-child(1) { white-space: normal; }
+.roomTable td:nth-child(8) { white-space: normal; }
+
+
+.roomTable th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.roomTable tbody tr:nth-of-type(odd) {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+.roomTable tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+.centerAlign { text-align: center; }
+.rightAlign { text-align: right; }
+
+.loadingCell,
+.noResultsCell {
+    text-align: center;
+    padding: 2rem;
+    color: #6c757d;
+    font-style: italic;
+}
+.loadingCell span { margin-left: 0.5rem; vertical-align: middle; }
+
+.statusBadge {
+    padding: 0.25em 0.6em;
+    font-size: 0.75rem; font-weight: 700; line-height: 1;
+    color: #fff; text-align: center; white-space: nowrap;
+    vertical-align: baseline; border-radius: 0.25rem; display: inline-block;
+}
+.statusAvailable { background-color: #28a745; }
+.statusOccupied { background-color: #dc3545; }
+
+.actionsCell { white-space: nowrap; text-align: right; }
+.actionButton { /* styles... */ }
+.deleteButton { /* styles... */ }

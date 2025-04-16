@@ -1,0 +1,74 @@
+/* src/pages/Rooms/RoomsPage.module.css */
+
+/* Base container for the page content */
+.pageContainer {
+    padding: 1.5rem; /* Standard padding around the page */
+    /* Optional: Limit the maximum width for very large screens */
+    max-width: 1600px;
+    margin-left: auto; /* Center the container */
+    margin-right: auto;
+}
+
+/* Centered container for the initial loading spinner */
+.loadingContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 1rem; /* Generous padding */
+    color: #6c757d; /* Muted text color */
+    text-align: center;
+}
+
+.loadingContainer p {
+    margin-top: 1rem;
+    font-size: 1rem;
+}
+
+/* Header section containing title and action buttons */
+.headerActions {
+    display: flex;
+    justify-content: space-between; /* Pushes title left, buttons right */
+    align-items: center; /* Vertically align title and buttons */
+    margin-bottom: 1.5rem; /* Space below the header */
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    gap: 1rem; /* Space between title and buttons if they wrap */
+}
+
+.headerActions h1 {
+    margin: 0; /* Remove default heading margin */
+    font-size: 1.75rem; /* Adjust title size */
+    color: #333; /* Darker text color */
+    flex-shrink: 0; /* Prevent title from shrinking too much */
+}
+
+/* Styles for the button group (if you add an "Add Room" button later) */
+.buttonGroup {
+    display: flex;
+    gap: 0.75rem; /* Space between buttons */
+    flex-wrap: wrap;
+}
+
+/* Example button style (if you add an "Add Room" button) */
+.primaryButton {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    background-color: #007bff; /* Example blue */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.primaryButton:hover:not(:disabled) {
+    background-color: #0056b3; /* Darker blue on hover */
+}
+
+.primaryButton:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Add other necessary styles if your layout demands them */

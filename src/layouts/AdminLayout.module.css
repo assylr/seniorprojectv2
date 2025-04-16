@@ -1,0 +1,16 @@
+/* src/layouts/AdminLayout.module.css */
+.adminLayout {
+    /* Example using flexbox for layout */
+    display: flex;
+    flex-direction: column; /* Stack navbar and main content */
+    min-height: 100vh; /* Ensure layout takes full viewport height */
+}
+
+.mainContent {
+    flex-grow: 1; /* Allow main content to take remaining vertical space */
+    padding: 0; /* Or add default padding if desired, e.g., padding: 1.5rem; */
+    /* background-color: #f4f7f6; Example background */
+    /* Overflow handling might be needed depending on content */
+}
+
+/* Add more specific layout styles if needed */

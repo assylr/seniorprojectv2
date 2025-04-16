@@ -1,0 +1,81 @@
+/* src/pages/Tenants/TenantsPage.module.css */
+.pageContainer {
+    padding: 1.5rem;
+    max-width: 1600px; /* Wider for tables potentially */
+    margin: 0 auto;
+}
+
+.loadingContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    color: #6c757d;
+}
+
+.loadingContainer p {
+    margin-top: 1rem;
+    font-size: 1rem;
+}
+
+.headerActions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.headerActions h1 {
+    margin: 0;
+    font-size: 1.75rem;
+}
+
+.buttonGroup {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+/* Add styles for primaryButton, secondaryButton, etc. or import from common Button component later */
+.primaryButton, .secondaryButton {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+.primaryButton { background-color: #007bff; color: white; }
+.secondaryButton { background-color: #6c757d; color: white; }
+.primaryButton:hover:not(:disabled) { background-color: #0056b3; }
+.secondaryButton:hover:not(:disabled) { background-color: #5a6268; }
+.primaryButton:disabled, .secondaryButton:disabled { background-color: #cccccc; cursor: not-allowed; }
+
+
+.filtersContainer {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 4px;
+    margin-bottom: 1.5rem;
+    /* Add display: grid or flex for layout */
+}
+
+.listContainer {
+    margin-top: 1.5rem;
+}
+
+.tenantItem {
+    border: 1px solid #eee;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.tenantItem button {
+    margin-left: 0.5rem;
+}

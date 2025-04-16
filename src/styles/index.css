@@ -1,15 +1,7 @@
 @import './base.css';
 @import './navigation.css';
-@import './cards.css';
-@import './rooms.css';
-@import './buildings.css';
-@import './forms.css';
-@import './buttons.css';
-@import './status.css';
-@import './tenants.css';
-@import './reports.css';
-@import './search.css';
 @import './login.css';
+
 .status-completed {
     color: #48bb78;
   }

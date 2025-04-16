@@ -1,0 +1,85 @@
+/* src/pages/Tenants/components/TenantFilters.module.css */
+.filtersContainer {
+    background-color: #f8f9fa;
+    padding: 1rem 1.5rem; /* Adjust padding */
+    border-radius: 6px;
+    margin-bottom: 1.5rem;
+    display: flex; /* Use flexbox for layout */
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    gap: 1.5rem; /* Space between search and selects */
+    align-items: center; /* Align items vertically */
+}
+
+.searchBox {
+    position: relative; /* For positioning clear button and icon */
+    flex-grow: 1; /* Allow search box to take available space */
+    min-width: 250px; /* Minimum width */
+}
+
+.searchBox input {
+    width: 100%;
+    padding: 0.6rem 2.5rem 0.6rem 0.75rem; /* Padding for icon/button */
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+.searchBox input:focus {
+    outline: none;
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.clearSearch {
+    position: absolute;
+    right: 2.2rem; /* Position before the search icon */
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    font-size: 1.4rem;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 0 0.3rem;
+    line-height: 1;
+}
+.clearSearch:hover {
+    color: #343a40;
+}
+
+.searchIcon {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+    pointer-events: none; /* Don't interfere with input focus */
+}
+
+
+.selectFilters {
+    display: flex;
+    flex-wrap: wrap; /* Allow selects to wrap */
+    gap: 1rem; /* Space between select dropdowns */
+}
+
+.selectFilters select {
+    padding: 0.6rem 0.75rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    background-color: #fff; /* Ensure background color */
+    min-width: 150px; /* Give selects some minimum width */
+}
+
+.selectFilters select:disabled {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+}
+
+/* Optional: Add focus styles for selects */
+.selectFilters select:focus {
+     outline: none;
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}

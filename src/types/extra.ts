@@ -1,92 +1,24 @@
-// Core Entities
-
-export interface Building {
-    id: number;
-    buildingType: "apartment" | "townhouse" | "cottage";
-    buildingNumber: string; // e.g., "Block 5", "12A"
-    floorCount: number | null;
-    totalArea: number | null; // Maybe overall building area?
-    // Consider removing 'available', or clarifying its meaning (e.g., 'isOperational')
-    // Room availability is usually tracked at the Room level.
-}
-
-export interface Room {
-    id: number;
-    buildingId: number; // Use ID for relation, fetch Building separately if needed
-    building?: Building; // Optional: Include full object if API provides it nested
-    roomNumber: string; // Example format: "A-101", "5-2B"
-    bedroomCount: number;
-    totalArea: number; // Area of the room itself
-    floorNumber: number | null;
-    isAvailable: boolean; // Renamed for clarity
-    baseRent: number | null; // Use null if rent varies or isn't set directly on the room
-}
-
-export interface Tenant {
-    id: number;
-    firstName: string; // Changed from 'name' for clarity
-    lastName: string;  // Changed from 'surname' for clarity
-    schoolOrDepartment: string | null; // More descriptive, allow null
-    position: string | null; // Allow null
-    tenantType: 'faculty' | 'staff'; // Standardized values and casing
-    mobile: string | null;
-    email: string | null; // Make required if it's the primary identifier/login?
-    // Tenant might not always have a room assigned yet
-    currentRoomId: number | null; // Relation via ID
-    currentRoom?: Room; // Optional: For display if API provides nested data
-    arrivalDate: Date | null; // Use null if not yet arrived/set
-    expectedDepartureDate: Date | null; // More descriptive name
-
-    // addition of new fields
-
-    deposit: number;
-}
-
-// --- Missing Core Types ---
-
-export interface Contract {
-    id: number;
-    tenantId: number;
-    roomId: number;
-    tenant?: Tenant; // Optional nested data for display
-    room?: Room;     // Optional nested data for display
-    startDate: Date;
-    endDate: Date;
-    monthlyRentAmount: number;
-    status: 'active' | 'expired' | 'terminated' | 'pending'; // Added pending/terminated
-    // Optional: Link to related documents (e.g., lease agreement URL)
-    leaseDocumentUrl?: string | null;
-    notes?: string | null;
-}
-
-export interface Payment {
-    id: number;
-    contractId: number;
-    tenantId: number; // Denormalized for easier querying/display
-    paymentDate: Date;
-    amount: number;
-    paymentMethod: 'bank_transfer' | 'card' | 'cash' | 'other' | null; // Example methods
-    notes?: string | null;
-    // Optional: Link to invoice if applicable
-    invoiceId?: number | null;
-}
-
-
+import { Room } from "./room";
+import { Tenant } from "./tenant";
 // Data Transfer Objects (for Forms / API Payloads)
 
+// src/services/types.ts
+
 export interface TenantFormData {
-    // Used for creating or updating a tenant
+    // ... other fields (firstName, lastName, tenantType, etc.) ...
     firstName: string;
     lastName: string;
     schoolOrDepartment: string | null;
     position: string | null;
     tenantType: 'faculty' | 'staff';
     mobile: string | null;
-    email: string | null; // Make required if used for login/primary contact
-    arrivalDate: string | null; // Use string for form input, convert to Date on submission/retrieval
-    expectedDepartureDate: string | null; // Use string for form input
-    // Assigning room might be part of Contract creation, not Tenant creation itself
-    // currentRoomId?: number | null; // Optionally include if assigning directly
+    email: string | null;
+    arrivalDate: string | null;
+    expectedDepartureDate: string | null;
+
+    // Add roomId - make it optional initially for edit mode where room isn't changed,
+    // but required logically for *new* check-ins. Validation schema will enforce.
+    roomId: number | null; // Store the selected room ID
 }
 
 export interface ContractFormData {
@@ -121,25 +53,6 @@ export interface BuildingFormData {
     buildingNumber: string;
     floorCount: number | null;
     totalArea: number | null;
-}
-
-
-// Batch Operations Types (Standardized Naming)
-
-export interface BatchTenantData extends Omit<TenantFormData, 'currentRoomId' | 'arrivalDate' | 'expectedDepartureDate'> {
-    // Fields needed specifically for batch upload, might differ from single Tenant form
-    roomIdToAssign: number | null; // Explicitly name the target room ID for assignment
-    buildingId?: number; // Optional building filter for room selection
-    status?: 'pending' | 'success' | 'error'; // Status for batch processing
-    errorMessage?: string; // Standardized casing
-}
-
-export interface BatchCheckOutData {
-    tenantId: number;
-    // Optional: Add departure date for batch check-out?
-    // departureDate?: string;
-    status?: 'pending' | 'success' | 'error';
-    errorMessage?: string; // Standardized casing
 }
 
 

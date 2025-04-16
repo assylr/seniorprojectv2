@@ -1,0 +1,121 @@
+/* src/pages/Tenants/components/TenantTable.module.css */
+.tableContainer {
+    overflow-x: auto; /* Allow horizontal scrolling on small screens */
+    margin-top: 1.5rem;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+}
+
+.tenantTable {
+    width: 100%;
+    border-collapse: collapse; /* Remove space between borders */
+    font-size: 0.9rem;
+    background-color: #fff;
+}
+
+.tenantTable th,
+.tenantTable td {
+    padding: 0.8rem 1rem; /* Consistent padding */
+    text-align: left;
+    border-bottom: 1px solid #dee2e6; /* Separator lines */
+    vertical-align: middle; /* Align cell content vertically */
+    white-space: nowrap; /* Prevent text wrapping initially */
+}
+.tenantTable td:nth-child(1) { white-space: normal; } /* Allow Name to wrap */
+.tenantTable td:nth-child(3) { white-space: normal; } /* Allow Contact to wrap */
+
+
+.tenantTable th {
+    background-color: #f8f9fa; /* Light header background */
+    font-weight: 600; /* Bold headers */
+    color: #495057;
+}
+
+/* Zebra striping for rows */
+.tenantTable tbody tr:nth-of-type(odd) {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+.tenantTable tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.05); /* Light blue hover */
+}
+
+.loadingCell,
+.noResultsCell {
+    text-align: center;
+    padding: 2rem;
+    color: #6c757d;
+    font-style: italic;
+}
+.loadingCell span {
+    margin-left: 0.5rem;
+    vertical-align: middle;
+}
+
+.statusBadge {
+    padding: 0.25em 0.6em;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #fff;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 0.25rem;
+}
+
+.statusActive {
+    background-color: #28a745; /* Green */
+}
+
+.statusCheckedOut {
+    background-color: #6c757d; /* Grey */
+}
+/* Add other status colors as needed */
+
+.actionsCell {
+    white-space: nowrap; /* Keep action buttons on one line */
+    text-align: right; /* Align actions to the right */
+}
+
+.actionButton {
+    background: none;
+    border: 1px solid transparent; /* Maintain size consistency */
+    padding: 0.3rem 0.6rem;
+    margin-left: 0.5rem;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+.actionButton:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.actionButton:hover:not(:disabled) {
+   background-color: #f1f1f1;
+   border-color: #ddd;
+}
+
+.actionButton:first-child {
+    margin-left: 0;
+}
+
+.checkOutButton {
+    color: #dc3545; /* Red */
+    border-color: #f5c6cb;
+}
+.checkOutButton:hover:not(:disabled) {
+    background-color: #f8d7da;
+    border-color: #f1b0b7;
+}
+
+.deleteButton { /* Style if you add delete */
+    color: #dc3545;
+    border-color: #f5c6cb;
+}
+.deleteButton:hover:not(:disabled) {
+    background-color: #f8d7da;
+    border-color: #f1b0b7;
+}
