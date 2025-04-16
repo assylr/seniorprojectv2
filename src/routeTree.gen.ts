@@ -15,7 +15,6 @@ import { Route as TenantsImport } from './routes/tenants'
 import { Route as RoomsImport } from './routes/rooms'
 import { Route as ReportsImport } from './routes/reports'
 import { Route as AuthImport } from './routes/auth'
-import { Route as AuthenticatedImport } from './routes/_authenticated'
 import { Route as IndexImport } from './routes/index'
 
 // Create/Update Routes
@@ -44,11 +43,6 @@ const AuthRoute = AuthImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const AuthenticatedRoute = AuthenticatedImport.update({
-  id: '/_authenticated',
-  getParentRoute: () => rootRoute,
-} as any)
-
 const IndexRoute = IndexImport.update({
   id: '/',
   path: '/',
@@ -64,13 +58,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexImport
-      parentRoute: typeof rootRoute
-    }
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof AuthenticatedImport
       parentRoute: typeof rootRoute
     }
     '/auth': {
@@ -108,7 +95,6 @@ declare module '@tanstack/react-router' {
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '': typeof AuthenticatedRoute
   '/auth': typeof AuthRoute
   '/reports': typeof ReportsRoute
   '/rooms': typeof RoomsRoute
@@ -117,7 +103,6 @@ export interface FileRoutesByFullPath {
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '': typeof AuthenticatedRoute
   '/auth': typeof AuthRoute
   '/reports': typeof ReportsRoute
   '/rooms': typeof RoomsRoute
@@ -127,7 +112,6 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
-  '/_authenticated': typeof AuthenticatedRoute
   '/auth': typeof AuthRoute
   '/reports': typeof ReportsRoute
   '/rooms': typeof RoomsRoute
@@ -136,23 +120,15 @@ export interface FileRoutesById {
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '' | '/auth' | '/reports' | '/rooms' | '/tenants'
+  fullPaths: '/' | '/auth' | '/reports' | '/rooms' | '/tenants'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '' | '/auth' | '/reports' | '/rooms' | '/tenants'
-  id:
-    | '__root__'
-    | '/'
-    | '/_authenticated'
-    | '/auth'
-    | '/reports'
-    | '/rooms'
-    | '/tenants'
+  to: '/' | '/auth' | '/reports' | '/rooms' | '/tenants'
+  id: '__root__' | '/' | '/auth' | '/reports' | '/rooms' | '/tenants'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AuthenticatedRoute: typeof AuthenticatedRoute
   AuthRoute: typeof AuthRoute
   ReportsRoute: typeof ReportsRoute
   RoomsRoute: typeof RoomsRoute
@@ -161,7 +137,6 @@ export interface RootRouteChildren {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AuthenticatedRoute: AuthenticatedRoute,
   AuthRoute: AuthRoute,
   ReportsRoute: ReportsRoute,
   RoomsRoute: RoomsRoute,
@@ -179,7 +154,6 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
-        "/_authenticated",
         "/auth",
         "/reports",
         "/rooms",
@@ -188,9 +162,6 @@ export const routeTree = rootRoute
     },
     "/": {
       "filePath": "index.tsx"
-    },
-    "/_authenticated": {
-      "filePath": "_authenticated.tsx"
     },
     "/auth": {
       "filePath": "auth.tsx"
