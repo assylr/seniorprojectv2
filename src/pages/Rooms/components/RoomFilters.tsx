@@ -1,23 +1,19 @@
-// src/pages/Rooms/components/RoomFilters.tsx
 import React, { ChangeEvent } from 'react';
-// Adjust path as necessary
-import { Building } from '../../../services/types';
+import { Building } from '@/types';
 import styles from './RoomFilters.module.css';
 
-// Define the filter state structure (can also be imported if defined centrally)
 export interface RoomFilterState {
-    buildingId: string; // Store ID as string for select value
-    availability: 'available' | 'occupied' | ''; // Use descriptive values
-    bedrooms: string; // Store as string for select value
+    buildingId: string;
+    availability: 'available' | 'occupied' | '';
+    bedrooms: string;
 }
 
 interface RoomFiltersProps {
-    filters: RoomFilterState; // Current filter values
-    // Callback function to update parent state
+    filters: RoomFilterState;
     onFilterChange: <K extends keyof RoomFilterState>(key: K, value: RoomFilterState[K]) => void;
-    buildings: Building[]; // List of buildings for the dropdown
-    uniqueBedroomCounts: number[]; // List of unique bedroom counts for the dropdown
-    isLoading: boolean; // To disable inputs during loading
+    buildings: Building[];
+    uniqueBedroomCounts: number[];
+    isLoading: boolean;
 }
 
 const RoomFilters: React.FC<RoomFiltersProps> = ({
@@ -31,21 +27,22 @@ const RoomFilters: React.FC<RoomFiltersProps> = ({
     // Generic handler for select changes
     const handleInputChange = (e: ChangeEvent<HTMLSelectElement>) => {
         const { name, value } = e.target;
-        // Use the name attribute to know which filter to update
         onFilterChange(name as keyof RoomFilterState, value as RoomFilterState[keyof RoomFilterState]);
     };
 
     return (
         <div className={styles.filtersContainer}>
+
             {/* Building Filter */}
             <select
-                name="buildingId" // Matches key in RoomFilterState
+                name="buildingId"
                 value={filters.buildingId}
                 onChange={handleInputChange}
                 disabled={isLoading}
                 aria-label="Filter by building"
             >
                 <option value="">All Buildings</option>
+
                 {buildings.map(building => (
                     // Convert building ID to string for the value attribute
                     <option key={building.id} value={String(building.id)}>
@@ -56,7 +53,7 @@ const RoomFilters: React.FC<RoomFiltersProps> = ({
 
             {/* Availability Filter */}
             <select
-                name="availability" // Matches key in RoomFilterState
+                name="availability"
                 value={filters.availability}
                 onChange={handleInputChange}
                 disabled={isLoading}
@@ -69,7 +66,7 @@ const RoomFilters: React.FC<RoomFiltersProps> = ({
 
             {/* Bedrooms Filter */}
             <select
-                name="bedrooms" // Matches key in RoomFilterState
+                name="bedrooms"
                 value={filters.bedrooms}
                 onChange={handleInputChange}
                 disabled={isLoading}

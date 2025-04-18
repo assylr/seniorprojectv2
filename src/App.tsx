@@ -1,5 +1,3 @@
-// src/App.tsx
-
 // Import base styles first
 import './styles/index.css'; // Global styles
 // import './App.css'; // App-specific styles

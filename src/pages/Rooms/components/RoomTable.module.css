@@ -64,5 +64,6 @@
 .statusOccupied { background-color: #dc3545; }
 
 .actionsCell { white-space: nowrap; text-align: right; }
-.actionButton { /* styles... */ }
-.deleteButton { /* styles... */ }
+
+/* .actionButton { styles... } */
+/* .deleteButton { styles... } */
