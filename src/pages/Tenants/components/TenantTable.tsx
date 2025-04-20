@@ -1,56 +1,68 @@
 // src/pages/Tenants/components/TenantTable.tsx
 import React from 'react';
+import { Link } from 'react-router-dom'; // Import Link for potential detail views
 import { Tenant, Room, Building } from '../../../services/types'; // Adjust path
 import { LoadingSpinner } from '../../../components/common'; // Adjust path
 import styles from './TenantTable.module.css';
 
 interface TenantTableProps {
     tenants: Tenant[];
-    rooms: Room[]; // Pass rooms to look up details
-    buildings: Building[]; // Pass buildings to look up details
-    isLoading: boolean; // To show loading state within the table body perhaps
-    isSubmitting: boolean; // To disable action buttons
+    // Receive maps instead of arrays
+    roomsMap: Map<number, Room>;
+    buildingsMap: Map<number, Building>;
+    isSubmitting: boolean; // For disabling row actions
     onEditTenant: (tenant: Tenant) => void;
     onCheckOutTenant: (tenant: Tenant) => void;
     // Optional: Add handlers for delete, view details etc.
+    // onDeleteTenant?: (tenant: Tenant) => void;
 }
 
 const TenantTable: React.FC<TenantTableProps> = ({
     tenants,
-    rooms,
-    buildings,
-    isLoading, // Note: Parent usually handles overall loading, this might be for inline indicators
+    roomsMap,
+    buildingsMap,
     isSubmitting,
     onEditTenant,
     onCheckOutTenant,
+    // onDeleteTenant,
 }) => {
 
-    // Helper function to get room/building details - can be optimized
-    const getRoomInfo = (roomId: number | null): string => {
+    // Helper uses maps now - much faster
+    const getRoomInfo = (roomId: number | null | undefined): string => {
         if (!roomId) return 'N/A';
-        const room = rooms.find(r => r.id === roomId);
-        if (!room) return 'N/A';
-        const building = buildings.find(b => b.id === room.buildingId);
-        return `${building?.buildingNumber || '?'}-${room.roomNumber}`;
+        const room = roomsMap.get(roomId);
+        if (!room) return 'Unknown Room'; // Handle case where room ID is invalid
+        const building = buildingsMap.get(room.buildingId);
+        // Combine building number and room number
+        return `${building?.buildingNumber ?? '?'}-${room.roomNumber}`;
     };
 
-    // Helper function to determine status
+    // Status calculation remains the same conceptually
     const getTenantStatus = (tenant: Tenant): { text: string; className: string } => {
-        // Example logic - adjust based on how you define 'checked-out'
         const isCheckedOut = !!tenant.expectedDepartureDate && new Date(tenant.expectedDepartureDate) <= new Date();
         if (isCheckedOut) {
             return { text: 'Checked Out', className: styles.statusCheckedOut };
         }
-        // Add other statuses if needed (e.g., Pending Arrival)
         return { text: 'Active', className: styles.statusActive };
     };
+
+    // Helper for date formatting
+    const formatDate = (dateInput: Date | string | null | undefined): string => {
+        if (!dateInput) return 'N/A';
+        try {
+            // Handles both Date objects and valid date strings
+            return new Date(dateInput).toLocaleDateString();
+        } catch (e) {
+            return 'Invalid Date';
+        }
+    };
+
 
     return (
         <div className={styles.tableContainer}>
             <table className={styles.tenantTable}>
                 <thead>
                     <tr>
-                        {/* Define your table headers */}
                         <th>Name</th>
                         <th>Type</th>
                         <th>Contact</th>
@@ -62,18 +74,8 @@ const TenantTable: React.FC<TenantTableProps> = ({
                     </tr>
                 </thead>
                 <tbody>
-                    {/* Handle case where parent is loading initially */}
-                    {isLoading && tenants.length === 0 && (
-                         <tr>
-                             <td colSpan={8} className={styles.loadingCell}>
-                                 <LoadingSpinner size="medium" />
-                                 <span>Loading tenants...</span>
-                             </td>
-                         </tr>
-                    )}
-
-                    {/* Handle no results after filtering */}
-                    {!isLoading && tenants.length === 0 && (
+                    {/* Loading/No Results handled by parent, only render rows */}
+                    {tenants.length === 0 && (
                         <tr>
                             <td colSpan={8} className={styles.noResultsCell}>
                                 No tenants match the current filters.
@@ -81,63 +83,69 @@ const TenantTable: React.FC<TenantTableProps> = ({
                         </tr>
                     )}
 
-                    {/* Render tenant rows */}
-                    {!isLoading && tenants.map((tenant) => {
+                    {tenants.map((tenant) => {
                         const statusInfo = getTenantStatus(tenant);
+                        const locationInfo = getRoomInfo(tenant.currentRoomId);
+
                         return (
                             <tr key={tenant.id}>
-                                <td>{tenant.firstName} {tenant.lastName}</td>
-                                <td>{tenant.tenantType}</td>
                                 <td>
-                                    {/* Display contact info concisely */}
+                                    {/* Optional: Link to tenant detail page */}
+                                    {/* <Link to={`/tenants/${tenant.id}`}>{tenant.firstName} {tenant.lastName}</Link> */}
+                                    {tenant.firstName} {tenant.lastName}
+                                </td>
+                                <td>{tenant.tenantType}</td>
+                                <td className={styles.contactCell}>
                                     {tenant.email && <div>{tenant.email}</div>}
                                     {tenant.mobile && <div>{tenant.mobile}</div>}
+                                    {!tenant.email && !tenant.mobile && 'N/A'}
                                 </td>
-                                <td>{getRoomInfo(tenant.currentRoomId)}</td>
+                                <td>{locationInfo}</td>
                                 <td>
                                     <span className={`${styles.statusBadge} ${statusInfo.className}`}>
                                         {statusInfo.text}
                                     </span>
                                 </td>
-                                <td>
-                                    {tenant.arrivalDate
-                                        ? new Date(tenant.arrivalDate).toLocaleDateString()
-                                        : 'N/A'}
-                                </td>
-                                <td>
-                                    {tenant.expectedDepartureDate
-                                        ? new Date(tenant.expectedDepartureDate).toLocaleDateString()
-                                        : 'N/A'}
-                                </td>
+                                <td>{formatDate(tenant.arrivalDate)}</td>
+                                <td>{formatDate(tenant.expectedDepartureDate)}</td>
                                 <td className={styles.actionsCell}>
                                     <button
+                                        type="button"
                                         onClick={() => onEditTenant(tenant)}
-                                        className={styles.actionButton}
+                                        className={`${styles.actionButton} ${styles.editButton}`}
                                         title="Edit Tenant"
                                         disabled={isSubmitting}
+                                        aria-label={`Edit ${tenant.firstName} ${tenant.lastName}`}
                                     >
-                                        ✏️ Edit
+                                        {/* Use text or icons consistently */}
+                                        Edit
                                     </button>
-                                    {/* Only show Check Out if tenant is active */}
-                                    {!tenant.expectedDepartureDate && (
+                                    {/* Only show Check Out if tenant is active (not already checked out) */}
+                                    {statusInfo.text === 'Active' && (
                                         <button
+                                            type="button"
                                             onClick={() => onCheckOutTenant(tenant)}
                                             className={`${styles.actionButton} ${styles.checkOutButton}`}
                                             title="Check Out Tenant"
                                             disabled={isSubmitting}
+                                            aria-label={`Check out ${tenant.firstName} ${tenant.lastName}`}
                                         >
-                                            🚪 Check Out
+                                             Check Out
                                         </button>
                                     )}
-                                    {/* Add Delete button if needed */}
-                                    {/* <button
-                                        onClick={() => onDeleteTenant(tenant)}
-                                        className={`${styles.actionButton} ${styles.deleteButton}`}
-                                        title="Delete Tenant"
-                                        disabled={isSubmitting}
-                                    >
-                                        🗑️ Delete
-                                    </button> */}
+                                    {/* Example Delete Button */}
+                                    {/* {onDeleteTenant && (
+                                        <button
+                                            type="button"
+                                            onClick={() => onDeleteTenant(tenant)}
+                                            className={`${styles.actionButton} ${styles.deleteButton}`}
+                                            title="Delete Tenant"
+                                            disabled={isSubmitting}
+                                            aria-label={`Delete ${tenant.firstName} ${tenant.lastName}`}
+                                        >
+                                            Delete
+                                        </button>
+                                    )} */}
                                 </td>
                             </tr>
                         );

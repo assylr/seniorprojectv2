@@ -14,7 +14,7 @@ import {
 import {
     Building, BuildingFormData, Room, RoomFormData, Tenant, TenantFormData,
     Contract, ContractFormData, Payment, PaymentFormData, /* ... other types ... */
-} from './types';
+} from '@/types';
 
 // --- Axios Instance Setup --- (Keep this section as is)
 // ... apiClient setup ...

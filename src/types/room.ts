@@ -11,3 +11,13 @@ export interface Room {
   baseRent: number | null;
   building?: Building;
 }
+
+export interface RoomFormData {
+  buildingId: number;
+  roomNumber: string;
+  bedroomCount: number;
+  totalArea: number;
+  floorNumber: number | null;
+  isAvailable: boolean;
+  baseRent: number | null;
+}

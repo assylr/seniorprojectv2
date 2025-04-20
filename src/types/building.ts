@@ -7,3 +7,10 @@ export interface Building {
   floorCount: number | null;
   totalArea: number | null;
 }
+
+export interface BuildingFormData {
+  buildingType: "apartment" | "townhouse" | "cottage";
+  buildingNumber: string;
+  floorCount: number | null;
+  totalArea: number | null;
+}

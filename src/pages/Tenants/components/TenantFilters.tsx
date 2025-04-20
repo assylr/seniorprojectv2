@@ -1,12 +1,12 @@
 // src/pages/Tenants/components/TenantFilters.tsx
 import React, { ChangeEvent } from 'react';
-import { Building } from '../../../services/types'; // Adjust path
+import { Building } from '@/types'; // Adjust path
 import styles from './TenantFilters.module.css';
 
-// Re-use the filter state definition or import from a shared location
+// Ensure this interface matches or is imported from a shared location
 export interface TenantFilterState {
     status: 'active' | 'checked-out' | '';
-    type: 'faculty' | 'staff' | '';
+    type: 'faculty' | 'staff' | ''; // Assuming these are your types
     buildingId: string;
     searchQuery: string;
 }
@@ -14,8 +14,8 @@ export interface TenantFilterState {
 interface TenantFiltersProps {
     filters: TenantFilterState;
     onFilterChange: <K extends keyof TenantFilterState>(key: K, value: TenantFilterState[K]) => void;
-    buildings: Building[]; // Pass buildings for the dropdown
-    isLoading: boolean; // Disable inputs while loading/submitting actions
+    buildings: Building[];
+    isLoading: boolean;
 }
 
 const TenantFilters: React.FC<TenantFiltersProps> = ({
@@ -25,12 +25,13 @@ const TenantFilters: React.FC<TenantFiltersProps> = ({
     isLoading
 }) => {
 
+    // Generic handler works well
     const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        // Type assertion needed here as name is a string, but we want it typed as a key
-        onFilterChange(name as keyof TenantFilterState, value as TenantFilterState[keyof TenantFilterState]);
+        onFilterChange(name as keyof TenantFilterState, value); // Simplified assertion
     };
 
+    // Clear search is fine
     const handleClearSearch = () => {
         onFilterChange('searchQuery', '');
     };
@@ -40,16 +41,18 @@ const TenantFilters: React.FC<TenantFiltersProps> = ({
             {/* Search Box */}
             <div className={styles.searchBox}>
                 <input
-                    type="text"
-                    name="searchQuery" // Add name attribute
+                    type="search" // Use type="search" for potential browser enhancements
+                    name="searchQuery"
                     placeholder="Search by name, email, phone, room..."
                     value={filters.searchQuery}
                     onChange={handleInputChange}
                     disabled={isLoading}
                     aria-label="Search tenants"
                  />
+                {/* Use type="button" for buttons not submitting forms */}
                 {filters.searchQuery && (
                     <button
+                        type="button"
                         className={styles.clearSearch}
                         onClick={handleClearSearch}
                         aria-label="Clear search"
@@ -59,13 +62,14 @@ const TenantFilters: React.FC<TenantFiltersProps> = ({
                         × {/* Use HTML entity for 'x' */}
                     </button>
                 )}
+                 {/* Consider using an icon library instead of emoji */}
                  <span className={styles.searchIcon} aria-hidden="true">🔍</span>
             </div>
 
             {/* Filter Selects */}
             <div className={styles.selectFilters}>
                 <select
-                    name="status" // Add name attribute
+                    name="status"
                     value={filters.status}
                     onChange={handleInputChange}
                     disabled={isLoading}
@@ -77,30 +81,31 @@ const TenantFilters: React.FC<TenantFiltersProps> = ({
                 </select>
 
                 <select
-                    name="type" // Add name attribute
+                    name="type"
                     value={filters.type}
                     onChange={handleInputChange}
                     disabled={isLoading}
                     aria-label="Filter by type"
                  >
                     <option value="">All Types</option>
-                    {/* Use updated type names */}
                     <option value="faculty">Faculty</option>
                     <option value="staff">Staff</option>
+                    {/* Add other types if they exist */}
                 </select>
 
                 <select
-                    name="buildingId" // Add name attribute
+                    name="buildingId"
                     value={filters.buildingId}
                     onChange={handleInputChange}
-                    disabled={isLoading}
+                    disabled={isLoading || buildings.length === 0} // Also disable if buildings haven't loaded
                     aria-label="Filter by building"
                  >
                     <option value="">All Buildings</option>
                     {buildings.map(building => (
-                        // Use building.id which should be number, convert to string for value
+                        // Key should be unique, value should be string
                         <option key={building.id} value={String(building.id)}>
-                            Building {building.buildingNumber}
+                            {/* Provide more context if needed, e.g., Bldg Number */}
+                            {building.buildingNumber || `ID: ${building.id}`}
                         </option>
                     ))}
                 </select>

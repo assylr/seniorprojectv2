@@ -1,153 +1,218 @@
-// src/pages/Tenants/TenantsPage.tsx
-import React, { useEffect, useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Tenant, Room, Building, TenantFormData } from '../../services/types';
-import { getTenants, getRooms, getBuildings, updateTenant, createTenant, deleteTenant } from '../../services/api';
-import { LoadingSpinner, AlertMessage } from '../../components/common';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
+// import { useNavigate } from 'react-router-dom';
+import { Tenant, Room, Building } from '@/types';
+import { getTenants, getRooms, getBuildings, updateTenant } from '@/services/api';
+import { LoadingSpinner, AlertMessage } from '@/components/common'; // Assuming Pagination might be added later
 import TenantFilters, { TenantFilterState } from './components/TenantFilters';
 import TenantTable from './components/TenantTable';
 import TenantFormModal from './components/TenantFormModal';
-
 import styles from './TenantsPage.module.css';
 
+// Helper to create maps
+const createMapById = <T extends { id: number }>(items: T[]): Map<number, T> => {
+    return new Map(items.map(item => [item.id, item]));
+};
+
 const TenantsPage: React.FC = () => {
-    // --- State ---
     const [tenants, setTenants] = useState<Tenant[]>([]);
-    const [rooms, setRooms] = useState<Room[]>([]); // Ensure this state holds all rooms
-    const [buildings, setBuildings] = useState<Building[]>([]); // Ensure this state holds all buildings
+    const [rooms, setRooms] = useState<Room[]>([]);
+    const [buildings, setBuildings] = useState<Building[]>([]);
+
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [filters, setFilters] = useState<TenantFilterState>({
         status: 'active', type: '', buildingId: '', searchQuery: ''
     });
+
     const [showTenantFormModal, setShowTenantFormModal] = useState<boolean>(false);
     const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
-    const [isSubmitting, setIsSubmitting] = useState<boolean>(false); // Used for table actions like check-out
+    const [isSubmittingAction, setIsSubmittingAction] = useState<boolean>(false);
 
-    const navigate = useNavigate();
+    // const navigate = useNavigate();
 
-    // --- Data Fetching ---
-    useEffect(() => { fetchInitialData(); }, []);
-    const fetchInitialData = async (showLoadingIndicator = true) => {
+    const roomsMap = useMemo(() => createMapById(rooms), [rooms]);
+    const buildingsMap = useMemo(() => createMapById(buildings), [buildings]);
+
+    const fetchInitialData = useCallback(async (showLoadingIndicator = true) => {
         if (showLoadingIndicator) setIsLoading(true);
         setError(null);
         try {
-            // Fetch all necessary data
             const [tenantsData, roomsData, buildingsData] = await Promise.all([
                 getTenants(),
-                getRooms(), // Make sure this fetches ALL rooms
-                getBuildings() // Make sure this fetches ALL buildings
+                getRooms(),
+                getBuildings()
             ]);
             setTenants(tenantsData);
-            setRooms(roomsData); // Populate rooms state
-            setBuildings(buildingsData); // Populate buildings state
-        } catch (err: any) {
-            setError(err?.message || "Failed to fetch initial tenant data");
-            console.error("Fetch error:", err);
+            setRooms(roomsData);
+            setBuildings(buildingsData);
+        } catch (err: unknown) {
+
+            if (err instanceof Error) {
+                setError(err?.message || "Failed to fetch initial data");
+                console.error("Fetch error:", err);
+            }
+
         } finally {
            if (showLoadingIndicator) setIsLoading(false);
         }
-    };
+    }, []);
 
-    // --- Filtering Logic ---
+    useEffect(() => {
+        fetchInitialData();
+    }, [fetchInitialData]);
+
+
     const filteredTenants = useMemo(() => {
-        // ... filtering logic remains the same ...
          return tenants.filter(tenant => {
-             const isCheckedOut = !!tenant.expectedDepartureDate && new Date(tenant.expectedDepartureDate) <= new Date();
-             const currentRoom = rooms.find(r => r.id === tenant.currentRoomId);
-             const currentBuilding = buildings.find(b => b.id === currentRoom?.buildingId);
-             const tenantBuildingId = currentBuilding?.id?.toString() || '';
+            const isCheckedOut = !!tenant.expectedDepartureDate && new Date(tenant.expectedDepartureDate) <= new Date();
+            const statusMatch = !filters.status ||
+               (filters.status === 'active' && !isCheckedOut) ||
+               (filters.status === 'checked-out' && isCheckedOut);
 
-             const statusMatch = !filters.status ||
-                (filters.status === 'active' && !isCheckedOut) ||
-                (filters.status === 'checked-out' && isCheckedOut);
             const typeMatch = !filters.type || tenant.tenantType === filters.type;
-            const buildingMatch = !filters.buildingId || tenantBuildingId === filters.buildingId;
 
+            const currentRoom = roomsMap.get(tenant.currentRoomId ?? -1);
+            const tenantBuildingId = currentRoom?.buildingId?.toString() || '';
+
+            const buildingMatch = !filters.buildingId || tenantBuildingId === filters.buildingId;
             let searchMatch = true;
-            if (filters.searchQuery) { /* ... search logic ... */ }
+
+            if (filters.searchQuery) {
+                 const query = filters.searchQuery.toLowerCase();
+                 const roomInfo = `${buildingsMap.get(currentRoom?.buildingId ?? -1)?.buildingNumber || ''}-${currentRoom?.roomNumber || ''}`;
+                 
+                 searchMatch =
+                     tenant.firstName.toLowerCase().includes(query) ||
+                     tenant.lastName.toLowerCase().includes(query) ||
+                     (tenant.email && tenant.email.toLowerCase().includes(query)) ||
+                     (tenant.mobile && tenant.mobile.includes(query)) || // Phone numbers might not need lowercase
+                     roomInfo.toLowerCase().includes(query);
+            }
+
             return statusMatch && typeMatch && buildingMatch && searchMatch;
         });
-    }, [tenants, filters, rooms, buildings]); // Add rooms/buildings dependencies
+    }, [tenants, filters, roomsMap, buildingsMap]);
 
     // --- Action Handlers ---
-    const handleFilterChange = <K extends keyof TenantFilterState>(key: K, value: TenantFilterState[K]) => { /* ... */ };
-    const handleOpenCreateForm = () => { /* ... */ setEditingTenant(null); setShowTenantFormModal(true); setSuccessMessage(null); setError(null);};
-    const handleOpenEditForm = (tenant: Tenant) => { /* ... */ setEditingTenant(tenant); setShowTenantFormModal(true); setSuccessMessage(null); setError(null);};
-    const handleFormModalClose = () => { /* ... */ setShowTenantFormModal(false); setEditingTenant(null); };
-    const handleFormSubmitSuccess = (submittedTenant: Tenant) => {
+    const handleFilterChange = <K extends keyof TenantFilterState>(key: K, value: TenantFilterState[K]) => {
+        setFilters(prevFilters => ({ ...prevFilters, [key]: value }));
+    };
+
+    const handleOpenCreateForm = () => {
+        setEditingTenant(null);
+        setShowTenantFormModal(true);
+        setSuccessMessage(null);
+        setError(null);
+    };
+
+    const handleOpenEditForm = (tenant: Tenant) => {
+        setEditingTenant(tenant);
+        setShowTenantFormModal(true);
+        setSuccessMessage(null);
+        setError(null);
+    };
+
+    const handleFormModalClose = () => {
+        setShowTenantFormModal(false);
+        setEditingTenant(null);
+    };
+
+    // This is called *after* the modal successfully submits and calls its internal API
+    const handleFormSubmitSuccess = (submittedTenant: Tenant, isEdit: boolean) => {
         handleFormModalClose();
         setSuccessMessage(
-            `Tenant "${submittedTenant.firstName} ${submittedTenant.lastName}" ${editingTenant ? 'updated' : 'created & checked in'} successfully!` // Updated message
+            `Tenant "${submittedTenant.firstName} ${submittedTenant.lastName}" ${isEdit ? 'updated' : 'created & checked in'} successfully!`
         );
-         // Refetch ALL data because room availability might have changed
-        fetchInitialData(false);
+        // TODO: Optimize this later if performance becomes an issue. Could try to update local state instead.
+        fetchInitialData(false); // Pass false to avoid main loading spinner
     };
+
     const handleCheckOut = async (tenant: Tenant) => {
-         if (!window.confirm(`Check out ${tenant.firstName} ${tenant.lastName}?`)) return;
-         setIsSubmitting(true); setError(null); setSuccessMessage(null);
+         if (!window.confirm(`Check out ${tenant.firstName} ${tenant.lastName}? This cannot be undone easily via the UI.`)) return;
+
+         setIsSubmittingAction(true); // Use specific submitting state for table actions
+         setError(null);
+         setSuccessMessage(null);
+
          try {
-             // --- Backend Assumption for Check Out ---
-             // Assumes updateTenant handles setting departure AND making the room available
-             const updateData: Partial<Tenant> = { expectedDepartureDate: new Date() };
-             await updateTenant(tenant.id, updateData);
-              // --- ---
-             setSuccessMessage(`Tenant ${tenant.firstName} ${tenant.lastName} checked out.`);
-             fetchInitialData(false); // Refetch to update room availability status
-         } catch (err: any) {
-             setError(err?.message || `Failed to check out tenant ${tenant.id}.`); console.error(err);
-         } finally { setIsSubmitting(false); }
+             const departureDate = new Date().toISOString();
+             await updateTenant(tenant.id, { expectedDepartureDate: departureDate });
+
+             setSuccessMessage(`Tenant ${tenant.firstName} ${tenant.lastName} checked out successfully.`);
+             fetchInitialData(false);
+         } catch (err: unknown) {
+            if (err instanceof Error) {
+                setError(err?.message || `Failed to check out tenant.`);
+                console.error("Check out error:", err);
+            }
+         } finally {
+             setIsSubmittingAction(false);
+         }
      };
-    // const handleDelete = async (tenant: Tenant) => { /* ... */ };
 
 
     // --- Render Logic ---
-    if (isLoading && tenants.length === 0) { /* ... initial loading ... */ }
+    const showInitialLoading = isLoading && tenants.length === 0;
 
     return (
         <div className={styles.pageContainer}>
+
+            {/* Display messages */}
             <AlertMessage message={successMessage} type="success" onClose={() => setSuccessMessage(null)} />
             <AlertMessage message={error} type="error" onClose={() => setError(null)} />
 
             <div className={styles.headerActions}>
                 <h1>Tenants</h1>
                 <div className={styles.buttonGroup}>
-                     <button onClick={handleOpenCreateForm} className={styles.primaryButton} disabled={isLoading}>+ Add Tenant</button>
+                     {/* Disable button if initial load is happening */}
+                     <button
+                        onClick={handleOpenCreateForm}
+                        className={styles.primaryButton}
+                        disabled={isLoading}
+                     >
+                        + Add Tenant
+                     </button>
                  </div>
             </div>
 
             <TenantFilters
                 filters={filters}
                 onFilterChange={handleFilterChange}
-                buildings={buildings} // Pass buildings data
-                isLoading={isLoading || isSubmitting}
+                buildings={buildings} // Pass raw buildings for filter dropdown
+                isLoading={isLoading || isSubmittingAction} // Disable filters during load or actions
             />
 
-            <TenantTable
-                tenants={filteredTenants}
-                rooms={rooms} // Pass rooms data
-                buildings={buildings} // Pass buildings data
-                isLoading={isLoading}
-                isSubmitting={isSubmitting}
-                onEditTenant={handleOpenEditForm}
-                onCheckOutTenant={handleCheckOut}
-            />
+            {/* Conditional Rendering for Loading/Table */}
+            {showInitialLoading ? (
+                <div className={styles.loadingContainer}>
+                    <LoadingSpinner size="large" />
+                    <p>Loading tenant data...</p>
+                </div>
+            ) : (
+                <TenantTable
+                    tenants={filteredTenants}
+                    roomsMap={roomsMap}
+                    buildingsMap={buildingsMap}
+                    // isLoading={isLoading}
+                    isSubmitting={isSubmittingAction}
+                    onEditTenant={handleOpenEditForm}
+                    onCheckOutTenant={handleCheckOut}
+                />
+            )}
 
             {/* Render Tenant Form Modal */}
+            {/* Mount the modal conditionally to reset its internal state */}
             {showTenantFormModal && (
                 <TenantFormModal
                     isOpen={showTenantFormModal}
                     onClose={handleFormModalClose}
                     onSubmitSuccess={handleFormSubmitSuccess}
                     tenantToEdit={editingTenant}
-                    // Pass buildings and rooms state down to the modal
                     buildings={buildings}
                     rooms={rooms}
                 />
             )}
-
-             {/* Batch Modals Removed */}
 
         </div>
     );
