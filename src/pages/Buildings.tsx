@@ -28,25 +28,26 @@ const BuildingsPage = () => {
     fetchBuildings();
   }, []);
 
-  if (loading) return <div className="container">Loading...</div>;
-  if (error) return <div className="container">Error: {error}</div>;
+  if (loading) return <div className="max-w-7xl mx-auto px-4 py-8">Loading...</div>;
+  if (error) return <div className="max-w-7xl mx-auto px-4 py-8 text-red-600">Error: {error}</div>;
 
   return (
-    <div className="container">
-      <h1 className="text-2xl font-bold mb-4">Buildings</h1>
-      <div className="card-grid">
+    <div className="max-w-7xl mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-6">Buildings</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {buildings.map((building) => (
-          <div key={building.building_id} className="card">
-            <h2 className="text-xl font-semibold">Building {building.building_number}</h2>
-            <p>Type: {building.building_type}</p>
-            <div className="building-stats mt-2">
-              <div>
-                <strong>Total Rooms:</strong> {building.total_rooms ?? 'N/A'}
-              </div>
-              <div>
-                <strong>Available Rooms:</strong> {building.available_rooms ?? 'N/A'}
-              </div>
-              <div>
+          <div
+            key={building.building_id}
+            className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow"
+          >
+            <h2 className="text-xl font-semibold text-gray-800 mb-2">
+              Building {building.building_number}
+            </h2>
+            <p className="text-gray-600">Type: {building.building_type}</p>
+            <div className="mt-4 space-y-1 text-sm text-gray-700">
+              <p><strong>Total Rooms:</strong> {building.total_rooms ?? 'N/A'}</p>
+              <p><strong>Available Rooms:</strong> {building.available_rooms ?? 'N/A'}</p>
+              <p>
                 <strong>Occupancy Rate:</strong>{' '}
                 {building.total_rooms
                   ? `${Math.round(
@@ -55,7 +56,7 @@ const BuildingsPage = () => {
                         100,
                     )}%`
                   : 'N/A'}
-              </div>
+              </p>
             </div>
           </div>
         ))}

@@ -1,4 +1,4 @@
-import { Building } from '../types/Buildings'
+import { Building } from '../types/buildings'
 import { api } from './api'
 
 export const getBuildings = async (): Promise<Building[]> => {

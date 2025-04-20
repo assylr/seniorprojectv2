@@ -12,4 +12,5 @@ export default defineConfig({
     react() as any,
     tailwindcss(),
   ],
+  server: { port: 3000 }
 })
