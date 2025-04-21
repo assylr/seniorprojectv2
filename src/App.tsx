@@ -34,9 +34,9 @@ function App() {
             {/* Define Routes within the Admin Layout */}
 
             {/* Default route now goes directly to buildings */}
-            <Route index element={<Navigate to="/buildings" replace />} />
+            <Route index element={<Navigate to="/blocks" replace />} />
 
-            <Route path="buildings" element={<BuildingsPage />} />
+            <Route path="blocks" element={<BuildingsPage />} />
             <Route path="rooms" element={<RoomsPage />} />
             <Route path="tenants" element={<TenantsPage />} />
             {/* <Route path="utility-billing" element={<UtilityBilling />} /> */}
