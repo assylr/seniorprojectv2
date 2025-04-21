@@ -78,7 +78,7 @@ const BuildingsPage: React.FC = () => {
             <AlertMessage message={error} type="error" onClose={() => setError(null)} />
 
             <div className={styles.headerActions}>
-                <h1>Buildings</h1>
+                <h1>Blocks</h1>
                 <div className={styles.controls}>
                      {/* Sort Controls */}
                     <div className={styles.sortControls}>
