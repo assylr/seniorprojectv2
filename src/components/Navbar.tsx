@@ -20,7 +20,7 @@ const Navbar = () => {
                 <ul className="nav-links">
                     <li>
                         <Link to="/" className={location.pathname === "/" ? "active" : ""}>
-                            Buildings
+                            Blocks
                         </Link>
                     </li>
                     <li>
