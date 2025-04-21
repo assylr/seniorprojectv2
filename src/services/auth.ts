@@ -21,50 +21,18 @@ interface LoginResponse {
 }
 
 // --- Authentication Functions ---
+ 
+export const login = async (email: string, password: string) => {
+  const response = await apiClient.post('/auth/login', {
+    email,
+    password,
+  });
 
-/**
- * Logs in the user by sending credentials to the backend.
- * Stores the received token and user data upon success.
- * @param username The user's username or email.
- * @param password The user's password.
- * @returns The user profile data from the backend.
- * @throws Throws an error if login fails (handled by Axios interceptor or caught here).
- */
-export const login = async (username: string, password: string): Promise<Tenant> => { // Return Tenant or UserProfile
-    try {
-        // Replace '/auth/login' with your actual login endpoint
-        const response = await apiClient.post<LoginResponse>('/auth/login', {
-            username: username, // Or 'email' depending on backend requirement
-            password: password,
-        });
-
-        const { token, user } = response.data;
-
-        if (!token || !user) {
-            throw new Error('Login successful, but token or user data missing in response.');
-        }
-
-        // Store token and user data
-        localStorage.setItem(AUTH_TOKEN_KEY, token);
-        localStorage.setItem(USER_DATA_KEY, JSON.stringify(user));
-
-        // Optional: You might want to set the token directly on the apiClient instance
-        // if the interceptor doesn't pick it up immediately for subsequent requests
-        // in the same synchronous block (usually not necessary).
-        // apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-
-        return user;
-
-    } catch (error: unknown) {
-        console.error('Login failed:', error);
-        // Clear any potentially leftover stale data on failed login
-        localStorage.removeItem(AUTH_TOKEN_KEY);
-        localStorage.removeItem(USER_DATA_KEY);
-        // Re-throw the error so the calling component knows login failed.
-        // The error might already be formatted by the Axios interceptor.
-        throw error;
-    }
+  const token = response.data.token;
+  localStorage.setItem('authToken', token);
+  return token;
 };
+
 
 /**
  * Logs out the user by removing local session data.
@@ -161,3 +129,19 @@ export const isAdmin = (): boolean => {
 //         return null;
 //     }
 // }
+
+export type AuthForm = {
+  email: string;
+  password: string;
+  fullName?: string;
+};
+
+export const register = async (form: AuthForm): Promise<string> => {
+  const response = await apiClient.post('/auth/register', {
+    email: form.email,
+    password: form.password,
+    role: 'USER', // hardcoded for now
+  });
+
+  return response.data.token;
+};
