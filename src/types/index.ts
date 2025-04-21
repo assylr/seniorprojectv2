@@ -1,6 +1,10 @@
 export interface Building {
-  building_id: string;
-  building_number: string;
+  id: string;
+  buildingNumber: string;
+  buildingType: string;
+  floorCount?: number;
+  totalArea?: number;
+  available?: boolean;
 }
 
 export interface Room {

@@ -1,7 +1,8 @@
-export type Building = {
-  building_id: string;
-  building_number: string;
-  building_type: string;
-  total_rooms?: number;
-  available_rooms?: number;
-};
+export interface Building {
+  id: string;
+  buildingNumber: string;
+  buildingType: string;
+  floorCount?: number;
+  totalArea?: number;
+  available?: boolean;
+}
