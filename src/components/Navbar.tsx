@@ -1,5 +1,5 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { logout, getCurrentUser } from "../services/auth";
+import { Link, useLocation, useNavigate } from "react-router-dom"
+import { getCurrentUser, logout } from "../services/auth"
 
 const Navbar = () => {
     const location = useLocation();

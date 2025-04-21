@@ -1,6 +1,0 @@
-export * from './building'
-export * from './room'
-export * from './tenant'
-export * from './contract'
-export * from './payment'
-export * from './extra'
