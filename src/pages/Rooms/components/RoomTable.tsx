@@ -68,7 +68,7 @@ const RoomTable: React.FC<RoomTableProps> = ({
                         <RoomTableRow
                             key={room.id}
                             room={room}
-                            building={buildingsMap.get(room.buildingId)}
+                            building={buildingsMap.get(room.building.id)} // TODO: buildingId or Building
                             tenant={activeTenantsMap.get(room.id)}
                         />
                     ))}

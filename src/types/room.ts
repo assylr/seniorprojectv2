@@ -9,7 +9,7 @@ export interface Room {
   floorNumber: number | null;
   isAvailable: boolean;
   baseRent: number | null;
-  building?: Building;
+  building: Building;
 }
 
 export interface RoomFormData {
