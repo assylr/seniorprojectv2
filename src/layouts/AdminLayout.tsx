@@ -1,19 +1,24 @@
-// src/layouts/AdminLayout.tsx
-import React from 'react';
-import { Outlet } from 'react-router-dom'; // Crucial for rendering child routes
-import Navbar from '../components/Navbar'; // Adjust path if Navbar moved
-import styles from './AdminLayout.module.css'; // Create this CSS module
+import React from 'react'
+import { Outlet, useLocation } from 'react-router-dom'
+import Navbar from '../components/Navbar'
+import styles from './AdminLayout.module.css'
 
 const AdminLayout: React.FC = () => {
-    return (
-        <div className={styles.adminLayout}>
-            <Navbar /> {/* Render the Navbar once */}
-            <main className={styles.mainContent}>
-                <Outlet /> {/* Render the matched child route component here */}
-            </main>
-            {/* You could add a Footer here if needed */}
-        </div>
-    );
+  const location = useLocation();
+
+  // Don't show layout on login page
+  const isAuthPage = location.pathname === '/login';
+
+  if (isAuthPage) return <Outlet />;
+
+  return (
+    <div className={styles.adminLayout}>
+      <Navbar />
+      <main className={styles.mainContent}>
+        <Outlet />
+      </main>
+    </div>
+  );
 };
 
 export default AdminLayout;
