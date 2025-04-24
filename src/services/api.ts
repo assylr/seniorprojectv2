@@ -29,17 +29,25 @@ const apiClient = axios.create({
 
 apiClient.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
-        const token = localStorage.getItem('authToken');
-        if (token && config.headers) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
+      const token = localStorage.getItem('authToken');
+  
+      // ❌ Don't send token if logging in or registering
+      if (
+        token &&
+        !config.url?.includes('/auth/login') &&
+        !config.url?.includes('/auth/register')
+      ) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+  
+      return config;
     },
     (error: AxiosError) => {
-        console.error('Axios request error:', error);
-        return Promise.reject(error);
+      console.error('Axios request error:', error);
+      return Promise.reject(error);
     }
-);
+  );
+  
 
 apiClient.interceptors.response.use(
     (response) => response,

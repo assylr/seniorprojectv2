@@ -1,5 +1,5 @@
 import { ChangeEvent, FormEvent, useState } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { isAuthenticated, login } from '../services/auth'
 import styles from './Login.module.css'
 
@@ -10,8 +10,11 @@ const Login = () => {
   const [loading, setLoading] = useState(false)
 
   const navigate = useNavigate()
+  const location = useLocation()
 
-  if (isAuthenticated()) return <Navigate to="/" />
+  if (isAuthenticated() && location.pathname === '/login') {
+    return <Navigate to="/" />
+  }
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
