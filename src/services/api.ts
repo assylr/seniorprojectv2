@@ -1,5 +1,5 @@
 // src/services/api.ts
-import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios'
+import axios, { AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'axios'
 // --- >>> Import Mock Data <<< ---
 // import {
 //     mockBuildings,
@@ -9,8 +9,7 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios'
 // } from './mockData';
 import {
     Building,
-    Contract, ContractFormData,
-    Room, RoomFormData, Tenant, TenantFormData
+    Room, RoomDetailDTO, RoomFormData, Tenant, TenantDetailDTO, TenantFormData
 } from '@/types'
 
 // --- Axios Instance Setup ---
@@ -66,6 +65,39 @@ apiClient.interceptors.response.use(
     }
 );
 
+const handleAxiosResponse = <T>(response: AxiosResponse<T>): T => {
+    // For successful responses (2xx), axios puts the data directly in response.data
+    return response.data;
+};
+
+const handleAxiosError = (error: unknown): Error => {
+    if (axios.isAxiosError(error)) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const axiosError = error as AxiosError<any>; // Type assertion for more specific access
+        let errorMessage = `API Error: ${axiosError.message}`; // Default message
+
+        // Check if the error response has data and a message property
+        if (axiosError.response?.data) {
+            const errorData = axiosError.response.data;
+            // Adjust based on your backend error structure (e.g., errorData.message, errorData.error)
+            errorMessage = errorData?.message || errorData?.error || errorMessage;
+        } else if (axiosError.request) {
+            // The request was made but no response was received (network error, timeout)
+            errorMessage = 'Network Error: No response received from server.';
+        }
+        // Log the detailed error
+        console.error(`API Request Failed: ${errorMessage}`, axiosError.config?.url, axiosError.response?.status, axiosError.response?.data);
+        // Return a standard Error object with the extracted message
+        return new Error(errorMessage);
+    } else {
+        // Handle non-Axios errors (e.g., setup errors, synchronous errors)
+        console.error('An unexpected error occurred:', error);
+        return error instanceof Error ? error : new Error('An unknown error occurred.');
+    }
+};
+
+
+
 export const setAuthToken = (token: string | null) => {
     if (token) {
       apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -83,10 +115,30 @@ export const getBuildings = async (): Promise<Building[]> => {
 };
 
 // --- Rooms ---
-export const getRooms = async (buildingId?: number): Promise<Room[]> => {
-    const endpoint = buildingId ? `/rooms?buildingId=${buildingId}` : '/rooms';
+export const getRooms = async (): Promise<Room[]> => {
+    const endpoint = '/rooms';
     const response = await apiClient.get<Room[]>(endpoint);
     return response.data;
+};
+
+/**
+ * Fetches a list of rooms with detailed information, supporting server-side filtering and sorting using Axios.
+ * @param params URLSearchParams containing filter/sort criteria (e.g., buildingId, status, bedrooms, sortBy)
+ * @returns Promise resolving to an array of RoomDetailDto
+ * @throws Error if the API request fails
+ */
+export const getRoomDetails = async (params: URLSearchParams): Promise<RoomDetailDTO[]> => {
+    const endpoint = '/rooms/view'; // Relative to baseURL
+    console.log(`Fetching rooms from: ${apiClient.defaults.baseURL}${endpoint}?${params.toString()}`); // For debugging
+
+    try {
+        const response = await apiClient.get<RoomDetailDTO[]>(endpoint, {
+            params: params, // Axios automatically handles URLSearchParams or objects as query params
+        });
+        return handleAxiosResponse(response);
+    } catch (error) {
+        throw handleAxiosError(error); // Process and re-throw the standardized error
+    }
 };
 
 export const updateRoom = async (id: number, roomData: Partial<RoomFormData>): Promise<Room> => {
@@ -100,9 +152,47 @@ export const getTenants = async (): Promise<Tenant[]> => {
     return response.data;
 };
 
+export const getTenantDetails = async (params: URLSearchParams): Promise<TenantDetailDTO[]> => {
+    const endpoint = '/tenants/view'; // Endpoint for the tenant DTO list
+    console.log(`Fetching tenants from: ${apiClient.defaults.baseURL}${endpoint}?${params.toString()}`);
+
+    try {
+        const response = await apiClient.get<TenantDetailDTO[]>(endpoint, {
+            params: params, // Pass URLSearchParams directly
+        });
+        return handleAxiosResponse(response);
+    } catch (error) {
+        throw handleAxiosError(error); // Process and re-throw the standardized error
+    }
+};
+
 export const createTenant = async (tenantData: TenantFormData): Promise<Tenant> => {
     const response = await apiClient.post<Tenant>('/tenants', tenantData);
     return response.data;
+};
+
+/**
+ * Sends a request to check out a specific tenant.
+ * Assumes the backend handles setting the actualDepartureDate.
+ * @param tenantId The ID of the tenant to check out.
+ * @returns Promise resolving to void on success.
+ * @throws Error if the API request fails.
+ */
+export const checkOutTenant = async (tenantId: number): Promise<void> => {
+    // Use POST for actions that change state. PUT could also be argued if idempotent.
+    // Endpoint includes the tenant ID.
+    const endpoint = `/tenants/${tenantId}/checkout`;
+    console.log(`Checking out tenant from: ${apiClient.defaults.baseURL}${endpoint}`);
+
+    try {
+        // No request body needed for this specific action
+        // We expect a 2xx response (e.g., 200 OK or 204 No Content) on success
+        await apiClient.post(endpoint);
+        // No explicit data handling needed if backend returns 204 or if we don't need the response body for 200
+        return; // Resolve promise with void
+    } catch (error) {
+        throw handleAxiosError(error); // Process and re-throw the standardized error
+    }
 };
 
 export const updateTenant = async (id: number, tenantData: Partial<TenantFormData>): Promise<Tenant> => {
@@ -112,18 +202,6 @@ export const updateTenant = async (id: number, tenantData: Partial<TenantFormDat
 
 export const deleteTenant = async (id: number): Promise<void> => {
     await apiClient.delete(`/tenants/${id}`);
-};
-
-// --- Contracts ---
-export const getContracts = async (tenantId?: number): Promise<Contract[]> => {
-    const endpoint = tenantId ? `/contracts?tenantId=${tenantId}` : '/contracts';
-    const response = await apiClient.get<Contract[]>(endpoint);
-    return response.data;
-};
-
-export const createContract = async (contractData: ContractFormData): Promise<Contract> => {
-    const response = await apiClient.post<Contract>('/contracts', contractData);
-    return response.data;
 };
 
 // Keep Axios client export

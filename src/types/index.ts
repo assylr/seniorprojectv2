@@ -1,6 +1,5 @@
 export * from '@/types/building'
 export * from '@/types/room'
 export * from '@/types/tenant'
-export * from '@/types/contract'
-export * from '@/types/payment'
+export * from '@/types/assignment'
 export * from '@/types/extra'

@@ -1,35 +1,55 @@
 import type { Room } from "./room";
+import { FamilyMember } from "./familyMember";
 
-export type TenantType = 'faculty' | 'staff' | 'rentor';
+export type TenantType = 'FACULTY' | 'STAFF' | 'RENTOR';
 
+// TenantDTO (basic)
 export interface Tenant {
   id: number;
-  firstName: string;
-  lastName: string;
-  schoolOrDepartment: string | null;
+  name: string;
+  surname: string;
+  school: string | null;
   position: string | null;
   tenantType: TenantType;
-  mobile: string | null;
-  email: string | null;
-  currentRoomId: number | null;
-  arrivalDate: Date | null;
-  expectedDepartureDate: Date | null;
-  currentRoom?: Room;
+  mobile: string;
+  email: string;
+  familyMembers: FamilyMember | null;
+  // status: 
+
+  room?: Room;
+}
+
+export interface TenantDetailDTO {
+  id: number;
+  name: string;
+  surname: string;
+  school: string | null;
+  position: string | null;
+  tenantType: TenantType;
+  // mobile: string;
+  // email: string;
+  status: string; // calculated by backend: e.g., 'Active', 'Checked-out', 'Pending'
+  checkInDate: string;
+  expectedDepartureDate: string;
+  roomId: number;
+  roomNumber: number;
+  buildingId: number;
+  buildingName: string; 
 }
 
 export interface TenantFormData {
-  // ... other fields (firstName, lastName, tenantType, etc.) ...
-  firstName: string;
-  lastName: string;
-  schoolOrDepartment: string | null;
+  name: string;
+  surname: string;
+  school: string | null;
   position: string | null;
-  tenantType: 'faculty' | 'staff';
-  mobile: string | null;
-  email: string | null;
-  arrivalDate: string | null;
-  expectedDepartureDate: string | null;
+  tenantType: TenantType;
+  mobile: string;
+  email: string;
+  familyMembers: FamilyMember | null;
 
-  // Add roomId - make it optional initially for edit mode where room isn't changed,
-  // but required logically for *new* check-ins. Validation schema will enforce.
-  roomId: number | null; // Store the selected room ID
+  // assignment
+  checkInDate: string | null;
+  expectedDepartureDate: string | null;
+  roomId: number;
+
 }

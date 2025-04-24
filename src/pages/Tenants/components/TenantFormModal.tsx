@@ -1,26 +1,28 @@
 // src/pages/Tenants/components/TenantFormModal.tsx
 import React, { useState } from 'react';
-import { Tenant, TenantFormData, Building, Room } from '../../../services/types'; // Adjust path
-import { createTenant, updateTenant } from '../../../services/api'; // Keep API calls here
-import Modal from '../../../components/common/Modal';
+// Use DTO for input, Tenant for output (based on current API assumptions)
+import { Tenant, TenantDetailDTO, TenantFormData, Building, Room } from '@/types'; // Adjust path
+import { createTenant, updateTenant } from '@/services/api'; // Adjust path
+import Modal from '@/components/common/Modal'; // Adjust path
 import TenantForm from './TenantForm';
-import { AlertMessage } from '../../../components/common';
+import { AlertMessage } from '@/components/common'; // Adjust path
 
 interface TenantFormModalProps {
     isOpen: boolean;
     onClose: () => void;
-    // Pass back the submitted tenant AND whether it was an edit operation
+    // Passed back Tenant might need revisit if API returns DTO
     onSubmitSuccess: (tenant: Tenant, isEdit: boolean) => void;
-    tenantToEdit?: Tenant | null;
+    // Accept DTO for editing context
+    tenantToEdit?: TenantDetailDTO | null;
     buildings: Building[];
-    rooms: Room[];
+    rooms: Room[]; // Still needed by TenantForm
 }
 
 const TenantFormModal: React.FC<TenantFormModalProps> = ({
     isOpen,
     onClose,
     onSubmitSuccess,
-    tenantToEdit = null,
+    tenantToEdit = null, // Default to null
     buildings,
     rooms,
 }) => {
@@ -34,25 +36,18 @@ const TenantFormModal: React.FC<TenantFormModalProps> = ({
         setIsSubmitting(true);
         setError(null);
 
-        // Note: Backend is assumed to handle room assignment logic (updating Room.isAvailable)
         try {
-            let resultTenant: Tenant;
+            let resultTenant: Tenant; // Assuming API returns base Tenant type
             if (isEditMode && tenantToEdit) {
-                // Ensure ID is present for update
-                resultTenant = await updateTenant(tenantToEdit.id, formData);
-                console.log('Tenant updated:', resultTenant);
+                resultTenant = await updateTenant(tenantToEdit.id, formData); // Use ID from DTO
             } else {
-                 // Remove potentially empty 'id' if present in formData for create
-                 // const { id, ...createData } = formData; // Adjust if 'id' is part of TenantFormData
-                resultTenant = await createTenant(formData); // Pass data without ID for creation
-                console.log('Tenant created:', resultTenant);
+                resultTenant = await createTenant(formData);
             }
-            // Pass the result and the mode back to the parent page
             onSubmitSuccess(resultTenant, isEditMode);
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
-            // Provide more specific error messages if possible
-            const message = err?.response?.data?.message || err?.message || (isEditMode ? 'Failed to update tenant' : 'Failed to create tenant');
+            const message = err?.response?.data?.message || err?.message || 'Operation failed.';
             setError(message);
             console.error("Form submission error:", err);
         } finally {
@@ -60,36 +55,23 @@ const TenantFormModal: React.FC<TenantFormModalProps> = ({
         }
     };
 
-    // Clear error when closing modal
     const handleClose = () => {
-        setError(null); // Clear error state on close
-        onClose();
-    };
-
-    // Prevent closing modal if submitting? Optional.
-    const handleAttemptClose = () => {
         if (!isSubmitting) {
-            handleClose();
+            setError(null);
+            onClose();
         }
     }
 
     return (
-        <Modal
-            isOpen={isOpen}
-            onClose={handleAttemptClose} // Use attempt close
-            title={modalTitle}
-            size="xlarge" // Adjust size as needed
-        >
-            {/* Display error specific to the modal submission */}
+        <Modal isOpen={isOpen} onClose={handleClose} title={modalTitle} size="xlarge">
             <AlertMessage message={error} type="error" onClose={() => setError(null)} />
-
             <TenantForm
                 onSubmit={handleFormSubmit}
-                onCancel={handleAttemptClose} // Use attempt close
-                initialData={tenantToEdit}
+                onCancel={handleClose}
+                initialData={tenantToEdit} // Pass the DTO down
                 isSubmitting={isSubmitting}
                 buildings={buildings}
-                rooms={rooms}
+                rooms={rooms} // Pass rooms down
             />
         </Modal>
     );

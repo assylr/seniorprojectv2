@@ -4,7 +4,7 @@ import styles from './RoomFilters.module.css';
 
 export interface RoomFilterState {
     buildingId: string;
-    availability: 'available' | 'occupied' | '';
+    status: 'AVAILABLE' | 'OCCUPIED' | 'MAINTENANCE' | '';
     bedrooms: string;
 }
 
@@ -53,8 +53,8 @@ const RoomFilters: React.FC<RoomFiltersProps> = ({
 
             {/* Availability Filter */}
             <select
-                name="availability"
-                value={filters.availability}
+                name="status"
+                value={filters.status}
                 onChange={handleInputChange}
                 disabled={isLoading}
                 aria-label="Filter by status"

@@ -1,29 +1,26 @@
 import React from 'react';
-import { Room, Tenant, Building } from '@/types';
+import { RoomDetailDTO } from '@/types'; // Use the DTO type
 import { LoadingSpinner } from '@/components/common';
 import styles from './RoomTable.module.css';
 import RoomTableRow from './RoomTableRow';
 
 interface RoomTableProps {
-    rooms: Room[];
-    buildingsMap: Map<number, Building>;
-    activeTenantsMap: Map<number, Tenant>;
-    isLoading: boolean;
-
-    // Optional action handlers (add if functionality is needed)
-    // onEditRoom?: (room: Room) => void;
-    // onDeleteRoom?: (room: Room) => void;
+    rooms: RoomDetailDTO[]; // Expecting the DTO array
+    isLoading: boolean; // To show loading/empty states correctly
+    // Add action handlers later
+    // onEditRoom?: (room: RoomDetailDTO) => void;
+    // onDeleteRoom?: (room: RoomDetailDTO) => void;
 }
 
 const RoomTable: React.FC<RoomTableProps> = ({
     rooms,
-    buildingsMap,
-    activeTenantsMap,
     isLoading,
-
     // onEditRoom,
     // onDeleteRoom,
 }) => {
+
+    // Adjust column count based on the final columns in RoomTableRow
+    const columnCount = 8; // Update if you add/remove columns
 
     return (
         <div className={styles.tableContainer}>
@@ -33,47 +30,47 @@ const RoomTable: React.FC<RoomTableProps> = ({
                         <th>Room #</th>
                         <th>Building</th>
                         <th>Floor</th>
-                        <th>Bedrooms</th>
+                        <th>Capacity</th>
                         <th>Area (m²)</th>
-                        <th>Base Rent</th>
-                        <th>Status</th>
-                        <th>Occupant</th>
-
-                        {/* Uncomment if actions are added */}
+                        <th>Status / Occupancy</th>
                         {/* <th>Actions</th> */}
                     </tr>
                 </thead>
                 <tbody>
-                    {/* Show loading state row only if parent says it's loading AND table has no data yet */}
+                    {/* Initial loading state */}
                     {isLoading && rooms.length === 0 && (
                          <tr>
-                             <td colSpan={8} className={styles.loadingCell}> {/* Adjust colSpan */}
+                             <td colSpan={columnCount} className={styles.loadingCell}>
                                  <LoadingSpinner size="medium" />
                                  <span>Loading rooms...</span>
                              </td>
                          </tr>
                     )}
 
-                    {/* Show "no results" row if not loading and the filtered list is empty */}
+                    {/* No results state */}
                     {!isLoading && rooms.length === 0 && (
                         <tr>
-                            <td colSpan={8} className={styles.noResultsCell}> {/* Adjust colSpan */}
+                            <td colSpan={columnCount} className={styles.noResultsCell}>
                                 No rooms match the current filters.
                             </td>
                         </tr>
                     )}
 
-                    {/* Render room rows if not loading or if rows exist */}
-                    {rooms.map((room) => (
+                    {/* Render room rows from DTO */}
+                    {/* Only map if not initial loading */}
+                    {!isLoading && rooms.map((room) => (
                         <RoomTableRow
                             key={room.id}
-                            room={room}
-                            building={buildingsMap.get(room.building.id)} // TODO: buildingId or Building
-                            tenant={activeTenantsMap.get(room.id)}
+                            room={room} // Pass the entire RoomDetailDto object
+                            // Pass action handlers down if needed
+                            // onEdit={onEditRoom}
+                            // onDelete={onDeleteRoom}
                         />
                     ))}
                 </tbody>
             </table>
+            {/* Optional: Add subtle loading indicator when refetching */}
+            {/* {isLoading && rooms.length > 0 && <div className={styles.refetchOverlay}>Updating...</div>} */}
         </div>
     );
 };

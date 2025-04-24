@@ -1,241 +1,267 @@
+// src/pages/Tenants/components/TenantForm.tsx
 import React, { useEffect, useMemo } from 'react';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Tenant, TenantFormData, Building, Room } from '@/types'; // Ensure Room type includes isAvailable
-import { tenantFormSchema } from '../../../services/validation';
+// Import the specific types provided
+import { TenantDetailDTO, TenantFormData, Building, Room, TenantType } from '@/types'; // Adjust path
+// Assume schema is adapted to validate the fields BELOW in FormState that map to TenantFormData
+import { tenantFormSchema } from '@/services/validation'; // Adjust path
 import styles from './TenantForm.module.css';
 
 interface TenantFormProps {
-    onSubmit: (data: TenantFormData) => Promise<void>; // Or just Promise<Tenant> if API returns it
+    onSubmit: (data: TenantFormData) => Promise<void>; // Expects TenantFormData structure
     onCancel: () => void;
-    initialData?: Tenant | null;
+    initialData?: TenantDetailDTO | null; // DTO for pre-filling
     isSubmitting: boolean;
     buildings: Building[];
-    rooms: Room[];
+    rooms: Room[]; // Needs Room[] with status
 }
+
+// Define the internal state structure for THIS form
+// Includes fields from TenantFormData + extras needed for UI (buildingId)
+type FormState = {
+    name: string;
+    surname: string;
+    school: string | null;
+    position: string | null;
+    tenantType: TenantType | undefined;
+    mobile: string; // Needed by form, even if missing in DTO
+    email: string;  // Needed by form, even if missing in DTO
+    // familyMembers: FamilyMember | null; // Assuming not handled in this specific form version
+    checkInDate: string | null; // Renamed from arrivalDate for consistency
+    expectedDepartureDate: string | null;
+    roomId: number;
+    // --- Extra fields needed ONLY for form logic/UI ---
+    buildingId: string | null; // For the building dropdown state (string)
+};
+
+// Helper functions
+const toStringOrEmpty = (value: unknown): string => (value != null ? String(value) : '');
+const formatDateForInput = (dateString: string | null | undefined): string => {
+    if (!dateString) return '';
+    try { return new Date(dateString).toISOString().split('T')[0]; }
+    catch (e) { console.error("Error formatting date:", dateString, e); return ''; }
+};
 
 const TenantForm: React.FC<TenantFormProps> = ({
     onSubmit,
     onCancel,
-    initialData = null,
+    initialData = null, // This is TenantDetailDTO
     isSubmitting,
     buildings,
     rooms,
 }) => {
-    // Helper to find initial building ID
-    const getInitialBuildingId = (tenant: Tenant | null, allRooms: Room[]): string => {
-        if (tenant?.currentRoomId) {
-            const room = allRooms.find(r => r.id === tenant.currentRoomId);
-            return room?.buildingId?.toString() || '';
-        }
-        return '';
-    };
 
-    const { register, handleSubmit, control, formState: { errors }, reset, watch, setValue } = useForm<TenantFormData>({
+    const { register, handleSubmit, control, formState: { errors }, reset, watch, setValue } = useForm<FormState>({
+        // IMPORTANT: Zod schema should validate the fields corresponding to FormState
+        // that eventually map to TenantFormData. It might need adjustments.
         resolver: zodResolver(tenantFormSchema),
-        // Set default values dynamically based on initialData
         defaultValues: useMemo(() => {
-            const initialBuildingId = getInitialBuildingId(initialData, rooms);
-            return initialData ? {
-                firstName: initialData.firstName,
-                lastName: initialData.lastName,
-                schoolOrDepartment: initialData.schoolOrDepartment ?? '', // Ensure nulls become empty strings if needed by input
-                position: initialData.position ?? '',
-                tenantType: initialData.tenantType,
-                mobile: initialData.mobile ?? '',
-                email: initialData.email ?? '',
-                arrivalDate: initialData.arrivalDate ? new Date(initialData.arrivalDate).toISOString().split('T')[0] : '',
-                expectedDepartureDate: initialData.expectedDepartureDate ? new Date(initialData.expectedDepartureDate).toISOString().split('T')[0] : '',
-                buildingId: initialBuildingId, // Use a dedicated field for building selection
-                roomId: initialData.currentRoomId ?? null, // RHF handles null/undefined for selects
-            } : {
-                // Defaults for create mode
-                firstName: '', lastName: '', schoolOrDepartment: '', position: '',
+            // Always initialize with the full FormState structure
+            const defaults: FormState = {
+                name: '', surname: '', school: null, position: null,
                 tenantType: undefined, mobile: '', email: '',
-                arrivalDate: '', expectedDepartureDate: '',
-                buildingId: '', // Default building to empty
-                roomId: null,
+                checkInDate: null, expectedDepartureDate: null,
+                roomId: null, buildingId: null,
             };
-        }, [initialData, rooms]) // Recalculate defaults if initialData or rooms change
+
+            if (initialData) { // If initialData (TenantDetailDTO) is provided
+                defaults.name = initialData.name ?? '';
+                defaults.surname = initialData.surname ?? '';
+                defaults.school = initialData.school ?? null;
+                defaults.position = initialData.position ?? null;
+                defaults.tenantType = initialData.tenantType;
+                // mobile & email are NOT in TenantDetailDTO as provided, so they remain empty
+                defaults.checkInDate = formatDateForInput(initialData.checkInDate);
+                defaults.expectedDepartureDate = formatDateForInput(initialData.expectedDepartureDate);
+                defaults.roomId = initialData.roomId ?? null;
+                defaults.buildingId = toStringOrEmpty(initialData.buildingId);
+            }
+            return defaults;
+        }, [initialData])
     });
 
-    // Watch the selected building ID directly from the form state
-    const watchedBuildingId = watch('buildingId');
+    const watchedBuildingId = watch('buildingId'); // string | null
 
-    // Filter available rooms based on the watched building ID
     const availableRoomsForSelectedBuilding = useMemo(() => {
         if (!watchedBuildingId) return [];
         const buildingIdNum = parseInt(watchedBuildingId, 10);
+        if (isNaN(buildingIdNum)) return [];
+        // Assumes Room type has 'status' field
         return rooms.filter(room =>
             room.buildingId === buildingIdNum &&
-            (room.isAvailable || room.id === initialData?.currentRoomId) // Room is available OR it's the tenant's current room
+            (room.id === initialData?.roomId || room.status === 'AVAILABLE')
         );
-    }, [watchedBuildingId, rooms, initialData?.currentRoomId]);
+    }, [watchedBuildingId, rooms, initialData?.roomId]);
 
-    // Effect to reset room selection when building changes
+    // Effect to reset room when building changes
     useEffect(() => {
-        // Don't reset if it's the initial render with pre-selected values matching
-        if (watch('buildingId') !== getInitialBuildingId(initialData, rooms)) {
-             // Check if the current room ID is still valid for the new building
-             const currentRoomId = watch('roomId');
-             const roomIsValidInNewBuilding = availableRoomsForSelectedBuilding.some(r => r.id === currentRoomId);
+        const currentFormBuildingId = watch('buildingId');
+        const initialDtoBuildingId = toStringOrEmpty(initialData?.buildingId);
 
-             if (!roomIsValidInNewBuilding) {
-                 setValue('roomId', null); // Reset room if building changes and current room is no longer valid/available
-             }
+        if (initialData === null || currentFormBuildingId !== initialDtoBuildingId) {
+            const currentRoomId = watch('roomId');
+            const roomIsValidInNewBuilding = availableRoomsForSelectedBuilding.some(r => r.id === currentRoomId);
+            if (!roomIsValidInNewBuilding && currentRoomId !== null) {
+                setValue('roomId', null, { shouldValidate: true });
+            }
         }
-        // This effect primarily handles user interaction changing the building
-    }, [watchedBuildingId, setValue, initialData, rooms, watch, availableRoomsForSelectedBuilding]); // Add necessary dependencies
+    }, [watchedBuildingId, setValue, initialData, watch, availableRoomsForSelectedBuilding]);
 
-
-    // Reset form completely if initialData itself changes (e.g., switching from create to edit)
+    // Effect to reset form fully when initialData changes
     useEffect(() => {
-        const initialBuildingId = getInitialBuildingId(initialData, rooms);
-        reset({
-            // Use the same logic as defaultValues Memo
-            ...(initialData ? {
-                firstName: initialData.firstName, lastName: initialData.lastName, schoolOrDepartment: initialData.schoolOrDepartment ?? '',
-                position: initialData.position ?? '', tenantType: initialData.tenantType, mobile: initialData.mobile ?? '', email: initialData.email ?? '',
-                arrivalDate: initialData.arrivalDate ? new Date(initialData.arrivalDate).toISOString().split('T')[0] : '',
-                expectedDepartureDate: initialData.expectedDepartureDate ? new Date(initialData.expectedDepartureDate).toISOString().split('T')[0] : '',
-                buildingId: initialBuildingId, roomId: initialData.currentRoomId ?? null,
-            } : {
-                 firstName: '', lastName: '', schoolOrDepartment: '', position: '', tenantType: undefined, mobile: '', email: '',
-                 arrivalDate: '', expectedDepartureDate: '', buildingId: '', roomId: null,
-            })
-        });
-    }, [initialData, reset, rooms]); // Dependency on initialData and potentially rooms
+        // Recalculate defaults using the same logic as useMemo
+        const defaults: FormState = {
+            name: '', surname: '', school: null, position: null,
+            tenantType: undefined, mobile: '', email: '',
+            checkInDate: null, expectedDepartureDate: null,
+            roomId: null, buildingId: null,
+        };
+        if (initialData) {
+            defaults.name = initialData.name ?? '';
+            defaults.surname = initialData.surname ?? '';
+            defaults.school = initialData.school ?? null;
+            defaults.position = initialData.position ?? null;
+            defaults.tenantType = initialData.tenantType;
+            defaults.checkInDate = formatDateForInput(initialData.checkInDate);
+            defaults.expectedDepartureDate = formatDateForInput(initialData.expectedDepartureDate);
+            defaults.roomId = initialData.roomId ?? null;
+            defaults.buildingId = toStringOrEmpty(initialData.buildingId);
+        }
+        reset(defaults);
+    }, [initialData, reset]);
 
 
-    // Submit handler remains the same conceptually
-    const handleFormSubmit: SubmitHandler<TenantFormData> = (data) => {
-        // buildingId is now a real field, no need to remove temporary one
-        onSubmit(data);
+    // Handle submission: Convert FormState -> TenantFormData
+    // Correct: SubmitHandler explicitly uses the FormState type
+const handleFormSubmit: SubmitHandler<FormState> = (formData: FormState) => {
+    console.log("Internal Form State Submitted:", formData);
+
+    // Create the object matching the TenantFormData structure
+    const dataToSubmit: TenantFormData = {
+        name: formData.name,
+        surname: formData.surname,
+        school: formData.school || null,
+        position: formData.position || null,
+        tenantType: formData.tenantType as TenantType, // Add assertion or proper handling
+        mobile: formData.mobile,
+        email: formData.email,
+        familyMembers: null, // Assuming null for now based on TenantFormData
+        checkInDate: formData.checkInDate || null,
+        expectedDepartureDate: formData.expectedDepartureDate || null,
+        roomId: formData.roomId,
     };
 
+    console.log("Data Prepared for API (TenantFormData):", dataToSubmit);
+    onSubmit(dataToSubmit); // Send the correctly structured data
+};
     return (
         <form onSubmit={handleSubmit(handleFormSubmit)} className={styles.tenantForm}>
             <div className={styles.formGrid}>
-                {/* Tenant Details (Fields remain mostly the same, ensure 'name' matches RHF register) */}
-                 <div className={styles.formGroup}>
-                    <label htmlFor="firstName">First Name *</label>
-                    <input id="firstName" {...register('firstName')} disabled={isSubmitting} aria-invalid={errors.firstName ? "true" : "false"}/>
-                    {errors.firstName && <p role="alert" className={styles.errorMessage}>{errors.firstName.message}</p>}
+                {/* --- Tenant Details --- */}
+                {/* Use register names matching FormState */}
+                <div className={styles.formGroup}>
+                    <label htmlFor="name">First Name *</label>
+                    <input id="name" {...register('name')} disabled={isSubmitting} />
+                    {errors.name && <p className={styles.errorMessage}>{errors.name.message}</p>}
                 </div>
-                 <div className={styles.formGroup}>
-                    <label htmlFor="lastName">Last Name *</label>
-                    <input id="lastName" {...register('lastName')} disabled={isSubmitting} aria-invalid={errors.lastName ? "true" : "false"}/>
-                    {errors.lastName && <p role="alert" className={styles.errorMessage}>{errors.lastName.message}</p>}
+                <div className={styles.formGroup}>
+                    <label htmlFor="surname">Last Name *</label>
+                    <input id="surname" {...register('surname')} disabled={isSubmitting} />
+                    {errors.surname && <p className={styles.errorMessage}>{errors.surname.message}</p>}
                 </div>
-                 <div className={styles.formGroup}>
+                <div className={styles.formGroup}>
                     <label htmlFor="tenantType">Type *</label>
-                    <select id="tenantType" {...register('tenantType')} disabled={isSubmitting} aria-invalid={errors.tenantType ? "true" : "false"}>
-                        <option value="">-- Select Type --</option>
-                        <option value="faculty">Faculty</option>
-                        <option value="staff">Staff</option>
-                        {/* Add other types */}
+                    <select id="tenantType" {...register('tenantType')} disabled={isSubmitting}>
+                        <option value="">Select Type</option>
+                        <option value="FACULTY">Faculty</option>
+                        <option value="STAFF">Staff</option>
+                        <option value="RENTOR">Renter</option>
                     </select>
-                    {errors.tenantType && <p role="alert" className={styles.errorMessage}>{errors.tenantType.message}</p>}
+                    {errors.tenantType && <p className={styles.errorMessage}>{errors.tenantType.message}</p>}
                 </div>
                 <div className={styles.formGroup}>
                     <label htmlFor="email">Email</label>
-                    <input id="email" type="email" {...register('email')} disabled={isSubmitting} aria-invalid={errors.email ? "true" : "false"}/>
-                    {errors.email && <p role="alert" className={styles.errorMessage}>{errors.email.message}</p>}
-                </div>
-                 <div className={styles.formGroup}>
-                    <label htmlFor="mobile">Mobile</label>
-                    <input id="mobile" type="tel" {...register('mobile')} disabled={isSubmitting} aria-invalid={errors.mobile ? "true" : "false"}/>
-                    {errors.mobile && <p role="alert" className={styles.errorMessage}>{errors.mobile.message}</p>}
+                    <input id="email" type="email" {...register('email')} disabled={isSubmitting} />
+                    {errors.email && <p className={styles.errorMessage}>{errors.email.message}</p>}
                 </div>
                 <div className={styles.formGroup}>
-                    <label htmlFor="schoolOrDepartment">School / Department</label>
-                    <input id="schoolOrDepartment" {...register('schoolOrDepartment')} disabled={isSubmitting} />
+                    <label htmlFor="mobile">Mobile</label>
+                    <input id="mobile" type="tel" {...register('mobile')} disabled={isSubmitting} />
+                    {errors.mobile && <p className={styles.errorMessage}>{errors.mobile.message}</p>}
+                </div>
+                <div className={styles.formGroup}>
+                    <label htmlFor="school">School / Dept</label>
+                    <input id="school" {...register('school')} disabled={isSubmitting} />
+                    {/* Add error if needed */}
                 </div>
                 <div className={styles.formGroup}>
                     <label htmlFor="position">Position</label>
                     <input id="position" {...register('position')} disabled={isSubmitting} />
+                    {/* Add error if needed */}
                 </div>
-                 <div className={styles.formGroup}>
-                    <label htmlFor="arrivalDate">Arrival Date</label>
-                    <input id="arrivalDate" type="date" {...register('arrivalDate')} disabled={isSubmitting} aria-invalid={errors.arrivalDate ? "true" : "false"}/>
-                     {errors.arrivalDate && <p role="alert" className={styles.errorMessage}>{errors.arrivalDate.message}</p>}
+                <div className={styles.formGroup}>
+                    <label htmlFor="checkInDate">Arrival Date</label> {/* Label might differ */}
+                    <input id="checkInDate" type="date" {...register('checkInDate')} disabled={isSubmitting} /> {/* Register name matches FormState/FormData */}
+                    {errors.checkInDate && <p className={styles.errorMessage}>{errors.checkInDate.message}</p>}
                 </div>
-                 <div className={styles.formGroup}>
+                <div className={styles.formGroup}>
                     <label htmlFor="expectedDepartureDate">Expected Departure</label>
-                    <input id="expectedDepartureDate" type="date" {...register('expectedDepartureDate')} disabled={isSubmitting} aria-invalid={errors.expectedDepartureDate ? "true" : "false"}/>
-                     {errors.expectedDepartureDate && <p role="alert" className={styles.errorMessage}>{errors.expectedDepartureDate.message}</p>}
-                 </div>
+                    <input id="expectedDepartureDate" type="date" {...register('expectedDepartureDate')} disabled={isSubmitting} />
+                    {errors.expectedDepartureDate && <p className={styles.errorMessage}>{errors.expectedDepartureDate.message}</p>}
+                </div>
 
-                 {/* --- Room Assignment --- */}
-                <div className={`${styles.formGroup} ${styles.spanFull}`}>
-                    <hr className={styles.divider} />
-                    <h3 className={styles.subheading}>Room Assignment</h3>
-                 </div>
+                {/* --- Room Assignment Section --- */}
+                <div className={`${styles.formGroup} ${styles.spanFull}`}><hr className={styles.divider} /><h3 className={styles.subheading}>Room Assignment</h3></div>
 
-                 {/* Building Selection (Now a required part of the form data) */}
-                 <div className={styles.formGroup}>
+                 {/* Building Selection - register 'buildingId' */}
+                <div className={styles.formGroup}>
                     <label htmlFor="buildingId">Building</label>
-                     {/* Register the actual buildingId field */}
-                    <select
-                        id="buildingId"
-                        {...register('buildingId')} // Register the field
-                        disabled={isSubmitting}
-                        aria-invalid={errors.buildingId ? "true" : "false"} // Add validation if needed
-                    >
-                        <option value="">-- Select Building --</option>
-                        {buildings.map(building => (
-                            <option key={building.id} value={building.id.toString()}>
-                                {building.buildingNumber || `ID: ${building.id}`}
+                    <select id="buildingId" {...register('buildingId')} disabled={isSubmitting}>
+                        <option value="">Select Building</option>
+                        {buildings.map(b => (
+                            <option key={b.id} value={String(b.id)}>
+                                {b.buildingNumber}
                             </option>
                         ))}
                     </select>
-                    {/* Add error display if building becomes required */}
-                    {/* {errors.buildingId && <p role="alert" className={styles.errorMessage}>{errors.buildingId.message}</p>} */}
-                 </div>
+                     {/* Error display for buildingId if validation requires it */}
+                    {/* {errors.buildingId && <p className={styles.errorMessage}>{errors.buildingId.message}</p>} */}
+                </div>
 
-                {/* Room Selection (Depends on watchedBuildingId) */}
+                {/* Room Selection - Controller for 'roomId' */}
                 <div className={styles.formGroup}>
-                    {/* Controller might be slightly cleaner for dependent fields if register causes issues */}
-                     <Controller
+                    <label htmlFor="roomId">Room</label>
+                    <Controller
                         name="roomId"
                         control={control}
                         render={({ field }) => (
-                             <>
-                                 <label htmlFor="roomId">Room</label>
-                                <select
-                                    id="roomId"
-                                    {...field}
-                                    value={field.value ?? ''} // Handle null/undefined for select value
-                                    onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value, 10) : null)} // Ensure value is number or null
-                                    disabled={isSubmitting || !watchedBuildingId || availableRoomsForSelectedBuilding.length === 0}
-                                    aria-invalid={errors.roomId ? "true" : "false"}
-                                >
-                                    <option value="">
-                                        {!watchedBuildingId ? '-- Select Building First --' : (availableRoomsForSelectedBuilding.length === 0 ? '-- No Available Rooms --' : '-- Select Room --')}
+                            <select
+                                id="roomId"
+                                {...field}
+                                value={field.value ?? ''}
+                                onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value, 10) : null)}
+                                disabled={isSubmitting || !watchedBuildingId || availableRoomsForSelectedBuilding.length === 0}
+                            >
+                                <option value="">
+                                    {!watchedBuildingId ? 'Select Building First' : (availableRoomsForSelectedBuilding.length === 0 ? 'No Available Rooms' : 'Select Room')}
+                                </option>
+                                {availableRoomsForSelectedBuilding.map(room => (
+                                    <option key={room.id} value={room.id}>
+                                        Room {room.roomNumber} {room.bedroomCount ? `(${room.bedroomCount} Bed)` : ''}
                                     </option>
-                                    {availableRoomsForSelectedBuilding.map(room => (
-                                        <option key={room.id} value={room.id}>
-                                            Room {room.roomNumber} ({room.bedroomCount} Bed)
-                                            {/* Optionally show if it's the current room */}
-                                            {/* {room.id === initialData?.currentRoomId ? ' (Current)' : ''} */}
-                                        </option>
-                                    ))}
-                                </select>
-                             </>
+                                ))}
+                            </select>
                          )}
                      />
-                    {errors.roomId && <p role="alert" className={styles.errorMessage}>{errors.roomId.message}</p>}
+                    {errors.roomId && <p className={styles.errorMessage}>{errors.roomId.message}</p>}
                 </div>
             </div>
 
-            {/* Form Actions */}
+            {/* --- Form Actions --- */}
             <div className={styles.formActions}>
-                <button type="button" onClick={onCancel} className={styles.cancelButton} disabled={isSubmitting}>
-                    Cancel
-                </button>
-                <button type="submit" className={styles.submitButton} disabled={isSubmitting}>
-                    {isSubmitting ? 'Saving...' : (initialData ? 'Update Tenant' : 'Create & Check In')}
-                </button>
+                <button type="button" onClick={onCancel} className={styles.cancelButton} disabled={isSubmitting}>Cancel</button>
+                <button type="submit" className={styles.submitButton} disabled={isSubmitting}>{isSubmitting ? 'Saving...' : (initialData ? 'Update Tenant' : 'Create & Check In')}</button>
             </div>
         </form>
     );

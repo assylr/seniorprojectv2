@@ -1,108 +1,118 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import { Tenant, Room, Building } from '@/types';
-import { getTenants, getRooms, getBuildings, updateTenant } from '@/services/api';
-import { LoadingSpinner, AlertMessage } from '@/components/common'; // Assuming Pagination might be added later
+import React, { useEffect, useState, useCallback } from 'react';
+// Import the DTO type and potentially original types if needed for forms
+import { Building, Room, TenantDetailDTO, Tenant } from '@/types';
+// Update API service imports
+import { getTenantDetails, getBuildings, getRooms, checkOutTenant } from '@/services/api';
+import { LoadingSpinner, AlertMessage } from '@/components/common';
 import TenantFilters, { TenantFilterState } from './components/TenantFilters';
 import TenantTable from './components/TenantTable';
 import TenantFormModal from './components/TenantFormModal';
 import styles from './TenantsPage.module.css';
+// Removed createMapById as it's no longer needed for client-side joins
 
-const createMapById = <T extends { id: number }>(items: T[]): Map<number, T> => {
-    return new Map(items.map(item => [item.id, item]));
+// Default filters - adjust 'active' based on backend default or desired initial view
+const initialFilters: TenantFilterState = {
+    status: 'Active', // Match backend status string, e.g., 'Active', 'Checked-Out', 'Pending'
+    type: '',
+    buildingId: '',
+    searchQuery: ''
 };
 
 const TenantsPage: React.FC = () => {
-    const [tenants, setTenants] = useState<Tenant[]>([]);
-    const [rooms, setRooms] = useState<Room[]>([]);
-    const [buildings, setBuildings] = useState<Building[]>([]);
+    // State using the DTO
+    const [tenants, setTenants] = useState<TenantDetailDTO[]>([]);
+    // State for filter dropdown data & modal data
+    const [filterBuildings, setFilterBuildings] = useState<Building[]>([]);
+    // *** NOTE: Still fetching all rooms for the modal. Optimize later if needed. ***
+    const [allRooms, setAllRooms] = useState<Room[]>([]);
 
     const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [isFetchingFilters, setIsFetchingFilters] = useState<boolean>(true); // Separate loading for filter data
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
-    const [filters, setFilters] = useState<TenantFilterState>({
-        status: 'active', type: '', buildingId: '', searchQuery: ''
-    });
+    const [filters, setFilters] = useState<TenantFilterState>(initialFilters);
 
     const [showTenantFormModal, setShowTenantFormModal] = useState<boolean>(false);
-    const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
+    // Use DTO for editing context, modal might need to fetch full data if DTO is insufficient
+    const [editingTenant, setEditingTenant] = useState<TenantDetailDTO | null>(null);
+    // State for actions like check-out, delete etc. within the table
     const [isSubmittingAction, setIsSubmittingAction] = useState<boolean>(false);
 
-    const roomsMap = useMemo(() => createMapById(rooms), [rooms]);
-    const buildingsMap = useMemo(() => createMapById(buildings), [buildings]);
-
-    const fetchInitialData = useCallback(async (showLoadingIndicator = true) => {
-        if (showLoadingIndicator) setIsLoading(true);
-        setError(null);
-        try {
-            const [tenantsData, roomsData, buildingsData] = await Promise.all([
-                getTenants(),
-                getRooms(),
-                getBuildings()
-            ]);
-            setTenants(tenantsData);
-            setRooms(roomsData);
-            setBuildings(buildingsData);
-        } catch (err: unknown) {
-
-            if (err instanceof Error) {
-                setError(err?.message || "Failed to fetch initial data");
-                console.error("Fetch error:", err);
+    // Fetch static data for filters and modal (runs once)
+    useEffect(() => {
+        const fetchFilterAndModalData = async () => {
+            setIsFetchingFilters(true);
+            try {
+                const [buildingsData, roomsData] = await Promise.all([
+                    getBuildings(),
+                    getRooms() // Still fetching all rooms for the modal
+                ]);
+                setFilterBuildings(buildingsData);
+                setAllRooms(roomsData);
+            } catch (err: unknown) {
+                console.error("Failed to fetch filter/modal data:", err);
+                setError("Could not load filter options or modal data.");
+            } finally {
+                setIsFetchingFilters(false);
             }
+        };
+        fetchFilterAndModalData();
+    }, []);
 
+    // Callback to fetch tenants based on current filters
+    const fetchTenants = useCallback(async (showLoadingIndicator = true) => {
+        if (showLoadingIndicator) setIsLoading(true);
+        // Don't clear error necessarily, fetch might fail again
+        // setError(null);
+        try {
+            const params = new URLSearchParams();
+            if (filters.status) params.set('status', filters.status);
+            if (filters.type) params.set('type', filters.type);
+            if (filters.buildingId) params.set('buildingId', filters.buildingId);
+            if (filters.searchQuery) params.set('searchQuery', filters.searchQuery);
+            // Add sorting params here if implemented
+            // params.set('sortBy', 'lastName');
+            // params.set('sortDirection', 'ASC');
+
+            const tenantsData = await getTenantDetails(params);
+            setTenants(tenantsData);
+             setError(null); // Clear error on successful fetch
+        } catch (err: unknown) {
+             const message = err instanceof Error ? err.message : 'Failed to fetch tenants';
+             console.error("Fetch tenants error:", err);
+             setError(message);
+             setTenants([]); // Clear data on error
         } finally {
            if (showLoadingIndicator) setIsLoading(false);
         }
-    }, []);
+    }, [filters]); // Re-run when filters change
 
+    // Effect to trigger fetching tenants when filters change or filter data is loaded
     useEffect(() => {
-        fetchInitialData();
-    }, [fetchInitialData]);
+        // Only fetch if filter data has loaded (or failed to load)
+        if (!isFetchingFilters) {
+             fetchTenants();
+        }
+    }, [fetchTenants, isFetchingFilters]); // Run when fetchTenants updates (due to filters)
 
-
-    const filteredTenants = useMemo(() => {
-         return tenants.filter(tenant => {
-            const isCheckedOut = !!tenant.expectedDepartureDate && new Date(tenant.expectedDepartureDate) <= new Date();
-            const statusMatch = !filters.status ||
-               (filters.status === 'active' && !isCheckedOut) ||
-               (filters.status === 'checked-out' && isCheckedOut);
-
-            const typeMatch = !filters.type || tenant.tenantType === filters.type;
-
-            const currentRoom = roomsMap.get(tenant.currentRoomId ?? -1);
-            const tenantBuildingId = currentRoom?.buildingId?.toString() || '';
-
-            const buildingMatch = !filters.buildingId || tenantBuildingId === filters.buildingId;
-            let searchMatch = true;
-
-            if (filters.searchQuery) {
-                 const query = filters.searchQuery.toLowerCase();
-                 const roomInfo = `${buildingsMap.get(currentRoom?.buildingId ?? -1)?.buildingNumber || ''}-${currentRoom?.roomNumber || ''}`;
-                 
-                 searchMatch =
-                     tenant.firstName.toLowerCase().includes(query) ||
-                     tenant.lastName.toLowerCase().includes(query) ||
-                     (tenant.email && tenant.email.toLowerCase().includes(query)) ||
-                     (tenant.mobile && tenant.mobile.includes(query)) || // Phone numbers might not need lowercase
-                     roomInfo.toLowerCase().includes(query);
-            }
-
-            return statusMatch && typeMatch && buildingMatch && searchMatch;
-        });
-    }, [tenants, filters, roomsMap, buildingsMap]);
+    // Remove the client-side filtering logic (filteredTenants useMemo)
 
     // --- Action Handlers ---
     const handleFilterChange = <K extends keyof TenantFilterState>(key: K, value: TenantFilterState[K]) => {
+        // Update filters state, which will trigger the useEffect to call fetchTenants
         setFilters(prevFilters => ({ ...prevFilters, [key]: value }));
+        // Optional: Add URL syncing here if desired, like in RoomsPage
     };
 
     const handleOpenCreateForm = () => {
         setEditingTenant(null);
         setShowTenantFormModal(true);
-        setSuccessMessage(null);
+        setSuccessMessage(null); // Clear messages when opening modal
         setError(null);
     };
 
-    const handleOpenEditForm = (tenant: Tenant) => {
+    // Accept TenantDetailDTO here
+    const handleOpenEditForm = (tenant: TenantDetailDTO) => {
         setEditingTenant(tenant);
         setShowTenantFormModal(true);
         setSuccessMessage(null);
@@ -114,34 +124,36 @@ const TenantsPage: React.FC = () => {
         setEditingTenant(null);
     };
 
-    // This is called *after* the modal successfully submits and calls its internal API
-    const handleFormSubmitSuccess = (submittedTenant: Tenant, isEdit: boolean) => {
+    // The modal submit success should perhaps return the updated/created TenantDetailDTO?
+    // Assuming it still returns the base Tenant type for now.
+    const handleFormSubmitSuccess = (submittedTenant: Tenant | TenantDetailDTO, isEdit: boolean) => {
         handleFormModalClose();
         setSuccessMessage(
-            `Tenant "${submittedTenant.firstName} ${submittedTenant.lastName}" ${isEdit ? 'updated' : 'created & checked in'} successfully!`
+            `Tenant "${submittedTenant.name} ${submittedTenant.surname}" ${isEdit ? 'updated' : 'created & checked in'} successfully!`
         );
-        // TODO: Optimize this later if performance becomes an issue. Could try to update local state instead.
-        fetchInitialData(false); // Pass false to avoid main loading spinner
+        // Refetch the current view instead of all initial data
+        fetchTenants(false); // Pass false to avoid main loading spinner
     };
 
-    const handleCheckOut = async (tenant: Tenant) => {
-         if (!window.confirm(`Check out ${tenant.firstName} ${tenant.lastName}? This cannot be undone easily via the UI.`)) return;
+    // Use TenantDetailDTO here, call dedicated checkout API
+    const handleCheckOut = async (tenant: TenantDetailDTO) => {
+         if (!window.confirm(`Check out ${tenant.name} ${tenant.surname}?`)) return;
 
-         setIsSubmittingAction(true); // Use specific submitting state for table actions
+         setIsSubmittingAction(true);
          setError(null);
          setSuccessMessage(null);
 
          try {
-             const departureDate = new Date().toISOString();
-             await updateTenant(tenant.id, { expectedDepartureDate: departureDate });
+             // Assuming a dedicated API function exists
+             await checkOutTenant(tenant.id); // Pass tenant ID
 
-             setSuccessMessage(`Tenant ${tenant.firstName} ${tenant.lastName} checked out successfully.`);
-             fetchInitialData(false);
+             setSuccessMessage(`Tenant ${tenant.name} ${tenant.surname} checked out successfully.`);
+             // Refetch the current view
+             fetchTenants(false);
          } catch (err: unknown) {
-            if (err instanceof Error) {
-                setError(err?.message || `Failed to check out tenant.`);
-                console.error("Check out error:", err);
-            }
+            const message = err instanceof Error ? err.message : 'Failed to check out tenant.';
+            setError(message);
+            console.error("Check out error:", err);
          } finally {
              setIsSubmittingAction(false);
          }
@@ -149,23 +161,21 @@ const TenantsPage: React.FC = () => {
 
 
     // --- Render Logic ---
-    const showInitialLoading = isLoading && tenants.length === 0;
+    const showInitialLoading = isLoading && tenants.length === 0 && !error;
+    const filtersDisabled = isFetchingFilters || isLoading || isSubmittingAction;
 
     return (
         <div className={styles.pageContainer}>
-
-            {/* Display messages */}
             <AlertMessage message={successMessage} type="success" onClose={() => setSuccessMessage(null)} />
             <AlertMessage message={error} type="error" onClose={() => setError(null)} />
 
             <div className={styles.headerActions}>
                 <h1>Tenants</h1>
                 <div className={styles.buttonGroup}>
-                     {/* Disable button if initial load is happening */}
                      <button
                         onClick={handleOpenCreateForm}
                         className={styles.primaryButton}
-                        disabled={isLoading}
+                        disabled={isLoading || isFetchingFilters} // Disable if loading anything initially
                      >
                         + Add Tenant
                      </button>
@@ -175,41 +185,41 @@ const TenantsPage: React.FC = () => {
             <TenantFilters
                 filters={filters}
                 onFilterChange={handleFilterChange}
-                buildings={buildings} // Pass raw buildings for filter dropdown
-                isLoading={isLoading || isSubmittingAction} // Disable filters during load or actions
+                buildings={filterBuildings} // Pass fetched buildings for filter
+                // Add tenantTypes if needed for filter: tenantTypes={tenantTypes}
+                isLoading={filtersDisabled}
             />
 
-            {/* Conditional Rendering for Loading/Table */}
             {showInitialLoading ? (
                 <div className={styles.loadingContainer}>
                     <LoadingSpinner size="large" />
                     <p>Loading tenant data...</p>
                 </div>
             ) : (
+                // Pass TenantDetailDTO array, remove maps
                 <TenantTable
-                    tenants={filteredTenants}
-                    roomsMap={roomsMap}
-                    buildingsMap={buildingsMap}
-                    // isLoading={isLoading}
-                    isSubmitting={isSubmittingAction}
-                    onEditTenant={handleOpenEditForm}
+                    tenants={tenants}
+                    //isLoading={isLoading} // Pass isLoading for potential row indicators
+                    isSubmitting={isSubmittingAction} // To disable actions in rows
+                    onEditTenant={handleOpenEditForm} // Pass handlers down
                     onCheckOutTenant={handleCheckOut}
+                    // Add handlers for View Details, Reassign Room etc.
                 />
             )}
 
             {/* Render Tenant Form Modal */}
-            {/* Mount the modal conditionally to reset its internal state */}
+            {/* Pass fetched buildings/rooms needed for selections */}
             {showTenantFormModal && (
                 <TenantFormModal
                     isOpen={showTenantFormModal}
                     onClose={handleFormModalClose}
                     onSubmitSuccess={handleFormSubmitSuccess}
+                    // Pass DTO, modal might need internal logic if form requires different structure
                     tenantToEdit={editingTenant}
-                    buildings={buildings}
-                    rooms={rooms}
+                    buildings={filterBuildings}
+                    rooms={allRooms} // Still passing all rooms for now
                 />
             )}
-
         </div>
     );
 };
