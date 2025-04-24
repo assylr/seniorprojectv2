@@ -166,8 +166,8 @@ export const getTenantDetails = async (params: URLSearchParams): Promise<TenantD
     }
 };
 
-export const createTenant = async (tenantData: TenantFormData): Promise<Tenant> => {
-    const response = await apiClient.post<Tenant>('/tenants', tenantData);
+export const createTenant = async (tenantData: TenantFormData): Promise<TenantDetailDTO> => {
+    const response = await apiClient.post<TenantDetailDTO>('/tenants', tenantData);
     return response.data;
 };
 
@@ -195,8 +195,8 @@ export const checkOutTenant = async (tenantId: number): Promise<void> => {
     }
 };
 
-export const updateTenant = async (id: number, tenantData: Partial<TenantFormData>): Promise<Tenant> => {
-    const response = await apiClient.put<Tenant>(`/tenants/${id}`, tenantData);
+export const updateTenant = async (id: number, tenantData: Partial<TenantFormData>): Promise<TenantDetailDTO> => {
+    const response = await apiClient.put<TenantDetailDTO>(`/tenants/${id}`, tenantData);
     return response.data;
 };
 

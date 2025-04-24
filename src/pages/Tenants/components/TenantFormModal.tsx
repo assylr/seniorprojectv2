@@ -1,7 +1,7 @@
 // src/pages/Tenants/components/TenantFormModal.tsx
 import React, { useState } from 'react';
 // Use DTO for input, Tenant for output (based on current API assumptions)
-import { Tenant, TenantDetailDTO, TenantFormData, Building, Room } from '@/types'; // Adjust path
+import { TenantDetailDTO, TenantFormData, Building, Room } from '@/types'; // Adjust path
 import { createTenant, updateTenant } from '@/services/api'; // Adjust path
 import Modal from '@/components/common/Modal'; // Adjust path
 import TenantForm from './TenantForm';
@@ -11,7 +11,7 @@ interface TenantFormModalProps {
     isOpen: boolean;
     onClose: () => void;
     // Passed back Tenant might need revisit if API returns DTO
-    onSubmitSuccess: (tenant: Tenant, isEdit: boolean) => void;
+    onSubmitSuccess: (tenant: TenantDetailDTO, isEdit: boolean) => void;
     // Accept DTO for editing context
     tenantToEdit?: TenantDetailDTO | null;
     buildings: Building[];
@@ -37,17 +37,15 @@ const TenantFormModal: React.FC<TenantFormModalProps> = ({
         setError(null);
 
         try {
-            let resultTenant: Tenant; // Assuming API returns base Tenant type
+            let resultTenant: TenantDetailDTO;
             if (isEditMode && tenantToEdit) {
-                resultTenant = await updateTenant(tenantToEdit.id, formData); // Use ID from DTO
+                resultTenant = await updateTenant(tenantToEdit.id, formData);
             } else {
                 resultTenant = await createTenant(formData);
             }
             onSubmitSuccess(resultTenant, isEditMode);
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (err: any) {
-            const message = err?.response?.data?.message || err?.message || 'Operation failed.';
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Operation failed.';
             setError(message);
             console.error("Form submission error:", err);
         } finally {
@@ -68,10 +66,10 @@ const TenantFormModal: React.FC<TenantFormModalProps> = ({
             <TenantForm
                 onSubmit={handleFormSubmit}
                 onCancel={handleClose}
-                initialData={tenantToEdit} // Pass the DTO down
+                initialData={tenantToEdit}
                 isSubmitting={isSubmitting}
                 buildings={buildings}
-                rooms={rooms} // Pass rooms down
+                rooms={rooms}
             />
         </Modal>
     );

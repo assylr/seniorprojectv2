@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useCallback, useReducer } from 'react';
 // Import the DTO type and potentially original types if needed for forms
-import { Building, Room, TenantDetailDTO, Tenant } from '@/types';
+import { Building, Room, TenantDetailDTO } from '@/types';
 // Update API service imports
 import { getTenantDetails, getBuildings, getRooms, checkOutTenant } from '@/services/api';
 import { LoadingSpinner, AlertMessage } from '@/components/common';
@@ -10,6 +10,32 @@ import TenantFormModal from './components/TenantFormModal';
 import styles from './TenantsPage.module.css';
 // Removed createMapById as it's no longer needed for client-side joins
 
+// Types
+type PageState = {
+    tenants: TenantDetailDTO[];
+    filterBuildings: Building[];
+    allRooms: Room[];
+    filters: TenantFilterState;
+    editingTenant: TenantDetailDTO | null;
+    showTenantFormModal: boolean;
+    isLoading: boolean;
+    isSubmittingAction: boolean;
+    error: string | null;
+    successMessage: string | null;
+};
+
+type PageAction =
+    | { type: 'SET_TENANTS'; payload: TenantDetailDTO[] }
+    | { type: 'SET_FILTER_BUILDINGS'; payload: Building[] }
+    | { type: 'SET_ALL_ROOMS'; payload: Room[] }
+    | { type: 'SET_FILTERS'; payload: Partial<TenantFilterState> }
+    | { type: 'SET_EDITING_TENANT'; payload: TenantDetailDTO | null }
+    | { type: 'SET_SHOW_MODAL'; payload: boolean }
+    | { type: 'SET_LOADING'; payload: boolean }
+    | { type: 'SET_SUBMITTING'; payload: boolean }
+    | { type: 'SET_ERROR'; payload: string | null }
+    | { type: 'SET_SUCCESS'; payload: string | null };
+
 // Default filters - adjust 'active' based on backend default or desired initial view
 const initialFilters: TenantFilterState = {
     status: 'Active', // Match backend status string, e.g., 'Active', 'Checked-Out', 'Pending'
@@ -18,175 +44,192 @@ const initialFilters: TenantFilterState = {
     searchQuery: ''
 };
 
+// Initial state
+const initialState: PageState = {
+    tenants: [],
+    filterBuildings: [],
+    allRooms: [],
+    filters: initialFilters,
+    editingTenant: null,
+    showTenantFormModal: false,
+    isLoading: true,
+    isSubmittingAction: false,
+    error: null,
+    successMessage: null
+};
+
+// Reducer
+const pageReducer = (state: PageState, action: PageAction): PageState => {
+    switch (action.type) {
+        case 'SET_TENANTS':
+            return { ...state, tenants: action.payload };
+        case 'SET_FILTER_BUILDINGS':
+            return { ...state, filterBuildings: action.payload };
+        case 'SET_ALL_ROOMS':
+            return { ...state, allRooms: action.payload };
+        case 'SET_FILTERS':
+            return { ...state, filters: { ...state.filters, ...action.payload } };
+        case 'SET_EDITING_TENANT':
+            return { ...state, editingTenant: action.payload };
+        case 'SET_SHOW_MODAL':
+            return { ...state, showTenantFormModal: action.payload };
+        case 'SET_LOADING':
+            return { ...state, isLoading: action.payload };
+        case 'SET_SUBMITTING':
+            return { ...state, isSubmittingAction: action.payload };
+        case 'SET_ERROR':
+            return { ...state, error: action.payload };
+        case 'SET_SUCCESS':
+            return { ...state, successMessage: action.payload };
+        default:
+            return state;
+    }
+};
+
 const TenantsPage: React.FC = () => {
-    // State using the DTO
-    const [tenants, setTenants] = useState<TenantDetailDTO[]>([]);
-    // State for filter dropdown data & modal data
-    const [filterBuildings, setFilterBuildings] = useState<Building[]>([]);
-    // *** NOTE: Still fetching all rooms for the modal. Optimize later if needed. ***
-    const [allRooms, setAllRooms] = useState<Room[]>([]);
+    const [state, dispatch] = useReducer(pageReducer, initialState);
 
-    const [isLoading, setIsLoading] = useState<boolean>(true);
-    const [isFetchingFilters, setIsFetchingFilters] = useState<boolean>(true); // Separate loading for filter data
-    const [error, setError] = useState<string | null>(null);
-    const [successMessage, setSuccessMessage] = useState<string | null>(null);
-    const [filters, setFilters] = useState<TenantFilterState>(initialFilters);
-
-    const [showTenantFormModal, setShowTenantFormModal] = useState<boolean>(false);
-    // Use DTO for editing context, modal might need to fetch full data if DTO is insufficient
-    const [editingTenant, setEditingTenant] = useState<TenantDetailDTO | null>(null);
-    // State for actions like check-out, delete etc. within the table
-    const [isSubmittingAction, setIsSubmittingAction] = useState<boolean>(false);
-
-    // Fetch static data for filters and modal (runs once)
+    // Fetch static data for filters and modal
     useEffect(() => {
         const fetchFilterAndModalData = async () => {
-            setIsFetchingFilters(true);
             try {
                 const [buildingsData, roomsData] = await Promise.all([
                     getBuildings(),
-                    getRooms() // Still fetching all rooms for the modal
+                    getRooms()
                 ]);
-                setFilterBuildings(buildingsData);
-                setAllRooms(roomsData);
-            } catch (err: unknown) {
+                dispatch({ type: 'SET_FILTER_BUILDINGS', payload: buildingsData });
+                dispatch({ type: 'SET_ALL_ROOMS', payload: roomsData });
+            } catch (err) {
                 console.error("Failed to fetch filter/modal data:", err);
-                setError("Could not load filter options or modal data.");
-            } finally {
-                setIsFetchingFilters(false);
+                dispatch({ type: 'SET_ERROR', payload: "Could not load filter options or modal data." });
             }
         };
         fetchFilterAndModalData();
     }, []);
 
-    // Callback to fetch tenants based on current filters
+    // Fetch tenants based on filters
     const fetchTenants = useCallback(async (showLoadingIndicator = true) => {
-        if (showLoadingIndicator) setIsLoading(true);
-        // Don't clear error necessarily, fetch might fail again
-        // setError(null);
+        if (showLoadingIndicator) {
+            dispatch({ type: 'SET_LOADING', payload: true });
+        }
+
         try {
             const params = new URLSearchParams();
-            if (filters.status) params.set('status', filters.status);
-            if (filters.type) params.set('type', filters.type);
-            if (filters.buildingId) params.set('buildingId', filters.buildingId);
-            if (filters.searchQuery) params.set('searchQuery', filters.searchQuery);
-            // Add sorting params here if implemented
-            // params.set('sortBy', 'lastName');
-            // params.set('sortDirection', 'ASC');
+            if (state.filters.status) params.set('status', state.filters.status);
+            if (state.filters.type) params.set('type', state.filters.type);
+            if (state.filters.buildingId) params.set('buildingId', state.filters.buildingId);
+            if (state.filters.searchQuery) params.set('searchQuery', state.filters.searchQuery);
 
             const tenantsData = await getTenantDetails(params);
-            setTenants(tenantsData);
-             setError(null); // Clear error on successful fetch
-        } catch (err: unknown) {
-             const message = err instanceof Error ? err.message : 'Failed to fetch tenants';
-             console.error("Fetch tenants error:", err);
-             setError(message);
-             setTenants([]); // Clear data on error
+            dispatch({ type: 'SET_TENANTS', payload: tenantsData });
+            dispatch({ type: 'SET_ERROR', payload: null });
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Failed to fetch tenants';
+            console.error("Fetch tenants error:", err);
+            dispatch({ type: 'SET_ERROR', payload: message });
+            dispatch({ type: 'SET_TENANTS', payload: [] });
         } finally {
-           if (showLoadingIndicator) setIsLoading(false);
+            if (showLoadingIndicator) {
+                dispatch({ type: 'SET_LOADING', payload: false });
+            }
         }
-    }, [filters]); // Re-run when filters change
+    }, [state.filters]);
 
-    // Effect to trigger fetching tenants when filters change or filter data is loaded
+    // Effect to trigger fetching tenants when filters change
     useEffect(() => {
-        // Only fetch if filter data has loaded (or failed to load)
-        if (!isFetchingFilters) {
-             fetchTenants();
-        }
-    }, [fetchTenants, isFetchingFilters]); // Run when fetchTenants updates (due to filters)
+        fetchTenants();
+    }, [fetchTenants]);
 
-    // Remove the client-side filtering logic (filteredTenants useMemo)
-
-    // --- Action Handlers ---
+    // Handlers
     const handleFilterChange = <K extends keyof TenantFilterState>(key: K, value: TenantFilterState[K]) => {
-        // Update filters state, which will trigger the useEffect to call fetchTenants
-        setFilters(prevFilters => ({ ...prevFilters, [key]: value }));
-        // Optional: Add URL syncing here if desired, like in RoomsPage
+        dispatch({ type: 'SET_FILTERS', payload: { [key]: value } });
     };
 
     const handleOpenCreateForm = () => {
-        setEditingTenant(null);
-        setShowTenantFormModal(true);
-        setSuccessMessage(null); // Clear messages when opening modal
-        setError(null);
+        dispatch({ type: 'SET_EDITING_TENANT', payload: null });
+        dispatch({ type: 'SET_SHOW_MODAL', payload: true });
+        dispatch({ type: 'SET_SUCCESS', payload: null });
+        dispatch({ type: 'SET_ERROR', payload: null });
     };
 
-    // Accept TenantDetailDTO here
     const handleOpenEditForm = (tenant: TenantDetailDTO) => {
-        setEditingTenant(tenant);
-        setShowTenantFormModal(true);
-        setSuccessMessage(null);
-        setError(null);
+        dispatch({ type: 'SET_EDITING_TENANT', payload: tenant });
+        dispatch({ type: 'SET_SHOW_MODAL', payload: true });
+        dispatch({ type: 'SET_SUCCESS', payload: null });
+        dispatch({ type: 'SET_ERROR', payload: null });
     };
 
     const handleFormModalClose = () => {
-        setShowTenantFormModal(false);
-        setEditingTenant(null);
+        dispatch({ type: 'SET_SHOW_MODAL', payload: false });
+        dispatch({ type: 'SET_EDITING_TENANT', payload: null });
     };
 
-    // The modal submit success should perhaps return the updated/created TenantDetailDTO?
-    // Assuming it still returns the base Tenant type for now.
-    const handleFormSubmitSuccess = (submittedTenant: Tenant | TenantDetailDTO, isEdit: boolean) => {
+    const handleFormSubmitSuccess = (submittedTenant: TenantDetailDTO, isEdit: boolean) => {
         handleFormModalClose();
-        setSuccessMessage(
-            `Tenant "${submittedTenant.name} ${submittedTenant.surname}" ${isEdit ? 'updated' : 'created & checked in'} successfully!`
-        );
-        // Refetch the current view instead of all initial data
-        fetchTenants(false); // Pass false to avoid main loading spinner
+        dispatch({ 
+            type: 'SET_SUCCESS', 
+            payload: `Tenant "${submittedTenant.name} ${submittedTenant.surname}" ${isEdit ? 'updated' : 'created & checked in'} successfully!`
+        });
+        fetchTenants(false);
     };
 
-    // Use TenantDetailDTO here, call dedicated checkout API
     const handleCheckOut = async (tenant: TenantDetailDTO) => {
-         if (!window.confirm(`Check out ${tenant.name} ${tenant.surname}?`)) return;
+        if (!window.confirm(`Check out ${tenant.name} ${tenant.surname}?`)) return;
 
-         setIsSubmittingAction(true);
-         setError(null);
-         setSuccessMessage(null);
+        dispatch({ type: 'SET_SUBMITTING', payload: true });
+        dispatch({ type: 'SET_ERROR', payload: null });
+        dispatch({ type: 'SET_SUCCESS', payload: null });
 
-         try {
-             // Assuming a dedicated API function exists
-             await checkOutTenant(tenant.id); // Pass tenant ID
-
-             setSuccessMessage(`Tenant ${tenant.name} ${tenant.surname} checked out successfully.`);
-             // Refetch the current view
-             fetchTenants(false);
-         } catch (err: unknown) {
+        try {
+            await checkOutTenant(tenant.id);
+            dispatch({ 
+                type: 'SET_SUCCESS', 
+                payload: `Tenant ${tenant.name} ${tenant.surname} checked out successfully.`
+            });
+            fetchTenants(false);
+        } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to check out tenant.';
-            setError(message);
+            dispatch({ type: 'SET_ERROR', payload: message });
             console.error("Check out error:", err);
-         } finally {
-             setIsSubmittingAction(false);
-         }
-     };
+        } finally {
+            dispatch({ type: 'SET_SUBMITTING', payload: false });
+        }
+    };
 
-
-    // --- Render Logic ---
-    const showInitialLoading = isLoading && tenants.length === 0 && !error;
-    const filtersDisabled = isFetchingFilters || isLoading || isSubmittingAction;
+    // Render
+    const showInitialLoading = state.isLoading && state.tenants.length === 0 && !state.error;
+    const filtersDisabled = state.isLoading || state.isSubmittingAction;
 
     return (
         <div className={styles.pageContainer}>
-            <AlertMessage message={successMessage} type="success" onClose={() => setSuccessMessage(null)} />
-            <AlertMessage message={error} type="error" onClose={() => setError(null)} />
+            <AlertMessage 
+                message={state.successMessage} 
+                type="success" 
+                onClose={() => dispatch({ type: 'SET_SUCCESS', payload: null })} 
+            />
+            <AlertMessage 
+                message={state.error} 
+                type="error" 
+                onClose={() => dispatch({ type: 'SET_ERROR', payload: null })} 
+            />
 
             <div className={styles.headerActions}>
                 <h1>Tenants</h1>
                 <div className={styles.buttonGroup}>
-                     <button
+                    <button
                         onClick={handleOpenCreateForm}
                         className={styles.primaryButton}
-                        disabled={isLoading || isFetchingFilters} // Disable if loading anything initially
-                     >
+                        disabled={state.isLoading}
+                    >
                         + Add Tenant
-                     </button>
-                 </div>
+                    </button>
+                </div>
             </div>
 
             <TenantFilters
-                filters={filters}
+                filters={state.filters}
                 onFilterChange={handleFilterChange}
-                buildings={filterBuildings} // Pass fetched buildings for filter
-                // Add tenantTypes if needed for filter: tenantTypes={tenantTypes}
+                buildings={state.filterBuildings}
                 isLoading={filtersDisabled}
             />
 
@@ -196,28 +239,22 @@ const TenantsPage: React.FC = () => {
                     <p>Loading tenant data...</p>
                 </div>
             ) : (
-                // Pass TenantDetailDTO array, remove maps
                 <TenantTable
-                    tenants={tenants}
-                    //isLoading={isLoading} // Pass isLoading for potential row indicators
-                    isSubmitting={isSubmittingAction} // To disable actions in rows
-                    onEditTenant={handleOpenEditForm} // Pass handlers down
+                    tenants={state.tenants}
+                    isSubmitting={state.isSubmittingAction}
+                    onEditTenant={handleOpenEditForm}
                     onCheckOutTenant={handleCheckOut}
-                    // Add handlers for View Details, Reassign Room etc.
                 />
             )}
 
-            {/* Render Tenant Form Modal */}
-            {/* Pass fetched buildings/rooms needed for selections */}
-            {showTenantFormModal && (
+            {state.showTenantFormModal && (
                 <TenantFormModal
-                    isOpen={showTenantFormModal}
+                    isOpen={state.showTenantFormModal}
                     onClose={handleFormModalClose}
                     onSubmitSuccess={handleFormSubmitSuccess}
-                    // Pass DTO, modal might need internal logic if form requires different structure
-                    tenantToEdit={editingTenant}
-                    buildings={filterBuildings}
-                    rooms={allRooms} // Still passing all rooms for now
+                    tenantToEdit={state.editingTenant}
+                    buildings={state.filterBuildings}
+                    rooms={state.allRooms}
                 />
             )}
         </div>
