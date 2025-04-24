@@ -26,7 +26,7 @@ const BuildingCard: React.FC<BuildingCardProps> = ({
                 </span>
             </div>
 
-            <h2 className={styles.buildingNumber}>Building {building.buildingNumber}</h2>
+            <h2 className={styles.buildingNumber}>Block {building.buildingNumber}</h2>
 
             <div className={styles.buildingStats}>
                 {/* Use conditional rendering for potentially null values */}
