@@ -4,20 +4,17 @@ import { apiClient } from './api'
 const AUTH_TOKEN_KEY = 'authToken'
 export const USER_DATA_KEY = "user";
 
-export interface User {
-  email: string
-  role: 'ADMIN' | 'USER' // Match your Role enum
-}
-
 interface LoginResponse {
   token: string
-  user: User
+  email: string
+  role: 'ADMIN' | 'USER'
 }
 
 export const login = async (email: string, password: string): Promise<string> => {
   const response = await apiClient.post<LoginResponse>('/auth/login', { email, password })
-  const { token, user } = response.data
-  console.log(user)
+  const { token, email: responseEmail, role } = response.data;
+
+  const user = { email: responseEmail, role };
 
   // Store to localStorage
   localStorage.setItem(AUTH_TOKEN_KEY, token)
@@ -42,7 +39,6 @@ export const getToken = (): string | null => {
 }
 
 export const getCurrentUser = (): User | null => {
-    console.log(localStorage.getItem(USER_DATA_KEY))
     try {
         const user = localStorage.getItem(USER_DATA_KEY);
         return user ? JSON.parse(user) : null;

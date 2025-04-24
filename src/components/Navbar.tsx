@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react"
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { logout } from "../services/auth"; // Assuming these are still correct
+import { Link, useLocation, useNavigate } from "react-router-dom"
+import { getCurrentUser, logout } from "../services/auth"; // Assuming these are still correct
 
 // --- Import the new component ---
-import LogoutButton from "@/pages/Authentication/components/LogoutButton";
+import LogoutButton from "@/pages/Authentication/components/LogoutButton"
 
 const Navbar = () => {
     const location = useLocation();
@@ -12,7 +12,6 @@ const Navbar = () => {
 
     // Re-check localStorage when path changes (covers login/logout navigation)
     useEffect(() => {
-        console.log(currentUser)
         setCurrentUser(getCurrentUser());
     }, [location.pathname]);
 
@@ -42,8 +41,6 @@ const Navbar = () => {
                 </ul>
                 <div className="nav-user">
                     {currentUser ? (
-
-                            {/* --- Replace the inline button with the LogoutButton component --- */}
                             <LogoutButton
                                 onLogout={handleLogout} // Pass the handler function as a prop
                                 className="logout-button" // Pass the class name for styling consistency
@@ -51,8 +48,6 @@ const Navbar = () => {
                     ) : (
                         <Link to="/login" className="login-button">Login</Link>
                     )}
-                    {/* If user is NOT logged in, you might want an else condition here */}
-                    {/* {!currentUser && <Link to="/login">Login</Link>} */}
                 </div>
             </div>
         </nav>
