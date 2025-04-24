@@ -14,7 +14,7 @@ import TenantsPage from "./pages/Tenants/TenantsPage";
 import Reports from "./pages/Reports";
 import UtilityBilling from "./pages/UtilityBilling";
 import Maintenance from "./pages/Maintenance";
-import Login from "./pages/Login"; // Keep Login page route if you want to access it directly still
+import LoginPage from '@/pages/Authentication/LoginPage';
 
 // --- Import Auth/Nav Components ---
 // ProtectedRoute import is no longer strictly needed here unless used elsewhere
@@ -26,7 +26,7 @@ function App() {
       <Router>
         <Routes>
           {/* Login Route (still accessible if needed) */}
-          <Route path="/login" element={<Login />} />
+          <Route path="/login" element={<LoginPage />} />
 
           {/* --- Main Application Routes (Now Publicly Accessible) --- */}
           {/* Removed the ProtectedRoute wrapper */}

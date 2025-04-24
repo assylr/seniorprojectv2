@@ -1,14 +1,19 @@
-import { Link, useLocation, useNavigate } from "react-router-dom"
-import { getCurrentUser, logout } from "../services/auth"
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { logout } from "../services/auth"; // Assuming these are still correct
+
+// --- Import the new component ---
+import LogoutButton from "@/pages/Authentication/components/LogoutButton";
 
 const Navbar = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const currentUser = getCurrentUser();
+    // const currentUser = getCurrentUser();
 
+    // --- This handler function remains the same ---
+    // It contains the logic specific to HOW your app performs logout
     const handleLogout = () => {
-        logout();
-        navigate('/login');
+        logout(); // Calls your service function
+        navigate('/login'); // Redirects
     };
 
     return (
@@ -18,9 +23,10 @@ const Navbar = () => {
                     <h1>NU HMS</h1>
                 </div>
                 <ul className="nav-links">
+                    {/* Your Link elements remain the same */}
                     <li>
                         <Link to="/" className={location.pathname === "/" ? "active" : ""}>
-                            Blocks
+                            Blocks {/* Changed from Buildings based on your code */}
                         </Link>
                     </li>
                     <li>
@@ -50,14 +56,17 @@ const Navbar = () => {
                     </li>
                 </ul>
                 <div className="nav-user">
-                    {currentUser && (
+                    {localStorage.getItem('authToken') && (
                         <>
-                            <span className="user-name">{currentUser.name}</span>
-                            <button onClick={handleLogout} className="logout-button">
-                                Logout
-                            </button>
+                            {/* --- Replace the inline button with the LogoutButton component --- */}
+                            <LogoutButton
+                                onLogout={handleLogout} // Pass the handler function as a prop
+                                className="logout-button" // Pass the class name for styling consistency
+                            />
                         </>
                     )}
+                    {/* If user is NOT logged in, you might want an else condition here */}
+                    {/* {!currentUser && <Link to="/login">Login</Link>} */}
                 </div>
             </div>
         </nav>

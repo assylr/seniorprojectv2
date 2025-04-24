@@ -1,9 +1,9 @@
 import { ChangeEvent, FormEvent, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
-import { isAuthenticated, login } from '../services/auth'
-import styles from './Login.module.css'
+import { isAuthenticated, login } from '@/services/auth'
+import styles from './LoginPage.module.css'
 
-const Login = () => {
+const LoginPage = () => {
   const [email, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -84,4 +84,4 @@ const Login = () => {
   )
 }
 
-export default Login
+export default LoginPage
