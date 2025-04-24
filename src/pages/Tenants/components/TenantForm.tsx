@@ -5,6 +5,7 @@ import { Tenant, TenantFormData, Building, Room } from '@/types'; // Ensure Room
 import { tenantFormSchema } from '../../../services/validation';
 import styles from './TenantForm.module.css';
 
+
 interface TenantFormProps {
     onSubmit: (data: TenantFormData) => Promise<void>; // Or just Promise<Tenant> if API returns it
     onCancel: () => void;
@@ -32,13 +33,13 @@ const TenantForm: React.FC<TenantFormProps> = ({
     };
 
     const { register, handleSubmit, control, formState: { errors }, reset, watch, setValue } = useForm<TenantFormData>({
-        resolver: zodResolver(tenantFormSchema),
+        resolver: zodResolver(tenantFormSchema) as any,
         // Set default values dynamically based on initialData
         defaultValues: useMemo(() => {
             const initialBuildingId = getInitialBuildingId(initialData, rooms);
             return initialData ? {
-                firstName: initialData.firstName,
-                lastName: initialData.lastName,
+                name: initialData.surname,
+                surname: initialData.name,
                 schoolOrDepartment: initialData.schoolOrDepartment ?? '', // Ensure nulls become empty strings if needed by input
                 position: initialData.position ?? '',
                 tenantType: initialData.tenantType,
@@ -50,10 +51,10 @@ const TenantForm: React.FC<TenantFormProps> = ({
                 roomId: initialData.currentRoomId ?? null, // RHF handles null/undefined for selects
             } : {
                 // Defaults for create mode
-                firstName: '', lastName: '', schoolOrDepartment: '', position: '',
+                name: '', surname: '', schoolOrDepartment: '', position: '',
                 tenantType: undefined, mobile: '', email: '',
                 arrivalDate: '', expectedDepartureDate: '',
-                buildingId: '', // Default building to empty
+                buildingId: null, // Default building to empty
                 roomId: null,
             };
         }, [initialData, rooms]) // Recalculate defaults if initialData or rooms change
@@ -65,7 +66,7 @@ const TenantForm: React.FC<TenantFormProps> = ({
     // Filter available rooms based on the watched building ID
     const availableRoomsForSelectedBuilding = useMemo(() => {
         if (!watchedBuildingId) return [];
-        const buildingIdNum = parseInt(watchedBuildingId, 10);
+        const buildingIdNum = 10
         return rooms.filter(room =>
             room.buildingId === buildingIdNum &&
             (room.isAvailable || room.id === initialData?.currentRoomId) // Room is available OR it's the tenant's current room
@@ -94,14 +95,14 @@ const TenantForm: React.FC<TenantFormProps> = ({
         reset({
             // Use the same logic as defaultValues Memo
             ...(initialData ? {
-                firstName: initialData.firstName, lastName: initialData.lastName, schoolOrDepartment: initialData.schoolOrDepartment ?? '',
+                name: initialData.name, surname: initialData.surname, schoolOrDepartment: initialData.schoolOrDepartment ?? '',
                 position: initialData.position ?? '', tenantType: initialData.tenantType, mobile: initialData.mobile ?? '', email: initialData.email ?? '',
                 arrivalDate: initialData.arrivalDate ? new Date(initialData.arrivalDate).toISOString().split('T')[0] : '',
                 expectedDepartureDate: initialData.expectedDepartureDate ? new Date(initialData.expectedDepartureDate).toISOString().split('T')[0] : '',
                 buildingId: initialBuildingId, roomId: initialData.currentRoomId ?? null,
             } : {
-                 firstName: '', lastName: '', schoolOrDepartment: '', position: '', tenantType: undefined, mobile: '', email: '',
-                 arrivalDate: '', expectedDepartureDate: '', buildingId: '', roomId: null,
+                 name: '', surname: '', schoolOrDepartment: '', position: '', tenantType: undefined, mobile: '', email: '',
+                 arrivalDate: '', expectedDepartureDate: '', buildingId: null, roomId: null,
             })
         });
     }, [initialData, reset, rooms]); // Dependency on initialData and potentially rooms
@@ -118,14 +119,14 @@ const TenantForm: React.FC<TenantFormProps> = ({
             <div className={styles.formGrid}>
                 {/* Tenant Details (Fields remain mostly the same, ensure 'name' matches RHF register) */}
                  <div className={styles.formGroup}>
-                    <label htmlFor="firstName">First Name *</label>
-                    <input id="firstName" {...register('firstName')} disabled={isSubmitting} aria-invalid={errors.firstName ? "true" : "false"}/>
-                    {errors.firstName && <p role="alert" className={styles.errorMessage}>{errors.firstName.message}</p>}
+                    <label htmlFor="name">First Name *</label>
+                    <input id="name" {...register('name')} disabled={isSubmitting} aria-invalid={errors.name ? "true" : "false"}/>
+                    {errors.name && <p role="alert" className={styles.errorMessage}>{errors.name.message}</p>}
                 </div>
                  <div className={styles.formGroup}>
-                    <label htmlFor="lastName">Last Name *</label>
-                    <input id="lastName" {...register('lastName')} disabled={isSubmitting} aria-invalid={errors.lastName ? "true" : "false"}/>
-                    {errors.lastName && <p role="alert" className={styles.errorMessage}>{errors.lastName.message}</p>}
+                    <label htmlFor="surname">Last Name *</label>
+                    <input id="surname" {...register('surname')} disabled={isSubmitting} aria-invalid={errors.surname ? "true" : "false"}/>
+                    {errors.surname && <p role="alert" className={styles.errorMessage}>{errors.surname.message}</p>}
                 </div>
                  <div className={styles.formGroup}>
                     <label htmlFor="tenantType">Type *</label>

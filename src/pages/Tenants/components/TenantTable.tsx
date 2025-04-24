@@ -1,7 +1,7 @@
 // src/pages/Tenants/components/TenantTable.tsx
 import React from 'react';
 import { Link } from 'react-router-dom'; // Import Link for potential detail views
-import { Tenant, Room, Building } from '../../../services/types'; // Adjust path
+import { Tenant, Room, Building } from '../../../types'; // Adjust path
 import { LoadingSpinner } from '../../../components/common'; // Adjust path
 import styles from './TenantTable.module.css';
 
@@ -92,7 +92,7 @@ const TenantTable: React.FC<TenantTableProps> = ({
                                 <td>
                                     {/* Optional: Link to tenant detail page */}
                                     {/* <Link to={`/tenants/${tenant.id}`}>{tenant.firstName} {tenant.lastName}</Link> */}
-                                    {tenant.firstName} {tenant.lastName}
+                                    {tenant.name} {tenant.surname}
                                 </td>
                                 <td>{tenant.tenantType}</td>
                                 <td className={styles.contactCell}>
@@ -115,7 +115,7 @@ const TenantTable: React.FC<TenantTableProps> = ({
                                         className={`${styles.actionButton} ${styles.editButton}`}
                                         title="Edit Tenant"
                                         disabled={isSubmitting}
-                                        aria-label={`Edit ${tenant.firstName} ${tenant.lastName}`}
+                                        aria-label={`Edit ${tenant.name} ${tenant.surname}`}
                                     >
                                         {/* Use text or icons consistently */}
                                         Edit
@@ -128,7 +128,7 @@ const TenantTable: React.FC<TenantTableProps> = ({
                                             className={`${styles.actionButton} ${styles.checkOutButton}`}
                                             title="Check Out Tenant"
                                             disabled={isSubmitting}
-                                            aria-label={`Check out ${tenant.firstName} ${tenant.lastName}`}
+                                            aria-label={`Check out ${tenant.name} ${tenant.surname}`}
                                         >
                                              Check Out
                                         </button>
