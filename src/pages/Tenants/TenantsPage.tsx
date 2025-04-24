@@ -83,8 +83,8 @@ const TenantsPage: React.FC = () => {
                  const roomInfo = `${buildingsMap.get(currentRoom?.buildingId ?? -1)?.buildingNumber || ''}-${currentRoom?.roomNumber || ''}`;
                  
                  searchMatch =
-                     tenant.firstName.toLowerCase().includes(query) ||
-                     tenant.lastName.toLowerCase().includes(query) ||
+                     tenant.name.toLowerCase().includes(query) ||
+                     tenant.surname.toLowerCase().includes(query) ||
                      (tenant.email && tenant.email.toLowerCase().includes(query)) ||
                      (tenant.mobile && tenant.mobile.includes(query)) || // Phone numbers might not need lowercase
                      roomInfo.toLowerCase().includes(query);
@@ -122,14 +122,14 @@ const TenantsPage: React.FC = () => {
     const handleFormSubmitSuccess = (submittedTenant: Tenant, isEdit: boolean) => {
         handleFormModalClose();
         setSuccessMessage(
-            `Tenant "${submittedTenant.firstName} ${submittedTenant.lastName}" ${isEdit ? 'updated' : 'created & checked in'} successfully!`
+            `Tenant "${submittedTenant.name} ${submittedTenant.surname}" ${isEdit ? 'updated' : 'created & checked in'} successfully!`
         );
         // TODO: Optimize this later if performance becomes an issue. Could try to update local state instead.
         fetchInitialData(false); // Pass false to avoid main loading spinner
     };
 
     const handleCheckOut = async (tenant: Tenant) => {
-         if (!window.confirm(`Check out ${tenant.firstName} ${tenant.lastName}? This cannot be undone easily via the UI.`)) return;
+         if (!window.confirm(`Check out ${tenant.name} ${tenant.surname}? This cannot be undone easily via the UI.`)) return;
 
          setIsSubmittingAction(true); // Use specific submitting state for table actions
          setError(null);
@@ -139,7 +139,7 @@ const TenantsPage: React.FC = () => {
              const departureDate = new Date().toISOString();
              await updateTenant(tenant.id, { expectedDepartureDate: departureDate });
 
-             setSuccessMessage(`Tenant ${tenant.firstName} ${tenant.lastName} checked out successfully.`);
+             setSuccessMessage(`Tenant ${tenant.name} ${tenant.surname} checked out successfully.`);
              fetchInitialData(false);
          } catch (err: unknown) {
             if (err instanceof Error) {

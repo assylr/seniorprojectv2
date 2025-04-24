@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import ExcelJS from 'exceljs';
-import { Building, Room, Tenant, UtilityBill } from '../services/types';
+import { Building, Room, Tenant, UtilityBill } from '../types';
 import { getBuildings, getRooms, getTenants, getUtilityBills } from '../services/api';
 
 interface Statistics {

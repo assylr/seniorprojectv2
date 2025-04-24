@@ -1,8 +1,8 @@
 // src/pages/Tenants/components/TenantTable.tsx
 import React from 'react';
-import { Link } from 'react-router-dom'; // Import Link for potential detail views
+// import { Link } from 'react-router-dom'; // Import Link for potential detail views
 import { Tenant, Room, Building } from '../../../types'; // Adjust path
-import { LoadingSpinner } from '../../../components/common'; // Adjust path
+// import { LoadingSpinner } from '../../../components/common'; // Adjust path
 import styles from './TenantTable.module.css';
 
 interface TenantTableProps {

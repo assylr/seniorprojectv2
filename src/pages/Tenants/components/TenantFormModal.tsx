@@ -1,6 +1,6 @@
 // src/pages/Tenants/components/TenantFormModal.tsx
 import React, { useState } from 'react';
-import { Tenant, TenantFormData, Building, Room } from '../../../services/types'; // Adjust path
+import { Tenant, TenantFormData, Building, Room } from '../../../types'; // Adjust path
 import { createTenant, updateTenant } from '../../../services/api'; // Keep API calls here
 import Modal from '../../../components/common/Modal';
 import TenantForm from './TenantForm';

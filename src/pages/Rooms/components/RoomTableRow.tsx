@@ -26,7 +26,7 @@ const RoomTableRow: React.FC<RoomTableRowProps> = ({ room, building, tenant }) =
       <td>
         <span className={`${styles.statusBadge} ${statusClass}`}>{statusText}</span>
       </td>
-      <td>{tenant ? `${tenant.firstName} ${tenant.lastName}` : '---'}</td>
+      <td>{tenant ? `${tenant.name} ${tenant.surname}` : '---'}</td>
     </tr>
   );
 };
