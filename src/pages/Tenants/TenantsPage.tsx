@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
-// import { useNavigate } from 'react-router-dom';
 import { Tenant, Room, Building } from '@/types';
 import { getTenants, getRooms, getBuildings, updateTenant } from '@/services/api';
 import { LoadingSpinner, AlertMessage } from '@/components/common'; // Assuming Pagination might be added later
@@ -8,7 +7,6 @@ import TenantTable from './components/TenantTable';
 import TenantFormModal from './components/TenantFormModal';
 import styles from './TenantsPage.module.css';
 
-// Helper to create maps
 const createMapById = <T extends { id: number }>(items: T[]): Map<number, T> => {
     return new Map(items.map(item => [item.id, item]));
 };
@@ -28,8 +26,6 @@ const TenantsPage: React.FC = () => {
     const [showTenantFormModal, setShowTenantFormModal] = useState<boolean>(false);
     const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
     const [isSubmittingAction, setIsSubmittingAction] = useState<boolean>(false);
-
-    // const navigate = useNavigate();
 
     const roomsMap = useMemo(() => createMapById(rooms), [rooms]);
     const buildingsMap = useMemo(() => createMapById(buildings), [buildings]);

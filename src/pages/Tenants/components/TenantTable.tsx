@@ -1,8 +1,7 @@
 // src/pages/Tenants/components/TenantTable.tsx
 import React from 'react';
-import { Link } from 'react-router-dom'; // Import Link for potential detail views
-import { Tenant, Room, Building } from '../../../services/types'; // Adjust path
-import { LoadingSpinner } from '../../../components/common'; // Adjust path
+import { Tenant, Room, Building } from '@/types'; // Adjust path
+import { LoadingSpinner } from '@/components/common'; // Adjust path
 import styles from './TenantTable.module.css';
 
 interface TenantTableProps {
@@ -52,8 +51,11 @@ const TenantTable: React.FC<TenantTableProps> = ({
         try {
             // Handles both Date objects and valid date strings
             return new Date(dateInput).toLocaleDateString();
-        } catch (e) {
-            return 'Invalid Date';
+        } catch (error: unknown) {
+            let msg = null;
+            if (error instanceof Error)
+                msg = error.message
+            return `Invalid Date: ${msg}`;
         }
     };
 
@@ -90,9 +92,7 @@ const TenantTable: React.FC<TenantTableProps> = ({
                         return (
                             <tr key={tenant.id}>
                                 <td>
-                                    {/* Optional: Link to tenant detail page */}
-                                    {/* <Link to={`/tenants/${tenant.id}`}>{tenant.firstName} {tenant.lastName}</Link> */}
-                                    {tenant.firstName} {tenant.lastName}
+                                    {tenant.name} {tenant.surname}
                                 </td>
                                 <td>{tenant.tenantType}</td>
                                 <td className={styles.contactCell}>
@@ -133,19 +133,6 @@ const TenantTable: React.FC<TenantTableProps> = ({
                                              Check Out
                                         </button>
                                     )}
-                                    {/* Example Delete Button */}
-                                    {/* {onDeleteTenant && (
-                                        <button
-                                            type="button"
-                                            onClick={() => onDeleteTenant(tenant)}
-                                            className={`${styles.actionButton} ${styles.deleteButton}`}
-                                            title="Delete Tenant"
-                                            disabled={isSubmitting}
-                                            aria-label={`Delete ${tenant.firstName} ${tenant.lastName}`}
-                                        >
-                                            Delete
-                                        </button>
-                                    )} */}
                                 </td>
                             </tr>
                         );
