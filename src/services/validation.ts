@@ -9,7 +9,7 @@ import {
     ContractFormData,
     PaymentFormData,
     MaintenanceRequestFormData
-} from './types';
+} from '../types';
 
 // --- Basic Reusable Schemas ---
 
@@ -65,30 +65,24 @@ const dateStringSchema = z.string()
 // Tenant Form Validation Schema
 // Matches the fields in TenantFormData type
 export const tenantFormSchema = z.object({
-    firstName: requiredString("First name is required"),
-    lastName: requiredString("Last name is required"),
+    name: requiredString("First name is required"),
+    surname: requiredString("Last name is required"),
     schoolOrDepartment: optionalString,
     position: optionalString,
-    tenantType: z.enum(['faculty', 'staff'], {
-        required_error: "Tenant type is required", // Error if undefined/null
-        invalid_type_error: "Invalid tenant type", // Error if value isn't 'faculty' or 'staff'
+    tenantType: z.enum(['faculty', 'staff', 'rentor'], {
+        required_error: "Tenant type is required",
+        invalid_type_error: "Invalid tenant type",
     }),
     mobile: phoneSchema,
     email: emailSchema,
     arrivalDate: dateStringSchema,
     expectedDepartureDate: dateStringSchema,
-    // Add roomId validation - Ensure this matches TenantFormData
-    roomId: z.number({
-            required_error: "Room selection is required.",
-            invalid_type_error: "Room selection is required.",
-        })
-        .positive({ message: "Please select a room."})
-        .nullable() // Allow null initially before selection
-        .refine(val => val !== null, { message: "Room selection is required." }), // Ensure a non-null value is ultimately chosen
-
-    // Note: If using refine based on edit mode, the logic gets more complex
-    // e.g., .refine((data) => isEditMode || data.roomId !== null, { ... })
-    // This often requires passing context to the resolver. Keeping it simple for now.
+    buildingId: z.number()
+        .nullable()
+        .refine(val => val !== null, { message: "Building selection is required." }),
+    roomId: z.number()
+        .nullable()
+        .refine(val => val !== null, { message: "Room selection is required." })
 });
 
 // Contract Form Validation Schema (Example - Add if/when needed)

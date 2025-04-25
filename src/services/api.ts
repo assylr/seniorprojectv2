@@ -105,6 +105,7 @@ export const createTenant = async (tenantData: TenantFormData): Promise<Tenant> 
     return response.data;
 };
 
+
 export const updateTenant = async (
     id: number,
     tenantData: Partial<TenantFormData>
