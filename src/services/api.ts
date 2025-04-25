@@ -1,10 +1,11 @@
-import axios, { AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'axios'
 import {
     Building,
+    MaintenanceRequest, MaintenanceRequestFormData,
     Room, RoomDetailDTO, RoomFormData, Tenant, TenantDetailDTO, TenantFormData
 } from '@/types'
+import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 
-import { AUTH_TOKEN_KEY } from './auth';
+import { AUTH_TOKEN_KEY } from './auth'
 
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -203,4 +204,50 @@ export const deleteTenant = async (id: number): Promise<void> => {
     await apiClient.delete(`/tenants/${id}`);
 };
 
+// --- Maintenance ---
+
+export const getMaintenanceRequests = async (): Promise<MaintenanceRequest[]> => {
+    const response = await apiClient.get<MaintenanceRequest[]>('/maintenance');
+    return response.data;
+};
+
+export const getMaintenanceRequestById = async (id: number): Promise<MaintenanceRequest> => {
+    const response = await apiClient.get<MaintenanceRequest>(`/maintenance/${id}`);
+    return response.data;
+};
+
+// ⚠️ This one is problematic!
+// You don't have "/{id}/updates" in your backend controller yet.
+// I will comment it for now and explain below.
+/*
+export const getMaintenanceUpdates = async (requestId: number): Promise<MaintenanceUpdate[]> => {
+    const response = await apiClient.get<MaintenanceUpdate[]>(`/maintenance/${requestId}/updates`);
+    return response.data;
+};
+*/
+
+export const createMaintenanceRequest = async (requestData: MaintenanceRequestFormData): Promise<MaintenanceRequest> => {
+    const requestDataFixed = {
+        ...requestData,
+        category: requestData.category.toUpperCase() // <- fix
+    };
+    console.log(requestDataFixed)
+    const response = await apiClient.post<MaintenanceRequest>('/maintenance', requestDataFixed);
+    return response.data;
+};
+
+
+export const updateMaintenanceRequest = async (
+    id: number,
+    updates: Partial<MaintenanceRequest>,
+    notes: string
+): Promise<MaintenanceRequest> => {
+    const response = await apiClient.patch<MaintenanceRequest>(`/maintenance/${id}`, {
+        ...updates,
+        notes
+    });
+    return response.data;
+};
+
 export { apiClient }
+

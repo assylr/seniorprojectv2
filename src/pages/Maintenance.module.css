@@ -1,0 +1,275 @@
+.container {
+    padding: 1.5rem;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+.headerActions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.headerActions h1 {
+    margin: 0;
+    font-size: 1.75rem;
+    color: #333;
+}
+
+.primaryButton {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.primaryButton:hover:not(:disabled) {
+    background-color: #0056b3;
+}
+
+.primaryButton:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+.formCard {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.formGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+}
+
+.formGroup label {
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: #333;
+}
+
+.formGroup input,
+.formGroup select,
+.formGroup textarea {
+    padding: 0.6rem 0.75rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.formGroup textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.formGroup input:focus,
+.formGroup select:focus,
+.formGroup textarea:focus {
+    outline: none;
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.errorMessage {
+    color: #dc3545;
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+}
+
+.dataTable {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.table th,
+.table td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.table th {
+    background-color: #f8fafc;
+    font-weight: 600;
+    color: #1a202c;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+}
+
+.table tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+.statusBadge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.statusPending {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.statusInProgress {
+    background-color: #cce5ff;
+    color: #004085;
+}
+
+.statusCompleted {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.statusCancelled {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.priorityBadge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.priorityLow {
+    background-color: #e2e8f0;
+    color: #4a5568;
+}
+
+.priorityMedium {
+    background-color: #bee3f8;
+    color: #2b6cb0;
+}
+
+.priorityHigh {
+    background-color: #feb2b2;
+    color: #c53030;
+}
+
+.priorityEmergency {
+    background-color: #f56565;
+    color: #ffffff;
+}
+
+.requestDetails {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.detailsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.detailItem {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.detailLabel {
+    font-size: 0.875rem;
+    color: #718096;
+}
+
+.detailValue {
+    font-size: 1rem;
+    color: #2d3748;
+    font-weight: 500;
+}
+
+.updatesList {
+    margin-top: 1.5rem;
+}
+
+.updateItem {
+    padding: 1rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.updateItem:last-child {
+    border-bottom: none;
+}
+
+.updateHeader {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.updateDate {
+    font-size: 0.875rem;
+    color: #718096;
+}
+
+.updateNotes {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: #4a5568;
+}
+
+.loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+    color: #6c757d;
+}
+
+.error {
+    background-color: #fff5f5;
+    border: 1px solid #fed7d7;
+    border-radius: 4px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    color: #c53030;
+}
+
+.success {
+    background-color: #f0fff4;
+    border: 1px solid #c6f6d5;
+    border-radius: 4px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    color: #2f855a;
+} 

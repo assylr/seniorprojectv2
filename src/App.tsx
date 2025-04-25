@@ -2,18 +2,19 @@
 import './styles/index.css'; // Global styles
 // import './App.css'; // App-specific styles
 
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { Navigate, Route, BrowserRouter as Router, Routes } from "react-router-dom"
 
 // --- Import Layouts ---
-import AdminLayout from './layouts/AdminLayout';
+import AdminLayout from './layouts/AdminLayout'
 
 // --- Import Pages ---
-import BuildingsPage from "./pages/Buildings/BuildingsPage";
-import RoomsPage from "./pages/Rooms/RoomsPage";
-import TenantsPage from "./pages/Tenants/TenantsPage";
-import ReportsPage from "./pages/Reports/ReportsPage";
-import LoginPage from '@/pages/Authentication/LoginPage';
-import ProtectedRoute from "./components/ProtectedRoute";
+import LoginPage from '@/pages/Authentication/LoginPage'
+import ProtectedRoute from "./components/ProtectedRoute"
+import BuildingsPage from "./pages/Buildings/BuildingsPage"
+import Maintenance from './pages/Maintenance'
+import ReportsPage from "./pages/Reports/ReportsPage"
+import RoomsPage from "./pages/Rooms/RoomsPage"
+import TenantsPage from "./pages/Tenants/TenantsPage"
 
 // --- Import Auth/Nav Components ---
 // ProtectedRoute import is no longer strictly needed here unless used elsewhere
@@ -40,7 +41,7 @@ function App() {
               <Route path="tenants" element={<TenantsPage />} />
               <Route path="reports" element={<ReportsPage />} />
               {/* <Route path="utility-billing" element={<UtilityBilling />} /> */}
-              {/* <Route path="maintenance" element={<Maintenance />} /> */}
+              <Route path="maintenance" element={<Maintenance />} />
 
               {/* Add other application routes here */}
 
