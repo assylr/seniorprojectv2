@@ -3,12 +3,18 @@ import {
     createMaintenanceRequest,
     getMaintenanceRequestById,
     getMaintenanceRequests,
-    getRooms,
-    getTenants,
+    getRoomDetails,
+    getTenantDetails,
     updateMaintenanceRequest
 } from '../services/api'
-import { MaintenanceRequest, MaintenanceUpdate, Room, Tenant } from '../types'
+import { 
+    MaintenanceRequest, 
+    MaintenanceUpdate, 
+    RoomDetailDTO, 
+    TenantDetailDTO
+} from '../types'
 import { MaintenanceCategory, MaintenancePriority, MaintenanceRequestFormData, MaintenanceStatus } from '../types/maintenance'
+import { LoadingSpinner } from '@/components/common'
 import styles from './Maintenance.module.css'
 
 interface MaintenanceFormData {
@@ -27,10 +33,17 @@ interface UpdateFormData {
     notes: string;
 }
 
+interface MaintenanceUpdates {
+    status?: MaintenanceStatus;
+    assignedTo?: string;
+    scheduledDate?: string;
+    completedDate?: string;
+}
+
 const Maintenance = () => {
     const [requests, setRequests] = useState<MaintenanceRequest[]>([]);
-    const [rooms, setRooms] = useState<Room[]>([]);
-    const [tenants, setTenants] = useState<Tenant[]>([]);
+    const [rooms, setRooms] = useState<RoomDetailDTO[]>([]);
+    const [tenants, setTenants] = useState<TenantDetailDTO[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
@@ -68,16 +81,39 @@ const Maintenance = () => {
     const fetchData = async () => {
         try {
             setLoading(true);
+            setError(null);
+            console.log('Fetching data...');
+            
             const [requestsData, roomsData, tenantsData] = await Promise.all([
                 getMaintenanceRequests(),
-                getRooms(),
-                getTenants()
+                getRoomDetails(new URLSearchParams()),
+                getTenantDetails(new URLSearchParams())
             ]);
+            
+            console.log('Maintenance requests received:', requestsData);
+            console.log('Rooms data received:', roomsData);
+            console.log('Tenants data received:', tenantsData);
+            
+            if (!requestsData) {
+                console.error('Maintenance requests data is null or undefined');
+                throw new Error('Failed to fetch maintenance requests');
+            }
+            
+            if (!roomsData) {
+                console.error('Rooms data is null or undefined');
+                throw new Error('Failed to fetch rooms data');
+            }
+            
+            if (!tenantsData) {
+                console.error('Tenants data is null or undefined');
+                throw new Error('Failed to fetch tenants data');
+            }
             
             setRequests(requestsData);
             setRooms(roomsData);
             setTenants(tenantsData);
         } catch (err) {
+            console.error('Error in fetchData:', err);
             setError(`Failed to fetch data: ${err instanceof Error ? err.message : String(err)}`);
         } finally {
             setLoading(false);
@@ -162,7 +198,7 @@ const Maintenance = () => {
         try {
             if (!updateForm.notes) throw new Error('Update notes are required');
             
-            const updates: any = {};
+            const updates: MaintenanceUpdates = {};
             
             if (updateForm.status && updateForm.status !== selectedRequest.status) {
                 updates.status = updateForm.status;
@@ -177,13 +213,13 @@ const Maintenance = () => {
                 const currentDate = selectedRequest.scheduledDate ? new Date(selectedRequest.scheduledDate) : null;
                 
                 if (!currentDate || newDate.getTime() !== currentDate.getTime()) {
-                    updates.scheduledDate = newDate;
+                    updates.scheduledDate = newDate.toISOString();
                 }
             }
             
             // If status is completed, add completion date
-            if (updateForm.status === 'completed' && !selectedRequest.completedDate) {
-                updates.completedDate = new Date();
+            if (updateForm.status === MaintenanceStatus.COMPLETED && !selectedRequest.completedDate) {
+                updates.completedDate = new Date().toISOString();
             }
             
             await updateMaintenanceRequest(
@@ -215,33 +251,69 @@ const Maintenance = () => {
         return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     };
     
-    const getStatusClass = (status: string) => {
+    const getStatusClass = (status: MaintenanceStatus) => {
         switch (status) {
-            case 'completed': return 'status-completed';
-            case 'in_progress': return 'status-in-progress';
-            case 'assigned': return 'status-assigned';
-            case 'cancelled': return 'status-cancelled';
-            default: return 'status-pending';
+            case MaintenanceStatus.COMPLETED: return styles.statusCompleted;
+            case MaintenanceStatus.IN_PROGRESS: return styles.statusInProgress;
+            case MaintenanceStatus.ASSIGNED: return styles.statusAssigned;
+            case MaintenanceStatus.CANCELLED: return styles.statusCancelled;
+            default: return styles.statusPending;
         }
     };
     
-    const getPriorityClass = (priority: string) => {
-        switch (priority) {
-            case 'emergency': return 'priority-emergency';
-            case 'high': return 'priority-high';
-            case 'medium': return 'priority-medium';
-            default: return 'priority-low';
+    const getPriorityClass = (priority: MaintenancePriority) => {
+        console.log('Priority value:', priority);
+        console.log('Priority type:', typeof priority);
+        const className = (() => {
+            switch (priority.toUpperCase()) {
+                case 'EMERGENCY':
+                    return styles.priorityEmergency;
+                case 'HIGH':
+                    return styles.priorityHigh;
+                case 'MEDIUM':
+                    return styles.priorityMedium;
+                case 'LOW':
+                    return styles.priorityLow;
+                default:
+                    return styles.priorityLow;
+            }
+        })();
+        console.log('Resulting class:', className);
+        return className;
+    };
+    
+    const getRoomNumber = (request: MaintenanceRequest) => {
+        // If we have nested room data, use it directly
+        if (request.room) {
+            const roomDetail = rooms.find(r => r.id === request.room?.id);
+            return `${request.room.roomNumber} (${roomDetail?.buildingName || 'Unknown Building'})`;
         }
+        
+        // Otherwise, look up the room from our state
+        if (!request.roomId) {
+            return 'N/A';
+        }
+        
+        const room = rooms.find(r => r.id === request.roomId);
+        if (!room) {
+            return `Room ${request.roomId}`;
+        }
+        
+        return `${room.roomNumber} (${room.buildingName})`;
     };
     
-    const getRoomNumber = (roomId: number) => {
-        const room = rooms.find(r => r.id === roomId);
-        return room ? `${room.roomNumber} (Building ${room.buildingId})` : 'Unknown';
-    };
-    
-    const getTenantName = (tenantId: number | null) => {
-        if (!tenantId) return 'N/A';
-        const tenant = tenants.find(t => t.id === tenantId);
+    const getTenantName = (request: MaintenanceRequest) => {
+        // If we have nested tenant data, use it directly
+        if (request.tenant) {
+            return `${request.tenant.name} ${request.tenant.surname}`;
+        }
+        
+        // Otherwise, look up the tenant from our state
+        if (!request.tenantId) {
+            return 'N/A';
+        }
+        
+        const tenant = tenants.find(t => t.id === request.tenantId);
         return tenant ? `${tenant.name} ${tenant.surname}` : 'Unknown';
     };
     
@@ -252,7 +324,14 @@ const Maintenance = () => {
         return true;
     });
     
-    if (loading && !requests.length) return <div className={styles.container}>Loading...</div>;
+    if (loading && !requests.length) return (
+        <div className={styles.container}>
+            <div className={styles.loadingContainer}>
+                <LoadingSpinner size="large" />
+                <p>Loading maintenance requests...</p>
+            </div>
+        </div>
+    );
     
     return (
         <div className={styles.container}>
@@ -286,7 +365,7 @@ const Maintenance = () => {
                                     <option value="">Select Room</option>
                                     {rooms.map(room => (
                                         <option key={room.id} value={room.id}>
-                                            {room.roomNumber} (Building {room.buildingId})
+                                            {room.roomNumber} (Building {room.buildingName})
                                         </option>
                                     ))}
                                 </select>
@@ -387,45 +466,57 @@ const Maintenance = () => {
             )}
             
             <div className={styles.filters}>
-                <select 
-                    value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
-                >
-                    <option value="">All Statuses</option>
-                    <option value={MaintenanceStatus.SUBMITTED}>Submitted</option>
-                    <option value={MaintenanceStatus.ACKNOWLEDGED}>Acknowledged</option>
-                    <option value={MaintenanceStatus.ASSIGNED}>Assigned</option>
-                    <option value={MaintenanceStatus.IN_PROGRESS}>In Progress</option>
-                    <option value={MaintenanceStatus.ON_HOLD}>On Hold</option>
-                    <option value={MaintenanceStatus.COMPLETED}>Completed</option>
-                    <option value={MaintenanceStatus.CANCELLED}>Cancelled</option>
-                    <option value={MaintenanceStatus.REJECTED}>Rejected</option>
-                </select>
+                <div className={styles.filterGroup}>
+                    <label htmlFor="filterStatus">Status</label>
+                    <select 
+                        id="filterStatus"
+                        value={filterStatus}
+                        onChange={(e) => setFilterStatus(e.target.value)}
+                    >
+                        <option value="">All Statuses</option>
+                        <option value={MaintenanceStatus.SUBMITTED}>Submitted</option>
+                        <option value={MaintenanceStatus.ACKNOWLEDGED}>Acknowledged</option>
+                        <option value={MaintenanceStatus.ASSIGNED}>Assigned</option>
+                        <option value={MaintenanceStatus.IN_PROGRESS}>In Progress</option>
+                        <option value={MaintenanceStatus.ON_HOLD}>On Hold</option>
+                        <option value={MaintenanceStatus.COMPLETED}>Completed</option>
+                        <option value={MaintenanceStatus.CANCELLED}>Cancelled</option>
+                        <option value={MaintenanceStatus.REJECTED}>Rejected</option>
+                    </select>
+                </div>
                 
-                <select 
-                    value={filterCategory}
-                    onChange={(e) => setFilterCategory(e.target.value)}
-                >
-                    <option value="">All Categories</option>
-                    <option value={MaintenanceCategory.PLUMBING}>Plumbing</option>
-                    <option value={MaintenanceCategory.ELECTRICAL}>Electrical</option>
-                    <option value={MaintenanceCategory.HVAC}>HVAC</option>
-                    <option value={MaintenanceCategory.APPLIANCE}>Appliance</option>
-                    <option value={MaintenanceCategory.STRUCTURAL}>Structural</option>
-                    <option value={MaintenanceCategory.GENERAL}>General</option>
-                    <option value={MaintenanceCategory.OTHER}>Other</option>
-                </select>
+                <div className={styles.filterGroup}>
+                    <label htmlFor="filterCategory">Category</label>
+                    <select 
+                        id="filterCategory"
+                        value={filterCategory}
+                        onChange={(e) => setFilterCategory(e.target.value)}
+                    >
+                        <option value="">All Categories</option>
+                        <option value={MaintenanceCategory.PLUMBING}>Plumbing</option>
+                        <option value={MaintenanceCategory.ELECTRICAL}>Electrical</option>
+                        <option value={MaintenanceCategory.HVAC}>HVAC</option>
+                        <option value={MaintenanceCategory.APPLIANCE}>Appliance</option>
+                        <option value={MaintenanceCategory.STRUCTURAL}>Structural</option>
+                        <option value={MaintenanceCategory.GENERAL}>General</option>
+                        <option value={MaintenanceCategory.OTHER}>Other</option>
+                    </select>
+                </div>
                 
-                <select 
-                    value={filterPriority}
-                    onChange={(e) => setFilterPriority(e.target.value)}
-                >
-                    <option value="">All Priorities</option>
-                    <option value={MaintenancePriority.LOW}>Low</option>
-                    <option value={MaintenancePriority.MEDIUM}>Medium</option>
-                    <option value={MaintenancePriority.HIGH}>High</option>
-                    <option value={MaintenancePriority.EMERGENCY}>Emergency</option>
-                </select>
+                <div className={styles.filterGroup}>
+                    <label htmlFor="filterPriority">Priority</label>
+                    <select 
+                        id="filterPriority"
+                        value={filterPriority}
+                        onChange={(e) => setFilterPriority(e.target.value)}
+                    >
+                        <option value="">All Priorities</option>
+                        <option value={MaintenancePriority.LOW}>Low</option>
+                        <option value={MaintenancePriority.MEDIUM}>Medium</option>
+                        <option value={MaintenancePriority.HIGH}>High</option>
+                        <option value={MaintenancePriority.EMERGENCY}>Emergency</option>
+                    </select>
+                </div>
             </div>
             
             {selectedRequest ? (
@@ -447,13 +538,13 @@ const Maintenance = () => {
                         </div>
                         <div className={styles.detailItem}>
                             <span className={styles.detailLabel}>Status</span>
-                            <span className={`${styles.statusBadge} ${styles[`status${selectedRequest.status.charAt(0).toUpperCase() + selectedRequest.status.slice(1)}`]}`}>
+                            <span className={`${styles.statusBadge} ${getStatusClass(selectedRequest.status)}`}>
                                 {selectedRequest.status.replace('_', ' ').toUpperCase()}
                             </span>
                         </div>
                         <div className={styles.detailItem}>
                             <span className={styles.detailLabel}>Priority</span>
-                            <span className={`${styles.priorityBadge} ${styles[`priority${selectedRequest.priority.charAt(0).toUpperCase() + selectedRequest.priority.slice(1)}`]}`}>
+                            <span className={`${styles.priorityBadge} ${getPriorityClass(selectedRequest.priority)}`}>
                                 {selectedRequest.priority.toUpperCase()}
                             </span>
                         </div>
@@ -463,11 +554,11 @@ const Maintenance = () => {
                         </div>
                         <div className={styles.detailItem}>
                             <span className={styles.detailLabel}>Room</span>
-                            <span className={styles.detailValue}>{getRoomNumber(selectedRequest.roomId)}</span>
+                            <span className={styles.detailValue}>{getRoomNumber(selectedRequest)}</span>
                         </div>
                         <div className={styles.detailItem}>
                             <span className={styles.detailLabel}>Tenant</span>
-                            <span className={styles.detailValue}>{getTenantName(selectedRequest.tenantId)}</span>
+                            <span className={styles.detailValue}>{getTenantName(selectedRequest)}</span>
                         </div>
                         <div className={styles.detailItem}>
                             <span className={styles.detailLabel}>Submitted Date</span>
@@ -594,7 +685,7 @@ const Maintenance = () => {
                                 .map(update => (
                                     <div key={update.id} className={styles.updateItem}>
                                         <div className={styles.updateHeader}>
-                                            <span className={`${styles.statusBadge} ${styles[`status${update.status.charAt(0).toUpperCase() + update.status.slice(1)}`]}`}>
+                                            <span className={`${styles.statusBadge} ${getStatusClass(update.status)}`}>
                                                 {update.status.replace('_', ' ').toUpperCase()}
                                             </span>
                                             <span className={styles.updateDate}>{formatDate(update.updateDate)}</span>
@@ -655,16 +746,16 @@ const Maintenance = () => {
                                 .map(request => (
                                     <tr key={request.id}>
                                         <td>{request.id}</td>
-                                        <td>{getRoomNumber(request.roomId)}</td>
+                                        <td>{getRoomNumber(request)}</td>
                                         <td>{request.category}</td>
                                         <td>{request.description}</td>
                                         <td>
-                                            <span className={`${styles.priorityBadge} ${styles[`priority${request.priority.charAt(0).toUpperCase() + request.priority.slice(1)}`]}`}>
+                                            <span className={`${styles.priorityBadge} ${getPriorityClass(request.priority)}`}>
                                                 {request.priority.toUpperCase()}
                                             </span>
                                         </td>
                                         <td>
-                                            <span className={`${styles.statusBadge} ${styles[`status${request.status.charAt(0).toUpperCase() + request.status.slice(1)}`]}`}>
+                                            <span className={`${styles.statusBadge} ${getStatusClass(request.status)}`}>
                                                 {request.status.replace('_', ' ').toUpperCase()}
                                             </span>
                                         </td>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ExcelJS from 'exceljs';
 import { Building, Room, TenantDetailDTO } from '@/types';
 import { getBuildings, getRooms, getTenantDetails } from '@/services/api';
+import { LoadingSpinner } from '@/components/common';
 import styles from './ReportsPage.module.css';
 
 interface Statistics {
@@ -136,7 +137,14 @@ const ReportsPage: React.FC = () => {
 
     const stats = calculateStatistics();
 
-    if (loading) return <div className={styles.loading}>Loading...</div>;
+    if (loading) return (
+        <div className={styles.container}>
+            <div className={styles.loadingContainer}>
+                <LoadingSpinner size="large" />
+                <p>Loading reports...</p>
+            </div>
+        </div>
+    );
     if (error) return <div className={styles.error}>Error: {error}</div>;
 
     return (

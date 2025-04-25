@@ -22,21 +22,5 @@
     color: #e53e3e;
   }
   
-  .priority-emergency {
-    color: #e53e3e;
-    font-weight: 600;
-  }
-  
-  .priority-high {
-    color: #ed8936;
-    font-weight: 600;
-  }
-  
-  .priority-medium {
-    color: #4299e1;
-  }
-  
-  .priority-low {
-    color: #718096;
-  }
+  /* Priority styles are now handled by Maintenance.module.css */
   

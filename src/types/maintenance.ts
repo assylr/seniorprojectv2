@@ -31,7 +31,7 @@ export enum MaintenanceCategory {
 
 export interface MaintenanceRequest {
     id: number;
-    roomId: number;
+    roomId: number | null; // Can be null if the request is not associated with a specific room
     tenantId: number | null; // Can be null if submitted by admin for vacant room
     room?: Room;       // Optional nested data
     tenant?: Tenant;   // Optional nested data
