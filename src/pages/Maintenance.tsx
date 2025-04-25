@@ -1,27 +1,27 @@
-import { useState, useEffect, FormEvent, ChangeEvent } from 'react';
-import { 
-    getMaintenanceRequests, 
-    getMaintenanceRequestById, 
-    getMaintenanceUpdates, 
-    createMaintenanceRequest, 
-    updateMaintenanceRequest,
+import { ChangeEvent, FormEvent, useEffect, useState } from 'react'
+import {
+    createMaintenanceRequest,
+    getMaintenanceRequestById,
+    getMaintenanceRequests,
     getRooms,
-    getTenants
-} from '../services/api';
-import { MaintenanceRequest, MaintenanceUpdate, Room, Tenant } from '../services/types';
-import { getCurrentUser } from '../services/auth';
+    getTenants,
+    updateMaintenanceRequest
+} from '../services/api'
+import { MaintenanceRequest, MaintenanceUpdate, Room, Tenant } from '../types'
+import { MaintenanceCategory, MaintenancePriority, MaintenanceRequestFormData, MaintenanceStatus } from '../types/maintenance'
+import styles from './Maintenance.module.css'
 
 interface MaintenanceFormData {
     roomId: string;
     tenantId: string;
-    category: 'plumbing' | 'electrical' | 'hvac' | 'appliance' | 'structural' | 'other' | '';
+    category: MaintenanceCategory | '';
     description: string;
-    priority: 'low' | 'medium' | 'high' | 'emergency' | '';
+    priority: MaintenancePriority | '';
     notes: string;
 }
 
 interface UpdateFormData {
-    status: 'pending' | 'assigned' | 'in_progress' | 'completed' | 'cancelled' | '';
+    status: MaintenanceStatus | '';
     assignedTo: string;
     scheduledDate: string;
     notes: string;
@@ -87,25 +87,12 @@ const Maintenance = () => {
     const fetchRequestDetails = async (requestId: number) => {
         try {
             setLoading(true);
-            const [request, updates] = await Promise.all([
-                getMaintenanceRequestById(requestId),
-                getMaintenanceUpdates(requestId)
-            ]);
-            
-            if (request) {
-                setSelectedRequest(request);
-                setRequestUpdates(updates);
-                
-                // Initialize update form with current values
-                setUpdateForm({
-                    status: request.status,
-                    assignedTo: request.assignedTo || '',
-                    scheduledDate: request.scheduledDate ? new Date(request.scheduledDate).toISOString().split('T')[0] : '',
-                    notes: ''
-                });
-            } else {
-                setError('Request not found');
-            }
+            const request = await getMaintenanceRequestById(requestId);
+            setSelectedRequest(request);
+            // TODO: Uncomment when getMaintenanceUpdates is implemented
+            // const updates = await getMaintenanceUpdates(requestId);
+            // setRequestUpdates(updates);
+            setRequestUpdates([]); // Temporary empty array until API is implemented
         } catch (err) {
             setError(`Failed to fetch request details: ${err instanceof Error ? err.message : String(err)}`);
         } finally {
@@ -135,12 +122,12 @@ const Maintenance = () => {
             if (!requestForm.description) throw new Error('Description is required');
             if (!requestForm.priority) throw new Error('Priority is required');
             
-            const requestData = {
+            const requestData: MaintenanceRequestFormData = {
                 roomId: parseInt(requestForm.roomId),
-                tenantId: requestForm.tenantId ? parseInt(requestForm.tenantId) : undefined,
-                category: requestForm.category as 'plumbing' | 'electrical' | 'hvac' | 'appliance' | 'structural' | 'other',
+                tenantId: requestForm.tenantId ? parseInt(requestForm.tenantId) : null,
+                category: requestForm.category as MaintenanceCategory,
                 description: requestForm.description,
-                priority: requestForm.priority as 'low' | 'medium' | 'high' | 'emergency',
+                priority: requestForm.priority as MaintenancePriority,
                 notes: requestForm.notes
             };
             
@@ -249,7 +236,7 @@ const Maintenance = () => {
     
     const getRoomNumber = (roomId: number) => {
         const room = rooms.find(r => r.id === roomId);
-        return room ? `${room.roomNumber} (Building ${room.building.buildingNumber})` : 'Unknown';
+        return room ? `${room.roomNumber} (Building ${room.buildingId})` : 'Unknown';
     };
     
     const getTenantName = (tenantId: number | null) => {
@@ -265,29 +252,29 @@ const Maintenance = () => {
         return true;
     });
     
-    if (loading && !requests.length) return <div className="container">Loading...</div>;
+    if (loading && !requests.length) return <div className={styles.container}>Loading...</div>;
     
     return (
-        <div className="container">
-            <div className="header-actions">
+        <div className={styles.container}>
+            <div className={styles.headerActions}>
                 <h1>Maintenance Management</h1>
                 <button 
                     onClick={() => setShowRequestForm(!showRequestForm)}
-                    className="primary"
+                    className={styles.primaryButton}
                 >
                     {showRequestForm ? 'Cancel' : 'New Maintenance Request'}
                 </button>
             </div>
             
-            {error && <div className="alert alert-error">{error}</div>}
-            {success && <div className="alert alert-success">{success}</div>}
+            {error && <div className={styles.error}>{error}</div>}
+            {success && <div className={styles.success}>{success}</div>}
             
             {showRequestForm && (
-                <div className="form-card">
+                <div className={styles.formCard}>
                     <h2>New Maintenance Request</h2>
                     <form onSubmit={handleRequestSubmit}>
-                        <div className="form-grid">
-                            <div className="form-group">
+                        <div className={styles.formGrid}>
+                            <div className={styles.formGroup}>
                                 <label htmlFor="roomId">Room *</label>
                                 <select
                                     id="roomId"
@@ -299,13 +286,13 @@ const Maintenance = () => {
                                     <option value="">Select Room</option>
                                     {rooms.map(room => (
                                         <option key={room.id} value={room.id}>
-                                            {room.roomNumber} (Building {room.building.buildingNumber})
+                                            {room.roomNumber} (Building {room.buildingId})
                                         </option>
                                     ))}
                                 </select>
                             </div>
                             
-                            <div className="form-group">
+                            <div className={styles.formGroup}>
                                 <label htmlFor="tenantId">Tenant (if applicable)</label>
                                 <select
                                     id="tenantId"
@@ -315,7 +302,7 @@ const Maintenance = () => {
                                 >
                                     <option value="">Select Tenant (Optional)</option>
                                     {tenants
-                                        .filter(tenant => !tenant.departure_date)
+                                        .filter(tenant => !tenant.departureDate)
                                         .map(tenant => (
                                             <option key={tenant.id} value={tenant.id}>
                                                 {tenant.name} {tenant.surname}
@@ -325,7 +312,7 @@ const Maintenance = () => {
                                 </select>
                             </div>
                             
-                            <div className="form-group">
+                            <div className={styles.formGroup}>
                                 <label htmlFor="category">Category *</label>
                                 <select
                                     id="category"
@@ -335,16 +322,17 @@ const Maintenance = () => {
                                     required
                                 >
                                     <option value="">Select Category</option>
-                                    <option value="plumbing">Plumbing</option>
-                                    <option value="electrical">Electrical</option>
-                                    <option value="hvac">HVAC</option>
-                                    <option value="appliance">Appliance</option>
-                                    <option value="structural">Structural</option>
-                                    <option value="other">Other</option>
+                                    <option value={MaintenanceCategory.PLUMBING}>Plumbing</option>
+                                    <option value={MaintenanceCategory.ELECTRICAL}>Electrical</option>
+                                    <option value={MaintenanceCategory.HVAC}>HVAC</option>
+                                    <option value={MaintenanceCategory.APPLIANCE}>Appliance</option>
+                                    <option value={MaintenanceCategory.STRUCTURAL}>Structural</option>
+                                    <option value={MaintenanceCategory.GENERAL}>General</option>
+                                    <option value={MaintenanceCategory.OTHER}>Other</option>
                                 </select>
                             </div>
                             
-                            <div className="form-group">
+                            <div className={styles.formGroup}>
                                 <label htmlFor="priority">Priority *</label>
                                 <select
                                     id="priority"
@@ -354,15 +342,15 @@ const Maintenance = () => {
                                     required
                                 >
                                     <option value="">Select Priority</option>
-                                    <option value="low">Low</option>
-                                    <option value="medium">Medium</option>
-                                    <option value="high">High</option>
-                                    <option value="emergency">Emergency</option>
+                                    <option value={MaintenancePriority.LOW}>Low</option>
+                                    <option value={MaintenancePriority.MEDIUM}>Medium</option>
+                                    <option value={MaintenancePriority.HIGH}>High</option>
+                                    <option value={MaintenancePriority.EMERGENCY}>Emergency</option>
                                 </select>
                             </div>
                         </div>
                         
-                        <div className="form-group">
+                        <div className={styles.formGroup}>
                             <label htmlFor="description">Description *</label>
                             <textarea
                                 id="description"
@@ -374,7 +362,7 @@ const Maintenance = () => {
                             />
                         </div>
                         
-                        <div className="form-group">
+                        <div className={styles.formGroup}>
                             <label htmlFor="notes">Additional Notes</label>
                             <textarea
                                 id="notes"
@@ -385,10 +373,10 @@ const Maintenance = () => {
                             />
                         </div>
                         
-                        <div className="form-actions">
+                        <div className={styles.formActions}>
                             <button 
                                 type="submit" 
-                                className="primary"
+                                className={styles.primaryButton}
                                 disabled={isSubmitting}
                             >
                                 {isSubmitting ? 'Submitting...' : 'Create Request'}
@@ -398,17 +386,20 @@ const Maintenance = () => {
                 </div>
             )}
             
-            <div className="filters">
+            <div className={styles.filters}>
                 <select 
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}
                 >
                     <option value="">All Statuses</option>
-                    <option value="pending">Pending</option>
-                    <option value="assigned">Assigned</option>
-                    <option value="in_progress">In Progress</option>
-                    <option value="completed">Completed</option>
-                    <option value="cancelled">Cancelled</option>
+                    <option value={MaintenanceStatus.SUBMITTED}>Submitted</option>
+                    <option value={MaintenanceStatus.ACKNOWLEDGED}>Acknowledged</option>
+                    <option value={MaintenanceStatus.ASSIGNED}>Assigned</option>
+                    <option value={MaintenanceStatus.IN_PROGRESS}>In Progress</option>
+                    <option value={MaintenanceStatus.ON_HOLD}>On Hold</option>
+                    <option value={MaintenanceStatus.COMPLETED}>Completed</option>
+                    <option value={MaintenanceStatus.CANCELLED}>Cancelled</option>
+                    <option value={MaintenanceStatus.REJECTED}>Rejected</option>
                 </select>
                 
                 <select 
@@ -416,12 +407,13 @@ const Maintenance = () => {
                     onChange={(e) => setFilterCategory(e.target.value)}
                 >
                     <option value="">All Categories</option>
-                    <option value="plumbing">Plumbing</option>
-                    <option value="electrical">Electrical</option>
-                    <option value="hvac">HVAC</option>
-                    <option value="appliance">Appliance</option>
-                    <option value="structural">Structural</option>
-                    <option value="other">Other</option>
+                    <option value={MaintenanceCategory.PLUMBING}>Plumbing</option>
+                    <option value={MaintenanceCategory.ELECTRICAL}>Electrical</option>
+                    <option value={MaintenanceCategory.HVAC}>HVAC</option>
+                    <option value={MaintenanceCategory.APPLIANCE}>Appliance</option>
+                    <option value={MaintenanceCategory.STRUCTURAL}>Structural</option>
+                    <option value={MaintenanceCategory.GENERAL}>General</option>
+                    <option value={MaintenanceCategory.OTHER}>Other</option>
                 </select>
                 
                 <select 
@@ -429,267 +421,267 @@ const Maintenance = () => {
                     onChange={(e) => setFilterPriority(e.target.value)}
                 >
                     <option value="">All Priorities</option>
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                    <option value="emergency">Emergency</option>
+                    <option value={MaintenancePriority.LOW}>Low</option>
+                    <option value={MaintenancePriority.MEDIUM}>Medium</option>
+                    <option value={MaintenancePriority.HIGH}>High</option>
+                    <option value={MaintenancePriority.EMERGENCY}>Emergency</option>
                 </select>
             </div>
             
             {selectedRequest ? (
-                <div className="request-details-container">
-                    <div className="request-details-header">
+                <div className={styles.requestDetails}>
+                    <div className={styles.requestDetailsHeader}>
                         <h2>Maintenance Request Details</h2>
                         <button 
-                            className="close-button"
+                            className={styles.closeButton}
                             onClick={closeRequestDetails}
                         >
                             &times;
                         </button>
                     </div>
                     
-                    <div className="request-details">
-                        <div className="request-info">
-                            <div className="info-group">
-                                <h3>Request ID</h3>
-                                <p>{selectedRequest.id}</p>
-                            </div>
-                            <div className="info-group">
-                                <h3>Status</h3>
-                                <p className={getStatusClass(selectedRequest.status)}>
-                                    {selectedRequest.status.replace('_', ' ').toUpperCase()}
-                                </p>
-                            </div>
-                            <div className="info-group">
-                                <h3>Priority</h3>
-                                <p className={getPriorityClass(selectedRequest.priority)}>
-                                    {selectedRequest.priority.toUpperCase()}
-                                </p>
-                            </div>
-                            <div className="info-group">
-                                <h3>Category</h3>
-                                <p className="capitalize">{selectedRequest.category}</p>
-                            </div>
+                    <div className={styles.detailsGrid}>
+                        <div className={styles.detailItem}>
+                            <span className={styles.detailLabel}>Request ID</span>
+                            <span className={styles.detailValue}>{selectedRequest.id}</span>
                         </div>
-                        
-                        <div className="request-details-grid">
-                            <div className="detail-group">
-                                <h3>Room</h3>
-                                <p>{getRoomNumber(selectedRequest.roomId)}</p>
-                            </div>
-                            <div className="detail-group">
-                                <h3>Tenant</h3>
-                                <p>{getTenantName(selectedRequest.tenantId)}</p>
-                            </div>
-                            <div className="detail-group">
-                                <h3>Submitted Date</h3>
-                                <p>{formatDate(selectedRequest.submittedDate)}</p>
-                            </div>
-                            <div className="detail-group">
-                                <h3>Assigned To</h3>
-                                <p>{selectedRequest.assignedTo || 'Not assigned'}</p>
-                            </div>
-                            <div className="detail-group">
-                                <h3>Scheduled Date</h3>
-                                <p>{selectedRequest.scheduledDate ? formatDate(selectedRequest.scheduledDate) : 'Not scheduled'}</p>
-                            </div>
-                            <div className="detail-group">
-                                <h3>Completed Date</h3>
-                                <p>{selectedRequest.completedDate ? formatDate(selectedRequest.completedDate) : 'Not completed'}</p>
-                            </div>
+                        <div className={styles.detailItem}>
+                            <span className={styles.detailLabel}>Status</span>
+                            <span className={`${styles.statusBadge} ${styles[`status${selectedRequest.status.charAt(0).toUpperCase() + selectedRequest.status.slice(1)}`]}`}>
+                                {selectedRequest.status.replace('_', ' ').toUpperCase()}
+                            </span>
                         </div>
-                        
-                        <div className="request-description">
-                            <h3>Description</h3>
-                            <p>{selectedRequest.description}</p>
-                            
-                            {selectedRequest.notes && (
-                                <>
-                                    <h3>Notes</h3>
-                                    <p>{selectedRequest.notes}</p>
-                                </>
-                            )}
+                        <div className={styles.detailItem}>
+                            <span className={styles.detailLabel}>Priority</span>
+                            <span className={`${styles.priorityBadge} ${styles[`priority${selectedRequest.priority.charAt(0).toUpperCase() + selectedRequest.priority.slice(1)}`]}`}>
+                                {selectedRequest.priority.toUpperCase()}
+                            </span>
                         </div>
+                        <div className={styles.detailItem}>
+                            <span className={styles.detailLabel}>Category</span>
+                            <span className={styles.detailValue}>{selectedRequest.category}</span>
+                        </div>
+                        <div className={styles.detailItem}>
+                            <span className={styles.detailLabel}>Room</span>
+                            <span className={styles.detailValue}>{getRoomNumber(selectedRequest.roomId)}</span>
+                        </div>
+                        <div className={styles.detailItem}>
+                            <span className={styles.detailLabel}>Tenant</span>
+                            <span className={styles.detailValue}>{getTenantName(selectedRequest.tenantId)}</span>
+                        </div>
+                        <div className={styles.detailItem}>
+                            <span className={styles.detailLabel}>Submitted Date</span>
+                            <span className={styles.detailValue}>{formatDate(selectedRequest.submittedDate)}</span>
+                        </div>
+                        <div className={styles.detailItem}>
+                            <span className={styles.detailLabel}>Assigned To</span>
+                            <span className={styles.detailValue}>{selectedRequest.assignedTo || 'Not assigned'}</span>
+                        </div>
+                        <div className={styles.detailItem}>
+                            <span className={styles.detailLabel}>Scheduled Date</span>
+                            <span className={styles.detailValue}>{selectedRequest.scheduledDate ? formatDate(selectedRequest.scheduledDate) : 'Not scheduled'}</span>
+                        </div>
+                        <div className={styles.detailItem}>
+                            <span className={styles.detailLabel}>Completed Date</span>
+                            <span className={styles.detailValue}>{selectedRequest.completedDate ? formatDate(selectedRequest.completedDate) : 'Not completed'}</span>
+                        </div>
+                    </div>
+                    
+                    <div className={styles.requestDescription}>
+                        <h3>Description</h3>
+                        <p>{selectedRequest.description}</p>
                         
-                        {selectedRequest.status !== 'completed' && selectedRequest.status !== 'cancelled' && (
-                            <div className="request-actions">
-                                <button 
-                                    className="primary"
-                                    onClick={() => setShowUpdateForm(!showUpdateForm)}
-                                >
-                                    {showUpdateForm ? 'Cancel Update' : 'Update Request'}
-                                </button>
-                            </div>
+                        {selectedRequest.notes && (
+                            <>
+                                <h3>Notes</h3>
+                                <p>{selectedRequest.notes}</p>
+                            </>
                         )}
-                        
-                        {showUpdateForm && (
-                            <div className="update-form">
-                                <h3>Update Request</h3>
-                                <form onSubmit={handleUpdateSubmit}>
-                                    <div className="form-grid">
-                                        <div className="form-group">
-                                            <label htmlFor="status">Status</label>
-                                            <select
-                                                id="status"
-                                                name="status"
-                                                value={updateForm.status}
-                                                onChange={handleUpdateInputChange}
-                                            >
-                                                <option value="">No Change</option>
-                                                <option value="pending">Pending</option>
-                                                <option value="assigned">Assigned</option>
-                                                <option value="in_progress">In Progress</option>
-                                                <option value="completed">Completed</option>
-                                                <option value="cancelled">Cancelled</option>
-                                            </select>
-                                        </div>
-                                        
-                                        <div className="form-group">
-                                            <label htmlFor="assignedTo">Assigned To</label>
-                                            <input
-                                                id="assignedTo"
-                                                name="assignedTo"
-                                                type="text"
-                                                value={updateForm.assignedTo}
-                                                onChange={handleUpdateInputChange}
-                                                placeholder="Name of assignee"
-                                            />
-                                        </div>
-                                        
-                                        <div className="form-group">
-                                            <label htmlFor="scheduledDate">Scheduled Date</label>
-                                            <input
-                                                id="scheduledDate"
-                                                name="scheduledDate"
-                                                type="date"
-                                                value={updateForm.scheduledDate}
-                                                onChange={handleUpdateInputChange}
-                                            />
-                                        </div>
+                    </div>
+                    
+                    {selectedRequest.status !== MaintenanceStatus.COMPLETED && selectedRequest.status !== MaintenanceStatus.CANCELLED && (
+                        <div className={styles.requestActions}>
+                            <button 
+                                className={styles.primaryButton}
+                                onClick={() => setShowUpdateForm(!showUpdateForm)}
+                            >
+                                {showUpdateForm ? 'Cancel Update' : 'Update Request'}
+                            </button>
+                        </div>
+                    )}
+                    
+                    {showUpdateForm && (
+                        <div className={styles.updateForm}>
+                            <h3>Update Request</h3>
+                            <form onSubmit={handleUpdateSubmit}>
+                                <div className={styles.formGrid}>
+                                    <div className={styles.formGroup}>
+                                        <label htmlFor="status">Status</label>
+                                        <select
+                                            id="status"
+                                            name="status"
+                                            value={updateForm.status}
+                                            onChange={handleUpdateInputChange}
+                                        >
+                                            <option value="">No Change</option>
+                                            <option value={MaintenanceStatus.SUBMITTED}>Submitted</option>
+                                            <option value={MaintenanceStatus.ACKNOWLEDGED}>Acknowledged</option>
+                                            <option value={MaintenanceStatus.ASSIGNED}>Assigned</option>
+                                            <option value={MaintenanceStatus.IN_PROGRESS}>In Progress</option>
+                                            <option value={MaintenanceStatus.ON_HOLD}>On Hold</option>
+                                            <option value={MaintenanceStatus.COMPLETED}>Completed</option>
+                                            <option value={MaintenanceStatus.CANCELLED}>Cancelled</option>
+                                            <option value={MaintenanceStatus.REJECTED}>Rejected</option>
+                                        </select>
                                     </div>
                                     
-                                    <div className="form-group">
-                                        <label htmlFor="notes">Update Notes *</label>
-                                        <textarea
-                                            id="notes"
-                                            name="notes"
-                                            value={updateForm.notes}
+                                    <div className={styles.formGroup}>
+                                        <label htmlFor="assignedTo">Assigned To</label>
+                                        <input
+                                            id="assignedTo"
+                                            name="assignedTo"
+                                            type="text"
+                                            value={updateForm.assignedTo}
                                             onChange={handleUpdateInputChange}
-                                            rows={3}
-                                            required
+                                            placeholder="Name of assignee"
                                         />
                                     </div>
                                     
-                                    <div className="form-actions">
-                                        <button 
-                                            type="submit" 
-                                            className="primary"
-                                            disabled={isSubmitting}
-                                        >
-                                            {isSubmitting ? 'Updating...' : 'Submit Update'}
-                                        </button>
+                                    <div className={styles.formGroup}>
+                                        <label htmlFor="scheduledDate">Scheduled Date</label>
+                                        <input
+                                            id="scheduledDate"
+                                            name="scheduledDate"
+                                            type="date"
+                                            value={updateForm.scheduledDate}
+                                            onChange={handleUpdateInputChange}
+                                        />
                                     </div>
-                                </form>
-                            </div>
-                        )}
-                        
-                        <div className="request-history">
-                            <h3>Request History</h3>
-                            {requestUpdates.length === 0 ? (
-                                <p>No updates found.</p>
-                            ) : (
-                                <div className="timeline">
-                                    {requestUpdates
-                                        .sort((a, b) => new Date(b.updateDate).getTime() - new Date(a.updateDate).getTime())
-                                        .map(update => (
-                                            <div key={update.id} className="timeline-item">
-                                                <div className="timeline-marker"></div>
-                                                <div className="timeline-content">
-                                                    <div className="timeline-header">
-                                                        <span className={`status ${getStatusClass(update.status)}`}>
-                                                            {update.status.replace('_', ' ').toUpperCase()}
-                                                        </span>
-                                                        <span className="date">{formatDate(update.updateDate)}</span>
-                                                    </div>
-                                                    <div className="timeline-body">
-                                                        <p className="updated-by">Updated by: {update.updatedBy}</p>
-                                                        <p className="notes">{update.notes}</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))
-                                    }
                                 </div>
-                            )}
+                                
+                                <div className={styles.formGroup}>
+                                    <label htmlFor="notes">Update Notes *</label>
+                                    <textarea
+                                        id="notes"
+                                        name="notes"
+                                        value={updateForm.notes}
+                                        onChange={handleUpdateInputChange}
+                                        rows={3}
+                                        required
+                                    />
+                                </div>
+                                
+                                <div className={styles.formActions}>
+                                    <button 
+                                        type="submit" 
+                                        className={styles.primaryButton}
+                                        disabled={isSubmitting}
+                                    >
+                                        {isSubmitting ? 'Updating...' : 'Submit Update'}
+                                    </button>
+                                </div>
+                            </form>
                         </div>
+                    )}
+                    
+                    <div className={styles.updatesList}>
+                        <h3>Request History</h3>
+                        {requestUpdates.length === 0 ? (
+                            <p>No updates found.</p>
+                        ) : (
+                            requestUpdates
+                                .sort((a, b) => new Date(b.updateDate).getTime() - new Date(a.updateDate).getTime())
+                                .map(update => (
+                                    <div key={update.id} className={styles.updateItem}>
+                                        <div className={styles.updateHeader}>
+                                            <span className={`${styles.statusBadge} ${styles[`status${update.status.charAt(0).toUpperCase() + update.status.slice(1)}`]}`}>
+                                                {update.status.replace('_', ' ').toUpperCase()}
+                                            </span>
+                                            <span className={styles.updateDate}>{formatDate(update.updateDate)}</span>
+                                        </div>
+                                        <div className={styles.updateNotes}>
+                                            <p>Updated by: {update.updatedBy}</p>
+                                            <p>{update.notes}</p>
+                                        </div>
+                                    </div>
+                                ))
+                        )}
                     </div>
                 </div>
             ) : (
-                <div className="data-table">
-                    <h2>Maintenance Requests</h2>
-                    {filteredRequests.length === 0 ? (
-                        <p>No maintenance requests found.</p>
-                    ) : (
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Room</th>
-                                    <th>Category</th>
-                                    <th>Description</th>
-                                    <th>Priority</th>
-                                    <th>Status</th>
-                                    <th>Submitted</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredRequests
-                                    .sort((a, b) => {
-                                        // Sort by priority first (emergency -> high -> medium -> low)
-                                        const priorityOrder = { emergency: 0, high: 1, medium: 2, low: 3 };
-                                        const priorityDiff = priorityOrder[a.priority as keyof typeof priorityOrder] - 
-                                                            priorityOrder[b.priority as keyof typeof priorityOrder];
-                                        
-                                        if (priorityDiff !== 0) return priorityDiff;
-                                        
-                                        // Then by status (pending -> assigned -> in_progress -> completed -> cancelled)
-                                        const statusOrder = { pending: 0, assigned: 1, in_progress: 2, completed: 3, cancelled: 4 };
-                                        const statusDiff = statusOrder[a.status as keyof typeof statusOrder] - 
-                                                          statusOrder[b.status as keyof typeof statusOrder];
-                                        
-                                        if (statusDiff !== 0) return statusDiff;
-                                        
-                                        // Finally by date (newest first)
-                                        return new Date(b.submittedDate).getTime() - new Date(a.submittedDate).getTime();
-                                    })
-                                    .map(request => (
-                                        <tr key={request.id}>
-                                            <td>{request.id}</td>
-                                            <td>{getRoomNumber(request.roomId)}</td>
-                                            <td className="capitalize">{request.category}</td>
-                                            <td className="description-cell">{request.description}</td>
-                                            <td className={getPriorityClass(request.priority)}>
+                <div className={styles.dataTable}>
+                    <table className={styles.table}>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Room</th>
+                                <th>Category</th>
+                                <th>Description</th>
+                                <th>Priority</th>
+                                <th>Status</th>
+                                <th>Submitted</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredRequests
+                                .sort((a, b) => {
+                                    const priorityOrder = { 
+                                        [MaintenancePriority.EMERGENCY]: 0, 
+                                        [MaintenancePriority.HIGH]: 1, 
+                                        [MaintenancePriority.MEDIUM]: 2, 
+                                        [MaintenancePriority.LOW]: 3 
+                                    };
+                                    const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
+                                    
+                                    if (priorityDiff !== 0) return priorityDiff;
+                                    
+                                    const statusOrder = { 
+                                        [MaintenanceStatus.SUBMITTED]: 0, 
+                                        [MaintenanceStatus.ACKNOWLEDGED]: 1, 
+                                        [MaintenanceStatus.ASSIGNED]: 2, 
+                                        [MaintenanceStatus.IN_PROGRESS]: 3, 
+                                        [MaintenanceStatus.ON_HOLD]: 4, 
+                                        [MaintenanceStatus.COMPLETED]: 5, 
+                                        [MaintenanceStatus.CANCELLED]: 6, 
+                                        [MaintenanceStatus.REJECTED]: 7 
+                                    };
+                                    const statusDiff = statusOrder[a.status] - statusOrder[b.status];
+                                    
+                                    if (statusDiff !== 0) return statusDiff;
+                                    
+                                    return new Date(b.submittedDate).getTime() - new Date(a.submittedDate).getTime();
+                                })
+                                .map(request => (
+                                    <tr key={request.id}>
+                                        <td>{request.id}</td>
+                                        <td>{getRoomNumber(request.roomId)}</td>
+                                        <td>{request.category}</td>
+                                        <td>{request.description}</td>
+                                        <td>
+                                            <span className={`${styles.priorityBadge} ${styles[`priority${request.priority.charAt(0).toUpperCase() + request.priority.slice(1)}`]}`}>
                                                 {request.priority.toUpperCase()}
-                                            </td>
-                                            <td className={getStatusClass(request.status)}>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span className={`${styles.statusBadge} ${styles[`status${request.status.charAt(0).toUpperCase() + request.status.slice(1)}`]}`}>
                                                 {request.status.replace('_', ' ').toUpperCase()}
-                                            </td>
-                                            <td>{formatDate(request.submittedDate).split(' ')[0]}</td>
-                                            <td>
-                                                <button 
-                                                    className="view-button"
-                                                    onClick={() => fetchRequestDetails(request.id)}
-                                                >
-                                                    View
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))
-                                }
-                            </tbody>
-                        </table>
-                    )}
+                                            </span>
+                                        </td>
+                                        <td>{formatDate(request.submittedDate).split(' ')[0]}</td>
+                                        <td>
+                                            <button 
+                                                className={styles.primaryButton}
+                                                onClick={() => fetchRequestDetails(request.id)}
+                                            >
+                                                View
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            }
+                        </tbody>
+                    </table>
                 </div>
             )}
         </div>
