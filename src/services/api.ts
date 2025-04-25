@@ -231,7 +231,6 @@ export const createMaintenanceRequest = async (requestData: MaintenanceRequestFo
         ...requestData,
         category: requestData.category.toUpperCase() // <- fix
     };
-    console.log(requestDataFixed)
     const response = await apiClient.post<MaintenanceRequest>('/maintenance', requestDataFixed);
     return response.data;
 };
@@ -242,7 +241,7 @@ export const updateMaintenanceRequest = async (
     updates: Partial<MaintenanceRequest>,
     notes: string
 ): Promise<MaintenanceRequest> => {
-    const response = await apiClient.patch<MaintenanceRequest>(`/maintenance/${id}`, {
+    const response = await apiClient.put<MaintenanceRequest>(`/maintenance/${id}`, {
         ...updates,
         notes
     });

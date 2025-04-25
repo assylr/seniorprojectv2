@@ -1,5 +1,6 @@
-import React, { ChangeEvent } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Building } from '@/types';
+import React, { ChangeEvent } from 'react';
 import styles from './RoomFilters.module.css';
 
 export interface RoomFilterState {
@@ -23,6 +24,7 @@ const RoomFilters: React.FC<RoomFiltersProps> = ({
     uniqueBedroomCounts,
     isLoading
 }) => {
+    const { t } = useLanguage();
 
     // Generic handler for select changes
     const handleInputChange = (e: ChangeEvent<HTMLSelectElement>) => {
@@ -39,14 +41,14 @@ const RoomFilters: React.FC<RoomFiltersProps> = ({
                 value={filters.buildingId}
                 onChange={handleInputChange}
                 disabled={isLoading}
-                aria-label="Filter by building"
+                aria-label={t('rooms.filters.building')}
             >
-                <option value="">All Buildings</option>
+                <option value="">{t('rooms.filters.all')} {t('rooms.filters.building')}</option>
 
                 {buildings.map(building => (
                     // Convert building ID to string for the value attribute
                     <option key={building.id} value={String(building.id)}>
-                        Building {building.buildingNumber}
+                        {t('nav.blocks')} {building.buildingNumber}
                     </option>
                 ))}
             </select>
@@ -57,12 +59,12 @@ const RoomFilters: React.FC<RoomFiltersProps> = ({
                 value={filters.status}
                 onChange={handleInputChange}
                 disabled={isLoading}
-                aria-label="Filter by status"
+                aria-label={t('rooms.filters.status')}
             >
-                <option value="">All Status</option>
-                <option value="AVAILABLE">Available</option>
-                <option value="OCCUPIED">Occupied</option>
-                <option value="MAINTENANCE">Maintenance</option>
+                <option value="">{t('rooms.filters.all')} {t('rooms.filters.status')}</option>
+                <option value="AVAILABLE">{t('rooms.status.available')}</option>
+                <option value="OCCUPIED">{t('rooms.status.occupied')}</option>
+                <option value="MAINTENANCE">{t('rooms.status.maintenance')}</option>
             </select>
 
             {/* Bedrooms Filter */}
@@ -71,13 +73,13 @@ const RoomFilters: React.FC<RoomFiltersProps> = ({
                 value={filters.bedrooms}
                 onChange={handleInputChange}
                 disabled={isLoading}
-                aria-label="Filter by bedroom count"
+                aria-label={t('rooms.filters.bedrooms')}
             >
-                <option value="">All Sizes</option>
+                <option value="">{t('rooms.filters.all')} {t('rooms.filters.bedrooms')}</option>
                 {uniqueBedroomCounts.map(count => (
                     // Convert count to string for the value attribute
                     <option key={count} value={String(count)}>
-                        {count} Bedroom(s)
+                        {count} {t('rooms.filters.bedrooms')}
                     </option>
                 ))}
             </select>
