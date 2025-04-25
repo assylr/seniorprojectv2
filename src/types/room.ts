@@ -1,37 +1,32 @@
-export type StatusType = 'AVAILABLE' | 'OCCUPIED' | 'MAINTENANCE';
+export enum StatusType {
+  AVAILABLE = 'AVAILABLE',
+  OCCUPIED = 'OCCUPIED',
+  MAINTENANCE = 'MAINTENANCE'
+}
 
-// RoomDTO (base)
+// RoomDTO
 export interface Room {
   id: number;
+  buildingId: number;
   roomNumber: string;
   bedroomCount: number;
   totalArea: number;
   floorNumber: number;
   status: StatusType | 'AVAILABLE'
-
-  buildingId: number;
 }
 
-export interface RoomDetailDTO {
-  id: number;
-  roomNumber: string;
-  bedroomCount: number;
-  totalArea: number;
-  floorNumber: number;
-  status: StatusType | 'AVAILABLE';
-
-  buildingId: number;
+// Room Detail
+export interface RoomDetailDTO extends Room {
   buildingName: string;
   currentOccupancyCount: number;
 }
 
-// TODO: Adjust it according to Room
+// For editing Room
 export interface RoomFormData {
   buildingId: number;
   roomNumber: string;
   bedroomCount: number;
   totalArea: number;
   floorNumber: number | null;
-  isAvailable: boolean;
-  baseRent: number | null;
+  status: StatusType;
 }

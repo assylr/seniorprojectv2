@@ -17,7 +17,7 @@ const getStatusClass = (status: RoomDetailDTO['status']): string => {
     }
 }
 
-const RoomTableRow: React.FC<RoomTableRowProps> = ({ room /*, onEdit, onDelete */ }) => {
+const RoomTableRow: React.FC<RoomTableRowProps> = ({ room, onView }) => {
   const statusText = room.status;
   const statusClass = getStatusClass(room.status);
 
