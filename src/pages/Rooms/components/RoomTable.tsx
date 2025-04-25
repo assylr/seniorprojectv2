@@ -27,13 +27,13 @@ const RoomTable: React.FC<RoomTableProps> = ({
             <table className={styles.roomTable}>
                 <thead>
                     <tr>
-                        <th>Room #</th>
                         <th>Building</th>
+                        <th>Room #</th>
                         <th>Floor</th>
                         <th>Capacity</th>
                         <th>Area (m²)</th>
-                        <th>Status / Occupancy</th>
-                        {/* <th>Actions</th> */}
+                        <th>Status</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>

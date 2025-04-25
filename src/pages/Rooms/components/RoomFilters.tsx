@@ -60,8 +60,9 @@ const RoomFilters: React.FC<RoomFiltersProps> = ({
                 aria-label="Filter by status"
             >
                 <option value="">All Status</option>
-                <option value="available">Available</option>
-                <option value="occupied">Occupied</option>
+                <option value="AVAILABLE">Available</option>
+                <option value="OCCUPIED">Occupied</option>
+                <option value="MAINTENANCE">Maintenance</option>
             </select>
 
             {/* Bedrooms Filter */}

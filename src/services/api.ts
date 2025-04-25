@@ -1,18 +1,12 @@
-// src/services/api.ts
 import axios, { AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'axios'
-// --- >>> Import Mock Data <<< ---
-// import {
-//     mockBuildings,
-//     mockRooms,
-//     mockTenants,
-//     getNextTenantId,
-// } from './mockData';
 import {
     Building,
     Room, RoomDetailDTO, RoomFormData, Tenant, TenantDetailDTO, TenantFormData
 } from '@/types'
 
-// --- Axios Instance Setup ---
+import { AUTH_TOKEN_KEY } from './auth';
+
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 if (!API_BASE_URL) {
@@ -28,7 +22,7 @@ const apiClient = axios.create({
 
 apiClient.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
-      const token = localStorage.getItem('authToken');
+      const token = localStorage.getItem(AUTH_TOKEN_KEY);
   
       // ❌ Don't send token if logging in or registering
       if (
@@ -55,7 +49,7 @@ apiClient.interceptors.response.use(
         if (error.response) {
             const { status } = error.response;
             if (status === 401) {
-                localStorage.removeItem('authToken');
+                localStorage.removeItem(AUTH_TOKEN_KEY);
                 window.location.href = '/login';
             } else if (status === 403) {
                 console.error('Forbidden - 403. User lacks permission.');
