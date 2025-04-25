@@ -7,6 +7,7 @@ import { LoadingSpinner, AlertMessage } from '@/components/common';
 import TenantFilters, { TenantFilterState } from './components/TenantFilters';
 import TenantTable from './components/TenantTable';
 import TenantFormModal from './components/TenantFormModal';
+import TenantDetailsModal from './components/TenantDetailsModal';
 import styles from './TenantsPage.module.css';
 // Removed createMapById as it's no longer needed for client-side joins
 
@@ -22,6 +23,7 @@ type PageState = {
     isSubmittingAction: boolean;
     error: string | null;
     successMessage: string | null;
+    selectedTenant: TenantDetailDTO | null;
 };
 
 type PageAction =
@@ -34,7 +36,8 @@ type PageAction =
     | { type: 'SET_LOADING'; payload: boolean }
     | { type: 'SET_SUBMITTING'; payload: boolean }
     | { type: 'SET_ERROR'; payload: string | null }
-    | { type: 'SET_SUCCESS'; payload: string | null };
+    | { type: 'SET_SUCCESS'; payload: string | null }
+    | { type: 'SET_SELECTED_TENANT'; payload: TenantDetailDTO | null };
 
 // Default filters - adjust 'active' based on backend default or desired initial view
 const initialFilters: TenantFilterState = {
@@ -55,7 +58,8 @@ const initialState: PageState = {
     isLoading: true,
     isSubmittingAction: false,
     error: null,
-    successMessage: null
+    successMessage: null,
+    selectedTenant: null
 };
 
 // Reducer
@@ -81,6 +85,8 @@ const pageReducer = (state: PageState, action: PageAction): PageState => {
             return { ...state, error: action.payload };
         case 'SET_SUCCESS':
             return { ...state, successMessage: action.payload };
+        case 'SET_SELECTED_TENANT':
+            return { ...state, selectedTenant: action.payload };
         default:
             return state;
     }
@@ -145,40 +151,13 @@ const TenantsPage: React.FC = () => {
         dispatch({ type: 'SET_FILTERS', payload: { [key]: value } });
     };
 
-    const handleOpenCreateForm = () => {
-        dispatch({ type: 'SET_EDITING_TENANT', payload: null });
-        dispatch({ type: 'SET_SHOW_MODAL', payload: true });
-        dispatch({ type: 'SET_SUCCESS', payload: null });
-        dispatch({ type: 'SET_ERROR', payload: null });
-    };
-
-    const handleOpenEditForm = (tenant: TenantDetailDTO) => {
-        dispatch({ type: 'SET_EDITING_TENANT', payload: tenant });
-        dispatch({ type: 'SET_SHOW_MODAL', payload: true });
-        dispatch({ type: 'SET_SUCCESS', payload: null });
-        dispatch({ type: 'SET_ERROR', payload: null });
-    };
-
-    const handleFormModalClose = () => {
-        dispatch({ type: 'SET_SHOW_MODAL', payload: false });
-        dispatch({ type: 'SET_EDITING_TENANT', payload: null });
-    };
-
-    const handleFormSubmitSuccess = (submittedTenant: TenantDetailDTO) => {
-        handleFormModalClose();
-        dispatch({ 
-            type: 'SET_SUCCESS', 
-            payload: `Tenant "${submittedTenant.name} ${submittedTenant.surname}" checked-in successfully!`
-        });
-        fetchTenants(false);
-    };
-
     const handleCheckOut = async (tenant: TenantDetailDTO) => {
-        if (!window.confirm(`Check out ${tenant.name} ${tenant.surname}?`)) return;
+        if (!window.confirm(`Are you sure you want to check out ${tenant.name} ${tenant.surname}?`)) {
+            return;
+        }
 
         dispatch({ type: 'SET_SUBMITTING', payload: true });
         dispatch({ type: 'SET_ERROR', payload: null });
-        dispatch({ type: 'SET_SUCCESS', payload: null });
 
         try {
             await checkOutTenant(tenant.id);
@@ -196,10 +175,15 @@ const TenantsPage: React.FC = () => {
         }
     };
 
-    // Render
-    const showInitialLoading = state.isLoading && state.tenants.length === 0 && !state.error;
-    const filtersDisabled = state.isLoading || state.isSubmittingAction;
+    const handleViewTenant = (tenant: TenantDetailDTO) => {
+        dispatch({ type: 'SET_SELECTED_TENANT', payload: tenant });
+    };
 
+    const handleCloseDetails = () => {
+        dispatch({ type: 'SET_SELECTED_TENANT', payload: null });
+    };
+
+    // Render
     return (
         <div className={styles.pageContainer}>
             <AlertMessage 
@@ -217,11 +201,11 @@ const TenantsPage: React.FC = () => {
                 <h1>Tenants</h1>
                 <div className={styles.buttonGroup}>
                     <button
-                        onClick={handleOpenCreateForm}
+                        onClick={() => dispatch({ type: 'SET_SHOW_MODAL', payload: true })}
                         className={styles.primaryButton}
                         disabled={state.isLoading}
                     >
-                        + Add Tenant
+                        + Check In Tenant
                     </button>
                 </div>
             </div>
@@ -230,10 +214,10 @@ const TenantsPage: React.FC = () => {
                 filters={state.filters}
                 onFilterChange={handleFilterChange}
                 buildings={state.filterBuildings}
-                isLoading={filtersDisabled}
+                isLoading={state.isLoading}
             />
 
-            {showInitialLoading ? (
+            {state.isLoading && state.tenants.length === 0 ? (
                 <div className={styles.loadingContainer}>
                     <LoadingSpinner size="large" />
                     <p>Loading tenant data...</p>
@@ -242,18 +226,32 @@ const TenantsPage: React.FC = () => {
                 <TenantTable
                     tenants={state.tenants}
                     isSubmitting={state.isSubmittingAction}
-                    onEditTenant={handleOpenEditForm}
                     onCheckOutTenant={handleCheckOut}
+                    onViewTenant={handleViewTenant}
                 />
             )}
 
             {state.showTenantFormModal && (
                 <TenantFormModal
                     isOpen={state.showTenantFormModal}
-                    onClose={handleFormModalClose}
-                    onSubmitSuccess={handleFormSubmitSuccess}
+                    onClose={() => dispatch({ type: 'SET_SHOW_MODAL', payload: false })}
+                    onSubmitSuccess={(tenant) => {
+                        dispatch({ type: 'SET_SHOW_MODAL', payload: false });
+                        dispatch({ 
+                            type: 'SET_SUCCESS', 
+                            payload: `Tenant "${tenant.name} ${tenant.surname}" checked in successfully!`
+                        });
+                        fetchTenants(false);
+                    }}
                     buildings={state.filterBuildings}
                     rooms={state.allRooms}
+                />
+            )}
+
+            {state.selectedTenant && (
+                <TenantDetailsModal
+                    tenant={state.selectedTenant}
+                    onClose={handleCloseDetails}
                 />
             )}
         </div>

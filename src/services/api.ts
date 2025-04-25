@@ -175,15 +175,22 @@ export const checkInTenant = async (tenantData: TenantFormData): Promise<string>
     }
 };
 
-export const checkOutTenant = async (tenantId: number): Promise<void> => {
-    const endpoint = `/tenants/${tenantId}/checkout`;
-    console.log(`Checking out tenant from: ${apiClient.defaults.baseURL}${endpoint}`);
-
+export const checkOutTenant = async (tenantId: number): Promise<string> => {
     try {
-        await apiClient.post(endpoint);
-        return;
+        console.log('Sending check-out request to:', `${apiClient.defaults.baseURL}/tenants/check-out/${tenantId}`);
+        const response = await apiClient.put<string>(`/tenants/check-out/${tenantId}`);
+        return response.data;
     } catch (error) {
-        throw handleAxiosError(error);
+        if (axios.isAxiosError(error)) {
+            console.error('Check-out request failed:', {
+                status: error.response?.status,
+                statusText: error.response?.statusText,
+                data: error.response?.data,
+                headers: error.response?.headers,
+                config: error.config
+            });
+        }
+        throw error;
     }
 };
 

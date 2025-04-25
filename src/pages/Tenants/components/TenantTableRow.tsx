@@ -6,9 +6,8 @@ import styles from './TenantTable.module.css'; // Assuming styles are shared or 
 interface TenantTableRowProps {
     tenant: TenantDetailDTO;
     isSubmitting: boolean;
-    onEditTenant: (tenant: TenantDetailDTO) => void;
     onCheckOutTenant: (tenant: TenantDetailDTO) => void;
-    // Add other handlers like onViewDetails if needed
+    onViewTenant: (tenant: TenantDetailDTO) => void;
 }
 
 // Helper function for date formatting specific to the row
@@ -25,20 +24,23 @@ const formatDate = (dateInput: string | null | undefined): string => {
 
 // Helper function for status class specific to the row
 const getStatusClass = (status: string | undefined): string => {
-    const lowerStatus = status?.toLowerCase() || '';
-    switch (lowerStatus) {
-        case 'active': return styles.statusActive;
-        case 'checked-out': return styles.statusCheckedOut;
-        case 'pending': return styles.statusPending;
-        default: return styles.statusUnknown;
+    switch (status?.toUpperCase()) {
+        case 'ACTIVE':
+            return styles.statusActive;
+        case 'CHECKED_OUT':
+            return styles.statusCheckedOut;
+        case 'PENDING':
+            return styles.statusPending;
+        default:
+            return '';
     }
-}
+};
 
 const TenantTableRow: React.FC<TenantTableRowProps> = ({
     tenant,
     isSubmitting,
-    onEditTenant,
     onCheckOutTenant,
+    onViewTenant,
 }) => {
     // Prepare display data within the row component
     const statusText = tenant.status || 'Unknown';
@@ -49,7 +51,7 @@ const TenantTableRow: React.FC<TenantTableRowProps> = ({
 
     return (
         <tr key={tenant.id}> {/* Key remains important */}
-            <td>{tenant.name} {tenant.name}</td> {/* Use firstName/lastName if DTO has them */}
+            <td>{tenant.name} {tenant.surname}</td>
             <td>{tenant.tenantType || 'N/A'}</td>
             <td>{locationInfo}</td>
             <td>
@@ -57,32 +59,26 @@ const TenantTableRow: React.FC<TenantTableRowProps> = ({
                     {statusText}
                 </span>
             </td>
-            <td>{formatDate(tenant.checkInDate)}</td>
-            <td>{formatDate(tenant.expectedDepartureDate)}</td>
+            <td>{formatDate(tenant.arrivalDate)}</td>
             <td className={styles.actionsCell}>
                 <button
-                    type="button"
-                    onClick={() => onEditTenant(tenant)} // Pass the specific tenant object
-                    className={`${styles.actionButton} ${styles.editButton}`}
-                    title="Edit Tenant"
+                    onClick={() => onViewTenant(tenant)}
+                    className={`${styles.actionButton} ${styles.viewButton}`}
                     disabled={isSubmitting}
-                    aria-label={`Edit ${tenant.name} ${tenant.surname}`}
+                    aria-label="View tenant details"
                 >
-                    Edit
+                    View
                 </button>
-                {tenant.status?.toLowerCase() === 'active' && (
+                {tenant.status === 'ACTIVE' && (
                     <button
-                        type="button"
-                        onClick={() => onCheckOutTenant(tenant)} // Pass the specific tenant object
+                        onClick={() => onCheckOutTenant(tenant)}
                         className={`${styles.actionButton} ${styles.checkOutButton}`}
-                        title="Check Out Tenant"
                         disabled={isSubmitting}
-                        aria-label={`Check out ${tenant.name} ${tenant.surname}`}
+                        aria-label="Check out tenant"
                     >
                         Check Out
                     </button>
                 )}
-                {/* Add other action buttons here */}
             </td>
         </tr>
     );
