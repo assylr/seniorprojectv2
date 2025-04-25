@@ -60,11 +60,6 @@ const Navbar = () => {
                         </Link>
                     </li>
                     <li>
-                        <Link to="/utility-billing" className={location.pathname === "/utility-billing" ? styles.active : ""}>
-                            {t('nav.utilityBilling')}
-                        </Link>
-                    </li>
-                    <li>
                         <Link to="/reports" className={location.pathname === "/reports" ? styles.active : ""}>
                             {t('nav.reports')}
                         </Link>
