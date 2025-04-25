@@ -2,23 +2,21 @@
 import './styles/index.css'; // Global styles
 // import './App.css'; // App-specific styles
 
-import { BrowserRouter as Router, Routes, Route, Outlet, Navigate } from "react-router-dom";
+import { Navigate, Route, BrowserRouter as Router, Routes } from "react-router-dom"
 
 // --- Import Layouts ---
-import AdminLayout from './layouts/AdminLayout';
+import AdminLayout from './layouts/AdminLayout'
 
 // --- Import Pages ---
-import BuildingsPage from "./pages/Buildings/BuildingsPage";
-import RoomsPage from "./pages/Rooms/RoomsPage";
-import TenantsPage from "./pages/Tenants/TenantsPage";
-import Reports from "./pages/Reports";
-import UtilityBilling from "./pages/UtilityBilling";
-import Maintenance from "./pages/Maintenance";
-import LoginPage from '@/pages/Authentication/LoginPage';
+import BuildingsPage from "./pages/Buildings/BuildingsPage"
+import Login from "./pages/Login.tsx"; // Keep Login page route if you want to access it directly still
+import RoomsPage from "./pages/Rooms/RoomsPage"
+import TenantsPage from "./pages/Tenants/TenantsPage"
 
 // --- Import Auth/Nav Components ---
 // ProtectedRoute import is no longer strictly needed here unless used elsewhere
 // import ProtectedRoute from "./components/ProtectedRoute";
+
 
 function App() {
   return (
@@ -26,7 +24,7 @@ function App() {
       <Router>
         <Routes>
           {/* Login Route (still accessible if needed) */}
-          <Route path="/login" element={<LoginPage />} />
+          <Route path="/login" element={<Login />} />
 
           {/* --- Main Application Routes (Now Publicly Accessible) --- */}
           {/* Removed the ProtectedRoute wrapper */}

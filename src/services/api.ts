@@ -105,10 +105,14 @@ export const createTenant = async (tenantData: TenantFormData): Promise<Tenant> 
     return response.data;
 };
 
-export const updateTenant = async (id: number, tenantData: Partial<TenantFormData>): Promise<Tenant> => {
-    const response = await apiClient.put<Tenant>(`/tenants/${id}`, tenantData);
+export const updateTenant = async (
+    id: number,
+    tenantData: Partial<TenantFormData>
+): Promise<Tenant> => {
+    const response = await apiClient.put<Tenant>(`/tenants/${id}/checkout`, tenantData);
     return response.data;
 };
+
 
 export const deleteTenant = async (id: number): Promise<void> => {
     await apiClient.delete(`/tenants/${id}`);
