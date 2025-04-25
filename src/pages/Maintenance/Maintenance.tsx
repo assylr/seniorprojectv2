@@ -6,14 +6,14 @@ import {
     getRoomDetails,
     getTenantDetails,
     updateMaintenanceRequest
-} from '../services/api'
+} from '../../services/api'
 import { 
     MaintenanceRequest, 
     MaintenanceUpdate, 
     RoomDetailDTO, 
     TenantDetailDTO
-} from '../types'
-import { MaintenanceCategory, MaintenancePriority, MaintenanceRequestFormData, MaintenanceStatus } from '../types/maintenance'
+} from '../../types'
+import { MaintenanceCategory, MaintenancePriority, MaintenanceRequestFormData, MaintenanceStatus } from '../../types/maintenance'
 import { LoadingSpinner } from '@/components/common'
 import styles from './Maintenance.module.css'
 

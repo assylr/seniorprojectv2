@@ -11,7 +11,7 @@ import AdminLayout from './layouts/AdminLayout'
 import LoginPage from '@/pages/Authentication/LoginPage'
 import ProtectedRoute from "./components/ProtectedRoute"
 import BuildingsPage from "./pages/Buildings/BuildingsPage"
-import Maintenance from './pages/Maintenance'
+import Maintenance from './pages/Maintenance/Maintenance'
 import ReportsPage from "./pages/Reports/ReportsPage"
 import RoomsPage from "./pages/Rooms/RoomsPage"
 import TenantsPage from "./pages/Tenants/TenantsPage"
