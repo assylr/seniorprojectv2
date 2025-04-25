@@ -1,7 +1,7 @@
 // src/services/auth.ts
 import { apiClient } from './api'
 
-const AUTH_TOKEN_KEY = 'authToken'
+const AUTH_TOKEN_KEY = 'token'
 export const USER_DATA_KEY = "user";
 
 interface LoginResponse {
