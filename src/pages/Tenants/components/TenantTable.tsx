@@ -17,7 +17,7 @@ const TenantTable: React.FC<TenantTableProps> = ({
     onCheckOutTenant,
     onViewTenant,
 }) => {
-    const columnCount = 6; // Updated: Name, Type, Location, Status, Arrival, Actions
+    const columnCount = 7; // Updated: Name, Type, Location, Status, Arrival, Departure, Actions
 
     return (
         <div className={styles.tableContainer}>
@@ -29,6 +29,7 @@ const TenantTable: React.FC<TenantTableProps> = ({
                         <th>Location</th>
                         <th>Status</th>
                         <th>Arrival</th>
+                        <th>Departure</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -45,10 +46,10 @@ const TenantTable: React.FC<TenantTableProps> = ({
                     {/* Map tenants array to TenantTableRow components */}
                     {tenants.map((tenant) => (
                         <TenantTableRow
-                            key={tenant.id} // Key goes on the component rendered in map
+                            key={tenant.id}
                             tenant={tenant}
                             isSubmitting={isSubmitting}
-                            onCheckOutTenant={onCheckOutTenant} // Pass handler down
+                            onCheckOutTenant={onCheckOutTenant}
                             onViewTenant={onViewTenant}
                         />
                     ))}

@@ -33,6 +33,7 @@ export interface Tenant {
 
 // Tenant Detail DTO
 export interface TenantDetailDTO extends Omit<Tenant, 'room'> {
+  tenantId: number;
   roomId: number;
   roomNumber: string;
   buildingId: number;

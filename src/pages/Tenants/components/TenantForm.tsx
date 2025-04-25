@@ -109,17 +109,17 @@ const TenantForm: React.FC<TenantFormProps> = ({
         <form onSubmit={handleSubmit(handleFormSubmit)} className={styles.tenantForm}>
             <div className={styles.formGrid}>
                 <div className={styles.formGroup}>
-                    <label htmlFor="name">First Name *</label>
+                    <label htmlFor="name">First Name</label>
                     <input id="name" {...register('name')} disabled={formIsSubmitting} />
                     {errors.name && <p className={styles.errorMessage}>{errors.name.message}</p>}
                 </div>
                 <div className={styles.formGroup}>
-                    <label htmlFor="surname">Last Name *</label>
+                    <label htmlFor="surname">Last Name</label>
                     <input id="surname" {...register('surname')} disabled={formIsSubmitting} />
                     {errors.surname && <p className={styles.errorMessage}>{errors.surname.message}</p>}
                 </div>
                 <div className={styles.formGroup}>
-                    <label htmlFor="tenantType">Type *</label>
+                    <label htmlFor="tenantType">Type</label>
                     <select id="tenantType" {...register('tenantType')} disabled={formIsSubmitting}>
                         <option value="">Select Type</option>
                         <option value="FACULTY">Faculty</option>
@@ -169,6 +169,18 @@ const TenantForm: React.FC<TenantFormProps> = ({
                         disabled={formIsSubmitting} 
                     />
                     {errors.deposit && <p className={styles.errorMessage}>{errors.deposit.message}</p>}
+                </div>
+
+                <div className={styles.formGroup}>
+                    <label htmlFor="visitingGuests">Visiting Guests</label>
+                    <textarea 
+                        id="visitingGuests" 
+                        {...register('visitingGuests')} 
+                        disabled={formIsSubmitting}
+                        placeholder="Enter details about visiting guests (optional)"
+                        rows={3}
+                    />
+                    {errors.visitingGuests && <p className={styles.errorMessage}>{errors.visitingGuests.message}</p>}
                 </div>
 
                 <div className={`${styles.formGroup} ${styles.spanFull}`}>

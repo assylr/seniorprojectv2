@@ -36,14 +36,23 @@ const getStatusClass = (status: string | undefined): string => {
     }
 };
 
+// Helper function for status text formatting
+const formatStatusText = (status: string | undefined): string => {
+    if (!status) return 'Unknown';
+    return status.replace('_', ' ').toUpperCase();
+};
+
 const TenantTableRow: React.FC<TenantTableRowProps> = ({
     tenant,
     isSubmitting,
     onCheckOutTenant,
     onViewTenant,
 }) => {
+    console.log('Rendering TenantTableRow for tenant:', tenant);
+    console.log('Tenant ID in row:', tenant.id);
+
     // Prepare display data within the row component
-    const statusText = tenant.status || 'Unknown';
+    const statusText = formatStatusText(tenant.status);
     const statusClass = getStatusClass(tenant.status);
     const locationInfo = tenant.buildingName && tenant.roomNumber
         ? `${tenant.buildingName} - ${tenant.roomNumber}`
@@ -60,6 +69,7 @@ const TenantTableRow: React.FC<TenantTableRowProps> = ({
                 </span>
             </td>
             <td>{formatDate(tenant.arrivalDate)}</td>
+            <td>{formatDate(tenant.departureDate)}</td>
             <td className={styles.actionsCell}>
                 <button
                     onClick={() => onViewTenant(tenant)}
@@ -71,7 +81,11 @@ const TenantTableRow: React.FC<TenantTableRowProps> = ({
                 </button>
                 {tenant.status === 'ACTIVE' && (
                     <button
-                        onClick={() => onCheckOutTenant(tenant)}
+                        onClick={() => {
+                            console.log('Checkout button clicked for tenant:', tenant);
+                            console.log('Tenant ID in button click:', tenant.id);
+                            onCheckOutTenant(tenant);
+                        }}
                         className={`${styles.actionButton} ${styles.checkOutButton}`}
                         disabled={isSubmitting}
                         aria-label="Check out tenant"

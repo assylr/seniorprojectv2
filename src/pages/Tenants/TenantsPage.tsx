@@ -194,6 +194,9 @@ const TenantsPage: React.FC = () => {
     };
 
     const handleCheckOut = async (tenant: TenantDetailDTO) => {
+        console.log('Checkout clicked for tenant:', tenant);
+        console.log('Tenant ID:', tenant.tenantId);
+        
         if (!window.confirm(`Are you sure you want to check out ${tenant.name} ${tenant.surname}?`)) {
             return;
         }
@@ -203,7 +206,8 @@ const TenantsPage: React.FC = () => {
         dispatch({ type: 'SET_SUCCESS', payload: null });
 
         try {
-            await checkOutTenant(tenant.id);
+            console.log('Calling checkOutTenant with ID:', tenant.tenantId);
+            await checkOutTenant(tenant.tenantId);
             dispatch({ 
                 type: 'SET_SUCCESS', 
                 payload: `Tenant ${tenant.name} ${tenant.surname} checked out successfully.`
