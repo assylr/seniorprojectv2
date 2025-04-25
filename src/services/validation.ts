@@ -29,19 +29,6 @@ const phoneSchema = z.string()
     .nullable() // Allow null
     .or(z.literal('')); // Also allow empty string
 
-// Optional positive number
-const optionalPositiveNumber = z.number()
-    .positive({ message: "Must be a positive number" })
-    .optional()
-    .nullable();
-
-// Optional positive integer
-const optionalPositiveInteger = z.number()
-    .int({ message: "Must be a whole number" })
-    .positive({ message: "Must be a positive number" })
-    .optional()
-    .nullable();
-
 // Helper for optional date string validation (YYYY-MM-DD format)
 const dateStringSchema = z.string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, { message: "Invalid date format (YYYY-MM-DD)" })
@@ -55,7 +42,7 @@ export const tenantFormSchema = z.object({
     surname: requiredString("Last name is required"),
     school: optionalString, // Matches form field 'school'
     position: optionalString, // Matches form field 'position'
-    tenantType: z.enum(['FACULTY', 'STAFF', 'RENTOR'], { // Added RENTOR
+    tenantType: z.enum(['FACULTY', 'RENTER'], { // Added RENTER
         required_error: "Tenant type is required",
         invalid_type_error: "Invalid tenant type",
     }),

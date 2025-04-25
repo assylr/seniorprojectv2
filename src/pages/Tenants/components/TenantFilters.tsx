@@ -81,8 +81,8 @@ const TenantFilters: React.FC<TenantFiltersProps> = ({
                  >
                     <option value="">All Types</option>
                     {/* Populate dynamically if needed from tenantTypes prop */}
-                    <option value="faculty">Faculty</option>
-                    <option value="staff">Staff</option>
+                    <option value="FACULTY">Faculty</option>
+                    <option value="RENTER">Renter</option>
                 </select>
 
                 <select

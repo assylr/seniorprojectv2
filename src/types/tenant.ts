@@ -3,7 +3,7 @@ import { FamilyMember } from "./familyMember";
 
 export enum TenantType {
   FACULTY = 'FACULTY',
-  RENTOR = 'RENTER'
+  RENTER = 'RENTER'
 }
 
 export enum TenantStatusType {
@@ -39,18 +39,24 @@ export interface TenantDetailDTO extends Omit<Tenant, 'room'> {
   buildingName: string;
 }
 
-// Tenant Form Data
+// Matches TenantCheckInRequest DTO from backend
 export interface TenantFormData {
+  // Basic Tenant Info
   name: string;
   surname: string;
+  mobile: string;
+  email: string;
   school: string | null;
   position: string | null;
   tenantType: TenantType;
-  mobile: string;
-  email: string;
-  arrivalDate: string; // ISO date string
-  departureDate: string | null; // ISO date string
-  visitingGuests: string | null;
-  deposit: number;
-  familyMembers: FamilyMember[] | null;
+
+  // Room and Building Info
+  buildingId: number | null;  // Optional
+  roomId: number;            // Required
+
+  // Check-in Additional Info
+  arrivalDate: string | null;     // Optional
+  departureDate: string | null;   // Optional
+  visitingGuests: string | null;  // Optional
+  deposit: number | null;         // Optional
 }

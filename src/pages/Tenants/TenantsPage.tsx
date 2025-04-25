@@ -164,11 +164,11 @@ const TenantsPage: React.FC = () => {
         dispatch({ type: 'SET_EDITING_TENANT', payload: null });
     };
 
-    const handleFormSubmitSuccess = (submittedTenant: TenantDetailDTO, isEdit: boolean) => {
+    const handleFormSubmitSuccess = (submittedTenant: TenantDetailDTO) => {
         handleFormModalClose();
         dispatch({ 
             type: 'SET_SUCCESS', 
-            payload: `Tenant "${submittedTenant.name} ${submittedTenant.surname}" ${isEdit ? 'updated' : 'created & checked in'} successfully!`
+            payload: `Tenant "${submittedTenant.name} ${submittedTenant.surname}" checked-in successfully!`
         });
         fetchTenants(false);
     };
@@ -252,7 +252,6 @@ const TenantsPage: React.FC = () => {
                     isOpen={state.showTenantFormModal}
                     onClose={handleFormModalClose}
                     onSubmitSuccess={handleFormSubmitSuccess}
-                    tenantToEdit={state.editingTenant}
                     buildings={state.filterBuildings}
                     rooms={state.allRooms}
                 />

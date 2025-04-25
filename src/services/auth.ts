@@ -8,6 +8,7 @@ interface LoginResponse {
   token: string
   email: string
   role: 'ADMIN' | 'USER'
+  user: User
 }
 
 interface User {

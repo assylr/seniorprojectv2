@@ -24,7 +24,7 @@ apiClient.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
       const token = localStorage.getItem(AUTH_TOKEN_KEY);
   
-      // ❌ Don't send token if logging in or registering
+      // Don't send token if logging in or registering
       if (
         token &&
         !config.url?.includes('/auth/login') &&
@@ -155,9 +155,24 @@ export const getTenantDetails = async (params: URLSearchParams): Promise<TenantD
     }
 };
 
-export const createTenant = async (tenantData: TenantFormData): Promise<TenantDetailDTO> => {
-    const response = await apiClient.post<TenantDetailDTO>('/tenants', tenantData);
-    return response.data;
+export const checkInTenant = async (tenantData: TenantFormData): Promise<string> => {
+    try {
+        console.log('Sending check-in request to:', `${apiClient.defaults.baseURL}/tenants/check-in`);
+        console.log('Request data:', tenantData);
+        const response = await apiClient.post<string>('/tenants/check-in', tenantData);
+        return response.data;
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+            console.error('Check-in request failed:', {
+                status: error.response?.status,
+                statusText: error.response?.statusText,
+                data: error.response?.data,
+                headers: error.response?.headers,
+                config: error.config
+            });
+        }
+        throw error;
+    }
 };
 
 export const checkOutTenant = async (tenantId: number): Promise<void> => {
