@@ -11,23 +11,20 @@ const BuildingsPage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [sortBy, setSortBy] = useState<keyof BuildingSummary | 'buildingNumber'>('buildingNumber'); // Use keys for type safety
 
-    // --- Data Fetching ---
     useEffect(() => {
         const fetchData = async () => {
             setIsLoading(true);
             setError(null);
             try {
-                // TODO: Consider if backend can provide summary data directly in getBuildings response
                 const [buildingsData, roomsData] = await Promise.all([
                     getBuildings(),
-                    getRooms() // Fetch all rooms - potential performance issue with many rooms
+                    getRooms()
                 ]);
 
-                // Calculate summary data for each building
                 const buildingSummaries = buildingsData.map(building => {
                     const buildingRooms = roomsData.filter(room => room.buildingId === building.id);
                     const totalRooms = buildingRooms.length;
-                    const occupiedRooms = buildingRooms.filter(room => !room.isAvailable).length;
+                    const occupiedRooms = buildingRooms.filter(room => room.status === 'OCCUPIED').length;
                     const loadPercentage = totalRooms > 0 ? (occupiedRooms / totalRooms) * 100 : 0;
 
                     return {

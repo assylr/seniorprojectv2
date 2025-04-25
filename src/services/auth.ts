@@ -10,6 +10,11 @@ interface LoginResponse {
   role: 'ADMIN' | 'USER'
 }
 
+interface User {
+  email: string
+  role: 'ADMIN' | 'USER'
+}
+
 export const login = async (email: string, password: string): Promise<string> => {
   const response = await apiClient.post<LoginResponse>('/auth/login', { email, password })
   const { token, email: responseEmail, role } = response.data;

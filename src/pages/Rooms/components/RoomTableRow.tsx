@@ -1,6 +1,6 @@
 import React from 'react';
 import { RoomDetailDTO } from '@/types'; // Use the DTO type
-import styles from './RoomTable.module.css'; // Assuming styles are in RoomTable.module.css
+import styles from './RoomTableRow.module.css'; // Assuming styles are in RoomTableRow.module.css
 
 interface RoomTableRowProps {
   room: RoomDetailDTO;
@@ -26,8 +26,8 @@ const RoomTableRow: React.FC<RoomTableRowProps> = ({ room, onView }) => {
       <td>{room.buildingName}</td>
       <td>{room.roomNumber}</td>
       <td>{room.floorNumber ?? 'N/A'}</td>
-      <td className={styles.centerAlign}>{room.bedroomCount}</td>
-      <td className={styles.rightAlign}>{room.totalArea ?? 'N/A'}</td>
+      <td>{room.bedroomCount}</td>
+      <td>{room.totalArea ?? 'N/A'}</td>
       <td>
         <span className={`${styles.statusBadge} ${statusClass}`}>{statusText}</span>
       </td>

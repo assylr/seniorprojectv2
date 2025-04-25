@@ -1,0 +1,77 @@
+.statusBadge {
+    padding: 0.25em 0.6em;
+    font-size: 0.7rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: #fff;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 4px;
+    display: inline-block;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    min-width: 90px;
+}
+
+.statusAvailable { 
+    background-color: #48bb78;
+    background-image: linear-gradient(to right, #48bb78, #38a169);
+}
+
+.statusOccupied { 
+    background-color: #f56565;
+    background-image: linear-gradient(to right, #f56565, #e53e3e);
+}
+
+.statusMaintenance { 
+    background-color: #ed8936;
+    background-image: linear-gradient(to right, #ed8936, #dd6b20);
+}
+
+.actionsCell { 
+    white-space: nowrap; 
+    text-align: center;
+    padding-right: 1rem !important;
+}
+
+.actionButton {
+    padding: 0.4rem 0.75rem;
+    background-color: #4299e1;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    min-width: 70px;
+}
+
+.actionButton:hover {
+    background-color: #3182ce;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.actionButton:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+@media (max-width: 768px) {
+    .statusBadge {
+        padding: 0.2em 0.5em;
+        font-size: 0.65rem;
+        min-width: 75px;
+    }
+    
+    .actionButton {
+        padding: 0.35rem 0.65rem;
+        font-size: 0.7rem;
+        min-width: 65px;
+    }
+} 

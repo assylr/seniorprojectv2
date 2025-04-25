@@ -10,7 +10,6 @@ export interface BuildingSummary extends Building {
 
 interface BuildingCardProps {
     building: BuildingSummary;
-    // onViewDetails: (id: number) => void; // Placeholder for navigation
 }
 
 const BuildingCard: React.FC<BuildingCardProps> = ({
@@ -21,8 +20,7 @@ const BuildingCard: React.FC<BuildingCardProps> = ({
         <div className={styles.card}>
             <div className={styles.cardHeader}>
                 <span className={styles.buildingTypeBadge}>
-                    {/* Capitalize building type */}
-                    {building.buildingType.charAt(0).toUpperCase() + building.buildingType.slice(1)}
+                    {building.buildingType.toUpperCase()}
                 </span>
             </div>
 
