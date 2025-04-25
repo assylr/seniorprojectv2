@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Tenant, TenantFormData, Building, Room } from '@/types'; // Ensure Room type includes isAvailable
 import { tenantFormSchema } from '../../../services/validation';
 import styles from './TenantForm.module.css';
 
@@ -32,14 +31,14 @@ const TenantForm: React.FC<TenantFormProps> = ({
         return '';
     };
 
+    // Fix the defaultValues in useForm
     const { register, handleSubmit, control, formState: { errors }, reset, watch, setValue } = useForm<TenantFormData>({
         resolver: zodResolver(tenantFormSchema) as any,
-        // Set default values dynamically based on initialData
         defaultValues: useMemo(() => {
             const initialBuildingId = getInitialBuildingId(initialData, rooms);
             return initialData ? {
-                name: initialData.surname,
-                surname: initialData.name,
+                name: initialData.name,  // Fixed: was swapped with surname
+                surname: initialData.surname,  // Fixed: was swapped with name
                 schoolOrDepartment: initialData.schoolOrDepartment ?? '', // Ensure nulls become empty strings if needed by input
                 position: initialData.position ?? '',
                 tenantType: initialData.tenantType,
@@ -47,8 +46,8 @@ const TenantForm: React.FC<TenantFormProps> = ({
                 email: initialData.email ?? '',
                 arrivalDate: initialData.arrivalDate ? new Date(initialData.arrivalDate).toISOString().split('T')[0] : '',
                 expectedDepartureDate: initialData.expectedDepartureDate ? new Date(initialData.expectedDepartureDate).toISOString().split('T')[0] : '',
-                buildingId: initialBuildingId, // Use a dedicated field for building selection
-                roomId: initialData.currentRoomId ?? null, // RHF handles null/undefined for selects
+                buildingId: initialBuildingId || '',  // Ensure string type
+                roomId: initialData.currentRoomId
             } : {
                 // Defaults for create mode
                 name: '', surname: '', schoolOrDepartment: '', position: '',
@@ -62,15 +61,36 @@ const TenantForm: React.FC<TenantFormProps> = ({
 
     // Watch the selected building ID directly from the form state
     const watchedBuildingId = watch('buildingId');
+    
+    console.log('Buildings from props:', buildings);
+    console.log('Rooms from props:', rooms);
+    console.log('Selected Building ID:', watchedBuildingId);
 
     // Filter available rooms based on the watched building ID
     const availableRoomsForSelectedBuilding = useMemo(() => {
-        if (!watchedBuildingId) return [];
-        const buildingIdNum = 10
-        return rooms.filter(room =>
-            room.buildingId === buildingIdNum &&
-            (room.isAvailable || room.id === initialData?.currentRoomId) // Room is available OR it's the tenant's current room
-        );
+        console.log('Filtering rooms for building:', watchedBuildingId);
+        
+        if (!watchedBuildingId) {
+            console.log('No building selected');
+            return [];
+        }
+        
+        const buildingId = Number(watchedBuildingId);
+        console.log('Converted building ID:', buildingId);
+        
+        const filteredRooms = rooms.filter(room => {
+            console.log('Checking room:', room);
+            // Access buildingId through the building object
+            const roomBuildingId = room.building?.id;
+            console.log('Room building ID:', roomBuildingId);
+            console.log('Room available:', room.available);
+            
+            return roomBuildingId === buildingId && 
+                   (room.available || room.id === initialData?.currentRoomId);
+        });
+        
+        console.log('Filtered rooms:', filteredRooms);
+        return filteredRooms;
     }, [watchedBuildingId, rooms, initialData?.currentRoomId]);
 
     // Effect to reset room selection when building changes
@@ -109,9 +129,24 @@ const TenantForm: React.FC<TenantFormProps> = ({
 
 
     // Submit handler remains the same conceptually
-    const handleFormSubmit: SubmitHandler<TenantFormData> = (data) => {
-        // buildingId is now a real field, no need to remove temporary one
-        onSubmit(data);
+    const handleFormSubmit: SubmitHandler<TenantFormData> = async (data) => {
+        try {
+            console.log('Form data before submission:', data);
+            
+            // Ensure proper type conversion
+            const formData = {
+                ...data,
+                buildingId: data.buildingId ? Number(data.buildingId) : null,
+                roomId: data.roomId ? Number(data.roomId) : null,
+                id: initialData?.id || undefined
+            };
+            
+            console.log('Processed form data:', formData);
+            await onSubmit(formData);
+        } catch (error) {
+            console.error('Form submission error:', error);
+            throw error;
+        }
     };
 
     return (
@@ -173,59 +208,52 @@ const TenantForm: React.FC<TenantFormProps> = ({
                     <h3 className={styles.subheading}>Room Assignment</h3>
                  </div>
 
-                 {/* Building Selection (Now a required part of the form data) */}
-                 <div className={styles.formGroup}>
-                    <label htmlFor="buildingId">Building</label>
-                     {/* Register the actual buildingId field */}
+                 // Building Selection
+                <div className={styles.formGroup}>
+                    <label htmlFor="buildingId">Building *</label>
                     <select
                         id="buildingId"
-                        {...register('buildingId')} // Register the field
+                        {...register('buildingId', {
+                            setValueAs: (value) => value ? Number(value) : null
+                        })}
                         disabled={isSubmitting}
-                        aria-invalid={errors.buildingId ? "true" : "false"} // Add validation if needed
                     >
                         <option value="">-- Select Building --</option>
                         {buildings.map(building => (
-                            <option key={building.id} value={building.id.toString()}>
-                                {building.buildingNumber || `ID: ${building.id}`}
+                            <option key={building.id} value={building.id}>
+                                {building.buildingNumber}
                             </option>
                         ))}
                     </select>
-                    {/* Add error display if building becomes required */}
-                    {/* {errors.buildingId && <p role="alert" className={styles.errorMessage}>{errors.buildingId.message}</p>} */}
-                 </div>
+                    {errors.buildingId && 
+                        <p role="alert" className={styles.errorMessage}>
+                            {errors.buildingId.message}
+                        </p>
+                    }
+                </div>
 
-                {/* Room Selection (Depends on watchedBuildingId) */}
+                {/* Room Selection */}
                 <div className={styles.formGroup}>
-                    {/* Controller might be slightly cleaner for dependent fields if register causes issues */}
-                     <Controller
-                        name="roomId"
-                        control={control}
-                        render={({ field }) => (
-                             <>
-                                 <label htmlFor="roomId">Room</label>
-                                <select
-                                    id="roomId"
-                                    {...field}
-                                    value={field.value ?? ''} // Handle null/undefined for select value
-                                    onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value, 10) : null)} // Ensure value is number or null
-                                    disabled={isSubmitting || !watchedBuildingId || availableRoomsForSelectedBuilding.length === 0}
-                                    aria-invalid={errors.roomId ? "true" : "false"}
-                                >
-                                    <option value="">
-                                        {!watchedBuildingId ? '-- Select Building First --' : (availableRoomsForSelectedBuilding.length === 0 ? '-- No Available Rooms --' : '-- Select Room --')}
-                                    </option>
-                                    {availableRoomsForSelectedBuilding.map(room => (
-                                        <option key={room.id} value={room.id}>
-                                            Room {room.roomNumber} ({room.bedroomCount} Bed)
-                                            {/* Optionally show if it's the current room */}
-                                            {/* {room.id === initialData?.currentRoomId ? ' (Current)' : ''} */}
-                                        </option>
-                                    ))}
-                                </select>
-                             </>
-                         )}
-                     />
-                    {errors.roomId && <p role="alert" className={styles.errorMessage}>{errors.roomId.message}</p>}
+                    <label htmlFor="roomId">Room *</label>
+                    <select
+                        id="roomId"
+                        {...register('roomId', {
+                            setValueAs: (value) => value ? Number(value) : null
+                        })}
+                        disabled={isSubmitting}
+                    >
+                        <option value="">-- Select Room --</option>
+                        {availableRoomsForSelectedBuilding.map(room => (
+                            <option key={room.id} value={room.id}>
+                                Room {room.roomNumber}
+                            </option>
+                        ))}
+                    </select>
+                    {errors.roomId && 
+                        <p role="alert" className={styles.errorMessage}>
+                            {errors.roomId.message}
+                        </p>
+                    }
                 </div>
             </div>
 

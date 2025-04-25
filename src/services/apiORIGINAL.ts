@@ -13,7 +13,7 @@ import {
     MaintenanceRequest, MaintenanceRequestData, MaintenanceRequestFormData, // <-- Added Maintenance Form Data
     MaintenanceUpdate
     // Remove imports for mockData, uuid, and potentially validation if handled elsewhere
-} from './types'; // Assuming your revised types.ts is in place
+} from '../types'; // Assuming your revised types.ts is in place
 
 // --- Axios Instance Setup ---
 

@@ -31,30 +31,28 @@ const TenantFormModal: React.FC<TenantFormModalProps> = ({
     const modalTitle = isEditMode ? 'Edit Tenant' : 'Add New Tenant & Check In';
 
     const handleFormSubmit = async (formData: TenantFormData) => {
+        console.log('TenantFormModal - Submit button clicked');
+        console.log('TenantFormModal - Form data received:', formData);
+        
         setIsSubmitting(true);
         setError(null);
 
-        // Note: Backend is assumed to handle room assignment logic (updating Room.isAvailable)
         try {
             let resultTenant: Tenant;
             if (isEditMode && tenantToEdit) {
-                // Ensure ID is present for update
+                console.log('TenantFormModal - Updating tenant:', tenantToEdit.id);
                 resultTenant = await updateTenant(tenantToEdit.id, formData);
-                console.log('Tenant updated:', resultTenant);
             } else {
-                 // Remove potentially empty 'id' if present in formData for create
-                 // const { id, ...createData } = formData; // Adjust if 'id' is part of TenantFormData
-                resultTenant = await createTenant(formData); // Pass data without ID for creation
-                console.log('Tenant created:', resultTenant);
+                console.log('TenantFormModal - Creating new tenant');
+                resultTenant = await createTenant(formData);
             }
-            // Pass the result and the mode back to the parent page
+            
+            console.log('TenantFormModal - Success:', resultTenant);
             onSubmitSuccess(resultTenant, isEditMode);
-
+            handleClose();
         } catch (err: any) {
-            // Provide more specific error messages if possible
-            const message = err?.response?.data?.message || err?.message || (isEditMode ? 'Failed to update tenant' : 'Failed to create tenant');
-            setError(message);
-            console.error("Form submission error:", err);
+            console.error('TenantFormModal - Error:', err);
+            setError(err?.response?.data?.message || err?.message || 'Failed to process tenant');
         } finally {
             setIsSubmitting(false);
         }
