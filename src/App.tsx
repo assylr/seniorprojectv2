@@ -2,7 +2,7 @@
 import './styles/index.css'; // Global styles
 // import './App.css'; // App-specific styles
 
-import { BrowserRouter as Router, Routes, Route, Outlet, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 
 // --- Import Layouts ---
 import AdminLayout from './layouts/AdminLayout';
@@ -11,9 +11,7 @@ import AdminLayout from './layouts/AdminLayout';
 import BuildingsPage from "./pages/Buildings/BuildingsPage";
 import RoomsPage from "./pages/Rooms/RoomsPage";
 import TenantsPage from "./pages/Tenants/TenantsPage";
-import Reports from "./pages/Reports";
-import UtilityBilling from "./pages/UtilityBilling";
-import Maintenance from "./pages/Maintenance";
+import ReportsPage from "./pages/Reports/ReportsPage";
 import LoginPage from '@/pages/Authentication/LoginPage';
 
 // --- Import Auth/Nav Components ---
@@ -39,9 +37,9 @@ function App() {
             <Route path="blocks" element={<BuildingsPage />} />
             <Route path="rooms" element={<RoomsPage />} />
             <Route path="tenants" element={<TenantsPage />} />
+            <Route path="reports" element={<ReportsPage />} />
             {/* <Route path="utility-billing" element={<UtilityBilling />} /> */}
             {/* <Route path="maintenance" element={<Maintenance />} /> */}
-            {/* <Route path="reports" element={<Reports />} /> */}
 
             {/* Add other application routes here */}
 
