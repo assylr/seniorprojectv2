@@ -1,11 +1,11 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { Tenant, Room, Building } from '@/types';
-import { getRooms, getTenants, getBuildings } from '../../services/api';
-import { LoadingSpinner, AlertMessage } from '../../components/common';
-import RoomFilters from './components/RoomFilters';
-import RoomTable from './components/RoomTable';
-import styles from './RoomsPage.module.css';
+import { Building, Room, Tenant } from '@/types'
+import React, { useEffect, useMemo, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { AlertMessage, LoadingSpinner } from '../../components/common'
+import { getBuildings, getRooms, getTenants } from '../../services/api'
+import RoomFilters from './components/RoomFilters'
+import RoomTable from './components/RoomTable'
+import styles from './RoomsPage.module.css'
 
 const createMapById = <T extends { id: number }>(items: T[]): Map<number, T> => {
     return new Map(items.map(item => [item.id, item]));

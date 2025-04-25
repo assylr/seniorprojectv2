@@ -1,8 +1,8 @@
-import React from 'react';
-import { Room, Tenant, Building } from '@/types';
-import { LoadingSpinner } from '@/components/common';
-import styles from './RoomTable.module.css';
-import RoomTableRow from './RoomTableRow';
+import { LoadingSpinner } from '@/components/common'
+import { Building, Room, Tenant } from '@/types'
+import React from 'react'
+import styles from './RoomTable.module.css'
+import RoomTableRow from './RoomTableRow'
 
 interface RoomTableProps {
     rooms: Room[];
@@ -68,7 +68,7 @@ const RoomTable: React.FC<RoomTableProps> = ({
                         <RoomTableRow
                             key={room.id}
                             room={room}
-                            building={buildingsMap.get(room.building.id)} // TODO: buildingId or Building
+                            building={buildingsMap.get(room.buildingId)} // TODO: buildingId or Building
                             tenant={activeTenantsMap.get(room.id)}
                         />
                     ))}
