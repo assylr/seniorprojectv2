@@ -105,18 +105,15 @@ export const createTenant = async (tenantData: TenantFormData): Promise<Tenant> 
     return response.data;
 };
 
-export const updateTenant = async (id: number, tenantData: Partial<TenantFormData>): Promise<Tenant> => {
-    console.log('Updating tenant with ID:', id);
-    console.log('Update data:', tenantData);
-    try {
-        const response = await apiClient.put<Tenant>(`/tenants/${id}`, tenantData);
-        console.log('Update response:', response.data);
-        return response.data;
-    } catch (error) {
-        console.error('Error updating tenant:', error);
-        throw error;
-    }
+
+export const updateTenant = async (
+    id: number,
+    tenantData: Partial<TenantFormData>
+): Promise<Tenant> => {
+    const response = await apiClient.put<Tenant>(`/tenants/${id}/checkout`, tenantData);
+    return response.data;
 };
+
 
 export const deleteTenant = async (id: number): Promise<void> => {
     await apiClient.delete(`/tenants/${id}`);

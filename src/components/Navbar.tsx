@@ -22,7 +22,6 @@ const Navbar = () => {
     const handleLogout = () => {
         logout();
         setCurrentUser(null); // clear local user in state
-        navigate('/login');
     };
 
     return (
