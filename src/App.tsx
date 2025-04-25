@@ -16,49 +16,53 @@ import ReportsPage from "./pages/Reports/ReportsPage"
 import RoomsPage from "./pages/Rooms/RoomsPage"
 import TenantsPage from "./pages/Tenants/TenantsPage"
 
+// Import Language Context
+import { LanguageProvider } from './contexts/LanguageContext'
+
 // --- Import Auth/Nav Components ---
 // ProtectedRoute import is no longer strictly needed here unless used elsewhere
 // import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   return (
-    <div className="app">
-      <Router>
-        <Routes>
-          {/* Login Route (still accessible if needed) */}
-          <Route path="/login" element={<LoginPage />} />
+    <LanguageProvider>
+      <div className="app">
+        <Router>
+          <Routes>
+            {/* Login Route (still accessible if needed) */}
+            <Route path="/login" element={<LoginPage />} />
 
-          {/* --- Main Application Routes (Now Publicly Accessible) --- */}
-          <Route element={<ProtectedRoute />}>
-            <Route element={<AdminLayout />}> {/* Apply layout directly */}
-              {/* Define Routes within the Admin Layout */}
+            {/* --- Main Application Routes (Now Publicly Accessible) --- */}
+            <Route element={<ProtectedRoute />}>
+              <Route element={<AdminLayout />}> {/* Apply layout directly */}
+                {/* Define Routes within the Admin Layout */}
 
-              {/* Default route now goes directly to buildings */}
-              <Route index element={<Navigate to="/blocks" replace />} />
+                {/* Default route now goes directly to buildings */}
+                <Route index element={<Navigate to="/blocks" replace />} />
 
-              <Route path="blocks" element={<BuildingsPage />} />
-              <Route path="rooms" element={<RoomsPage />} />
-              <Route path="tenants" element={<TenantsPage />} />
-              <Route path="reports" element={<ReportsPage />} />
-              {/* <Route path="utility-billing" element={<UtilityBilling />} /> */}
-              <Route path="maintenance" element={<Maintenance />} />
+                <Route path="blocks" element={<BuildingsPage />} />
+                <Route path="rooms" element={<RoomsPage />} />
+                <Route path="tenants" element={<TenantsPage />} />
+                <Route path="reports" element={<ReportsPage />} />
+                {/* <Route path="utility-billing" element={<UtilityBilling />} /> */}
+                <Route path="maintenance" element={<Maintenance />} />
 
-              {/* Add other application routes here */}
+                {/* Add other application routes here */}
 
-              {/* Catch-all within the main layout */}
-              <Route path="*" element={<div>Page Not Found</div>} /> {/* Or your NotFoundPage */}
+                {/* Catch-all within the main layout */}
+                <Route path="*" element={<div>Page Not Found</div>} /> {/* Or your NotFoundPage */}
 
-            </Route>{/* End AdminLayout Route */}
-          </Route>
+              </Route>{/* End AdminLayout Route */}
+            </Route>
 
-          {/* Optional: Top-level catch-all (if you want un-matched routes to go somewhere specific) */}
-          {/* If removed, unmatched routes simply won't render anything */}
-          {/* <Route path="*" element={<Navigate to="/buildings" replace />} /> */}
+            {/* Optional: Top-level catch-all (if you want un-matched routes to go somewhere specific) */}
+            {/* If removed, unmatched routes simply won't render anything */}
+            {/* <Route path="*" element={<Navigate to="/buildings" replace />} /> */}
 
-
-        </Routes>
-      </Router>
-    </div>
+          </Routes>
+        </Router>
+      </div>
+    </LanguageProvider>
   );
 }
 

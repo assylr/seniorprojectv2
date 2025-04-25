@@ -1,14 +1,17 @@
-import { useEffect, useState } from "react"
-import { Link, useLocation, useNavigate } from "react-router-dom"
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { getCurrentUser, logout } from "../services/auth"; // Assuming these are still correct
+import styles from './Navbar.module.css';
 
 // --- Import the new component ---
-import LogoutButton from "@/pages/Authentication/components/LogoutButton"
+import LogoutButton from "@/pages/Authentication/components/LogoutButton";
 
 const Navbar = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const [currentUser, setCurrentUser] = useState(getCurrentUser());
+    const { language, setLanguage, t } = useLanguage();
 
     // Re-check localStorage when path changes (covers login/logout navigation)
     useEffect(() => {
@@ -25,28 +28,63 @@ const Navbar = () => {
         navigate('/login');
     };
 
+    const toggleLanguage = () => {
+        setLanguage(language === 'en' ? 'kk' : 'en');
+    };
+
     return (
         <nav>
-            <div className="nav-container">
-                <div className="nav-brand">
+            <div className={styles.navContainer}>
+                <div className={styles.navBrand}>
                     <h1>NU HMS</h1>
                 </div>
-                <ul className="nav-links">
-                    <li><Link to="/" className={location.pathname === "/" ? "active" : ""}>Blocks</Link></li>
-                    <li><Link to="/rooms" className={location.pathname === "/rooms" ? "active" : ""}>Rooms</Link></li>
-                    <li><Link to="/tenants" className={location.pathname === "/tenants" ? "active" : ""}>Tenants</Link></li>
-                    <li><Link to="/maintenance" className={location.pathname === "/maintenance" ? "active" : ""}>Maintenance</Link></li>
-                    <li><Link to="/utility-billing" className={location.pathname === "/utility-billing" ? "active" : ""}>Utility Billing</Link></li>
-                    <li><Link to="/reports" className={location.pathname === "/reports" ? "active" : ""}>Reports</Link></li>
+                <ul className={styles.navLinks}>
+                    <li>
+                        <Link to="/" className={location.pathname === "/" ? styles.active : ""}>
+                            {t('nav.blocks')}
+                        </Link>
+                    </li>
+                    <li>
+                        <Link to="/rooms" className={location.pathname === "/rooms" ? styles.active : ""}>
+                            {t('nav.rooms')}
+                        </Link>
+                    </li>
+                    <li>
+                        <Link to="/tenants" className={location.pathname === "/tenants" ? styles.active : ""}>
+                            {t('nav.tenants')}
+                        </Link>
+                    </li>
+                    <li>
+                        <Link to="/maintenance" className={location.pathname === "/maintenance" ? styles.active : ""}>
+                            {t('nav.maintenance')}
+                        </Link>
+                    </li>
+                    <li>
+                        <Link to="/utility-billing" className={location.pathname === "/utility-billing" ? styles.active : ""}>
+                            {t('nav.utilityBilling')}
+                        </Link>
+                    </li>
+                    <li>
+                        <Link to="/reports" className={location.pathname === "/reports" ? styles.active : ""}>
+                            {t('nav.reports')}
+                        </Link>
+                    </li>
                 </ul>
-                <div className="nav-user">
+                <div className={styles.navUser}>
+                    <button 
+                        onClick={toggleLanguage} 
+                        className={styles.languageButton}
+                        title={t('language')}
+                    >
+                        {language === 'en' ? 'Қаз' : 'En'}
+                    </button>
                     {currentUser ? (
-                            <LogoutButton
-                                onLogout={handleLogout} // Pass the handler function as a prop
-                                className="logout-button" // Pass the class name for styling consistency
-                            />
+                        <LogoutButton
+                            onLogout={handleLogout}
+                            className={styles.logoutButton}
+                        />
                     ) : (
-                        <Link to="/login" className="login-button">Login</Link>
+                        <Link to="/login" className={styles.loginButton}>{t('login')}</Link>
                     )}
                 </div>
             </div>
