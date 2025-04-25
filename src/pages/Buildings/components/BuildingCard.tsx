@@ -1,3 +1,4 @@
+import { useLanguage } from '@/contexts/LanguageContext';
 import React from 'react';
 import { Building } from '../../../types/building';
 import styles from './BuildingCard.module.css';
@@ -10,19 +11,18 @@ export interface BuildingSummary extends Building {
 
 interface BuildingCardProps {
     building: BuildingSummary;
-    // onViewDetails: (id: number) => void; // Placeholder for navigation
 }
 
 const BuildingCard: React.FC<BuildingCardProps> = ({
     building,
 }) => {
+    const { t } = useLanguage();
     
     return (
         <div className={styles.card}>
             <div className={styles.cardHeader}>
                 <span className={styles.buildingTypeBadge}>
-                    {/* Capitalize building type */}
-                    {building.buildingType.charAt(0).toUpperCase() + building.buildingType.slice(1)}
+                    {building.buildingType.toUpperCase()}
                 </span>
             </div>
 
@@ -32,16 +32,16 @@ const BuildingCard: React.FC<BuildingCardProps> = ({
                 {/* Use conditional rendering for potentially null values */}
                 {building.floorCount !== null && (
                     <div>
-                        <span>Floors</span>
+                        <span>{t('buildings.floors')}</span>
                         <span>{building.floorCount}</span>
                     </div>
                 )}
                 <div>
-                    <span>Total Rooms</span>
+                    <span>{t('buildings.totalRooms')}</span>
                     <span>{building.totalRooms}</span>
                 </div>
                 <div>
-                    <span>Occupied</span>
+                    <span>{t('buildings.occupied')}</span>
                     <span>{building.occupiedRooms}</span>
                 </div>
                 {building.totalArea !== null && (
@@ -54,7 +54,7 @@ const BuildingCard: React.FC<BuildingCardProps> = ({
 
             <div className={styles.occupancySection}>
                 <div className={styles.occupancyHeader}>
-                    <span>Occupancy</span>
+                    <span>{t('buildings.occupancy')}</span>
                     <span className={styles.occupancyPercentage}>
                         {building.loadPercentage.toFixed(1)}%
                     </span>

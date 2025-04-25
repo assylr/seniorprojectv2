@@ -1,4 +1,4 @@
-export type BuildingType = "apartment" | "townhouse" | "cottage";
+export type BuildingType = "APARTMENT" | "TOWNHOUSE" | "COTTAGE";
 
 export interface Building {
   id: number;
@@ -9,7 +9,7 @@ export interface Building {
 }
 
 export interface BuildingFormData {
-  buildingType: "apartment" | "townhouse" | "cottage";
+  buildingType: BuildingType;
   buildingNumber: string;
   floorCount: number | null;
   totalArea: number | null;

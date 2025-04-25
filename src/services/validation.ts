@@ -1,15 +1,5 @@
 // src/services/validation.ts
 import { z } from 'zod';
-// Import your FormData types (adjust path if needed)
-// Ensure these types align with the fields used in your Zod schemas
-import {
-    BuildingFormData,
-    RoomFormData,
-    TenantFormData,
-    ContractFormData,
-    PaymentFormData,
-    MaintenanceRequestFormData
-} from '../types';
 
 // --- Basic Reusable Schemas ---
 
@@ -39,19 +29,6 @@ const phoneSchema = z.string()
     .nullable() // Allow null
     .or(z.literal('')); // Also allow empty string
 
-// Optional positive number
-const optionalPositiveNumber = z.number()
-    .positive({ message: "Must be a positive number" })
-    .optional()
-    .nullable();
-
-// Optional positive integer
-const optionalPositiveInteger = z.number()
-    .int({ message: "Must be a whole number" })
-    .positive({ message: "Must be a positive number" })
-    .optional()
-    .nullable();
-
 // Helper for optional date string validation (YYYY-MM-DD format)
 const dateStringSchema = z.string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, { message: "Invalid date format (YYYY-MM-DD)" })
@@ -60,92 +37,43 @@ const dateStringSchema = z.string()
     .or(z.literal('')); // Allow empty string
 
 
-// --- Form Data Schemas ---
-
-// Tenant Form Validation Schema
-// Matches the fields in TenantFormData type
 export const tenantFormSchema = z.object({
     name: requiredString("First name is required"),
     surname: requiredString("Last name is required"),
-    schoolOrDepartment: optionalString,
-    position: optionalString,
-    tenantType: z.enum(['faculty', 'staff', 'rentor'], {
+    school: optionalString, // Matches form field 'school'
+    position: optionalString, // Matches form field 'position'
+    tenantType: z.enum(['FACULTY', 'RENTER'], { // Added RENTER
         required_error: "Tenant type is required",
         invalid_type_error: "Invalid tenant type",
     }),
-    mobile: phoneSchema,
-    email: emailSchema,
-    arrivalDate: dateStringSchema,
-    expectedDepartureDate: dateStringSchema,
-    buildingId: z.number()
-        .nullable()
-        .refine(val => val !== null, { message: "Building selection is required." }),
-    roomId: z.number()
-        .nullable()
-        .refine(val => val !== null, { message: "Room selection is required." })
+    mobile: phoneSchema, // Assumes phoneSchema handles optional/nullable
+    email: emailSchema, // Assumes emailSchema handles optional/nullable
+    // Use form field names:
+    checkInDate: dateStringSchema, // Validates the string input
+    expectedDepartureDate: dateStringSchema, // Validates the string input
+
+    // buildingId is mainly for form logic, maybe not strictly needed in validation schema
+    // unless you require a building to be selected. Add if needed:
+    // buildingId: requiredString("Building is required").nullable().optional(),
+
+    // Room ID can be number or null (if not assigned)
+    roomId: z.number({ invalid_type_error: "Invalid room ID format." })
+        .positive({ message: "Invalid room ID." })
+        .nullable(), // Allow null
+
+    // familyMembers: z.any().nullable().optional(), // Add if needed and validation isn't complex here
+
+}).refine(data => {
+    // Example cross-field validation: departure date must be after arrival date if both provided
+    if (data.checkInDate && data.expectedDepartureDate) {
+        try {
+            return new Date(data.expectedDepartureDate) >= new Date(data.checkInDate);
+        } catch {
+            return false; // Invalid date format handled by field validation
+        }
+    }
+    return true; // Pass if one or both dates are missing
+}, {
+    message: "Expected departure date must be on or after the arrival date.",
+    path: ["expectedDepartureDate"], // Indicate which field the error relates to
 });
-
-// Contract Form Validation Schema (Example - Add if/when needed)
-// export const contractFormSchema = z.object({
-//     tenantId: z.number().positive("Tenant is required"),
-//     roomId: z.number().positive("Room is required"),
-//     startDate: requiredString("Start date is required").regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"),
-//     endDate: requiredString("End date is required").regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"),
-//     monthlyRentAmount: z.number({ required_error: "Monthly rent is required" })
-//         .positive({ message: "Rent must be a positive amount" }),
-//     notes: optionalString,
-// }).refine(data => !data.endDate || !data.startDate || new Date(data.endDate) >= new Date(data.startDate), {
-//     message: "End date cannot be before start date",
-//     path: ["endDate"], // Point error to end date field
-// });
-
-// Payment Form Validation Schema (Example - Add if/when needed)
-// export const paymentFormSchema = z.object({
-//     contractId: z.number().positive(), // Assuming implicitly known
-//     paymentDate: requiredString("Payment date is required").regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"),
-//     amount: z.number({ required_error: "Amount is required" })
-//         .positive({ message: "Amount must be positive" }),
-//     paymentMethod: z.enum(['bank_transfer', 'card', 'cash', 'other']).nullable(),
-//     notes: optionalString,
-// });
-
-// Building Form Validation Schema (Example - Add if/when needed, assuming buildings are static now)
-// export const buildingFormSchema = z.object({
-//     buildingType: z.enum(['apartment', 'townhouse', 'cottage'], { required_error: 'Building type is required'}),
-//     buildingNumber: requiredString('Building number/name is required'),
-//     floorCount: optionalPositiveInteger,
-//     totalArea: optionalPositiveNumber,
-// });
-
-// Room Form Validation Schema (Example - Add if/when needed for room management)
-// export const roomFormSchema = z.object({
-//     buildingId: z.number({ required_error: "Building is required" }).positive("Building is required"),
-//     roomNumber: requiredString('Room number is required'),
-//     bedroomCount: z.number({ required_error: "Bedroom count is required" }).int().min(0, "Cannot be negative"),
-//     totalArea: z.number({ required_error: "Area is required" }).positive("Area must be positive"),
-//     floorNumber: z.number().int().nullable().optional(),
-//     isAvailable: z.boolean(),
-//     baseRent: optionalPositiveNumber,
-// });
-
-// Maintenance Request Form Validation Schema (Example - Add if/when needed)
-// export const maintenanceRequestFormSchema = z.object({
-//     roomId: z.number({ required_error: "Room is required"}).min(1, "Room is required"),
-//     category: z.enum(['plumbing', 'electrical', 'hvac', 'appliance', 'structural', 'general', 'other'], { required_error: "Category is required" }),
-//     description: requiredString("Description is required"),
-//     priority: z.enum(['low', 'medium', 'high', 'emergency'], { required_error: "Priority is required" }),
-//     notes: optionalString,
-// });
-
-
-// --- Optional: Type Inference ---
-// You can use Zod's inference to automatically create TypeScript types
-// from your schemas. This guarantees your types and validation rules match.
-// If you use this, you might not need to manually define the FormData types in types.ts.
-// export type InferredTenantFormData = z.infer<typeof tenantFormSchema>;
-// export type InferredContractFormData = z.infer<typeof contractFormSchema>;
-// etc.
-
-// --- Export Schemas ---
-// Export the schemas you need for your forms.
-// We currently only need the tenantFormSchema implemented.

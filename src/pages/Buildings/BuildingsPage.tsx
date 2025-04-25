@@ -1,33 +1,31 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
+import React, { useEffect, useMemo, useState } from 'react';
+import { AlertMessage, LoadingSpinner } from '../../components/common';
 import { getBuildings, getRooms } from '../../services/api';
-import { LoadingSpinner, AlertMessage } from '../../components/common';
-import BuildingCard, { BuildingSummary } from './components/BuildingCard';
 import styles from './BuildingsPage.module.css';
+import BuildingCard, { BuildingSummary } from './components/BuildingCard';
 
 const BuildingsPage: React.FC = () => {
-
+    const { t } = useLanguage();
     const [buildings, setBuildings] = useState<BuildingSummary[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
-    const [sortBy, setSortBy] = useState<keyof BuildingSummary | 'buildingNumber'>('buildingNumber'); // Use keys for type safety
+    const [sortBy, setSortBy] = useState<keyof BuildingSummary | 'buildingNumber'>('buildingNumber');
 
-    // --- Data Fetching ---
     useEffect(() => {
         const fetchData = async () => {
             setIsLoading(true);
             setError(null);
             try {
-                // TODO: Consider if backend can provide summary data directly in getBuildings response
                 const [buildingsData, roomsData] = await Promise.all([
                     getBuildings(),
-                    getRooms() // Fetch all rooms - potential performance issue with many rooms
+                    getRooms()
                 ]);
 
-                // Calculate summary data for each building
                 const buildingSummaries = buildingsData.map(building => {
                     const buildingRooms = roomsData.filter(room => room.buildingId === building.id);
                     const totalRooms = buildingRooms.length;
-                    const occupiedRooms = buildingRooms.filter(room => !room.isAvailable).length;
+                    const occupiedRooms = buildingRooms.filter(room => room.status === 'OCCUPIED').length;
                     const loadPercentage = totalRooms > 0 ? (occupiedRooms / totalRooms) * 100 : 0;
 
                     return {
@@ -40,11 +38,8 @@ const BuildingsPage: React.FC = () => {
 
                 setBuildings(buildingSummaries);
             } catch (err: unknown) {
-
-                let errorMessage = "Failed to fetch building data";
-
+                let errorMessage = t('buildings.error');
                 if (err instanceof Error) errorMessage = err.message;
-
                 setError(errorMessage);
                 console.error("Fetch error:", err);
             } finally {
@@ -52,9 +47,8 @@ const BuildingsPage: React.FC = () => {
             }
         };
         fetchData();
-    }, []); // Empty dependency array runs once on mount
+    }, [t]);
 
-    // --- Sorting Logic (Memoized) ---
     const sortedBuildings = useMemo(() => {
         return [...buildings].sort((a, b) => {
             switch(sortBy) {
@@ -62,57 +56,49 @@ const BuildingsPage: React.FC = () => {
                     return b.loadPercentage - a.loadPercentage;
                 case 'totalRooms':
                     return b.totalRooms - a.totalRooms;
-                case 'buildingNumber': // Fallback to buildingNumber
+                case 'buildingNumber':
                 default:
-                    // Handle potential null/undefined if buildingNumber isn't guaranteed
                     return (a.buildingNumber ?? '').localeCompare(b.buildingNumber ?? '');
             }
         });
-    }, [buildings, sortBy]); // Recalculate only when buildings or sortBy changes
+    }, [buildings, sortBy]);
 
-
-    // --- Render Logic ---
     return (
         <div className={styles.pageContainer}>
-            {/* Use AlertMessage for feedback */}
             <AlertMessage message={error} type="error" onClose={() => setError(null)} />
 
             <div className={styles.headerActions}>
-                <h1>Blocks</h1>
+                <h1>{t('buildings.title')}</h1>
                 <div className={styles.controls}>
-                     {/* Sort Controls */}
                     <div className={styles.sortControls}>
-                        <label htmlFor="sortBy">Sort by:</label>
+                        <label htmlFor="sortBy">{t('buildings.sortBy')}</label>
                         <select
                             id="sortBy"
                             value={sortBy}
                             onChange={(e) => setSortBy(e.target.value as keyof BuildingSummary | 'buildingNumber')}
-                            disabled={isLoading} // Disable while loading
+                            disabled={isLoading}
                         >
-                            <option value="buildingNumber">Building Number</option>
-                            <option value="loadPercentage">Occupancy (Highest)</option>
-                            <option value="totalRooms">Total Rooms (Highest)</option>
+                            <option value="buildingNumber">{t('buildings.buildingNumber')}</option>
+                            <option value="loadPercentage">{t('buildings.occupancyHighest')}</option>
+                            <option value="totalRooms">{t('buildings.totalRoomsHighest')}</option>
                         </select>
                     </div>
-                 </div>
-
+                </div>
             </div>
 
-            {/* Loading State */}
             {isLoading && (
                 <div className={styles.loadingContainer}>
                     <LoadingSpinner size="large" />
-                    <p>Loading buildings...</p>
+                    <p>{t('buildings.loading')}</p>
                 </div>
             )}
 
-            {/* Data Display */}
             {!isLoading && !error && (
                 <>
                     {sortedBuildings.length === 0 ? (
-                         <p className={styles.noDataMessage}>No buildings found.</p>
+                        <p className={styles.noDataMessage}>{t('buildings.noData')}</p>
                     ) : (
-                         <div className={styles.cardGrid}>
+                        <div className={styles.cardGrid}>
                             {sortedBuildings.map((building) => (
                                 <BuildingCard
                                     key={building.id}

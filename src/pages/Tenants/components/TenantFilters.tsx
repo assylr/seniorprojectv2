@@ -1,12 +1,12 @@
 // src/pages/Tenants/components/TenantFilters.tsx
 import React, { ChangeEvent } from 'react';
-import { Building } from '@/types'; // Adjust path
+import { Building, TenantStatusType, TenantType } from '@/types';
 import styles from './TenantFilters.module.css';
 
-// Ensure this interface matches or is imported from a shared location
 export interface TenantFilterState {
-    status: 'active' | 'checked-out' | '';
-    type: 'faculty' | 'staff' | ''; // Assuming these are your types
+    // --- Match backend status values ---
+    status: TenantStatusType | ''; // Example: Use backend values
+    tenantType: TenantType | ''; // Assuming these are your types
     buildingId: string;
     searchQuery: string;
 }
@@ -16,22 +16,23 @@ interface TenantFiltersProps {
     onFilterChange: <K extends keyof TenantFilterState>(key: K, value: TenantFilterState[K]) => void;
     buildings: Building[];
     isLoading: boolean;
+    // Add tenantTypes prop if needed: tenantTypes: string[];
 }
 
 const TenantFilters: React.FC<TenantFiltersProps> = ({
     filters,
     onFilterChange,
     buildings,
-    isLoading
+    isLoading,
+    // tenantTypes = [] // Default if passed
 }) => {
 
-    // Generic handler works well
     const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        onFilterChange(name as keyof TenantFilterState, value); // Simplified assertion
+        // Ensure type safety if possible, otherwise cast
+        onFilterChange(name as keyof TenantFilterState, value as TenantFilterState[keyof TenantFilterState]);
     };
 
-    // Clear search is fine
     const handleClearSearch = () => {
         onFilterChange('searchQuery', '');
     };
@@ -40,29 +41,19 @@ const TenantFilters: React.FC<TenantFiltersProps> = ({
         <div className={styles.filtersContainer}>
             {/* Search Box */}
             <div className={styles.searchBox}>
-                <input
-                    type="search" // Use type="search" for potential browser enhancements
+                 {/* ... Search input ... */}
+                 <input
+                    type="search"
                     name="searchQuery"
-                    placeholder="Search by name, email, phone, room..."
+                    placeholder="Search tenants..."
                     value={filters.searchQuery}
                     onChange={handleInputChange}
                     disabled={isLoading}
                     aria-label="Search tenants"
                  />
-                {/* Use type="button" for buttons not submitting forms */}
                 {filters.searchQuery && (
-                    <button
-                        type="button"
-                        className={styles.clearSearch}
-                        onClick={handleClearSearch}
-                        aria-label="Clear search"
-                        disabled={isLoading}
-                        title="Clear search"
-                    >
-                        × {/* Use HTML entity for 'x' */}
-                    </button>
+                    <button type="button" className={styles.clearSearch} onClick={handleClearSearch} aria-label="Clear search" disabled={isLoading}>×</button>
                 )}
-                 {/* Consider using an icon library instead of emoji */}
                  <span className={styles.searchIcon} aria-hidden="true">🔍</span>
             </div>
 
@@ -75,36 +66,35 @@ const TenantFilters: React.FC<TenantFiltersProps> = ({
                     disabled={isLoading}
                     aria-label="Filter by status"
                  >
-                    <option value="">All Status</option>
-                    <option value="active">Active</option>
-                    <option value="checked-out">Checked Out</option>
+                    <option value="">All Statuses</option>
+                    <option value="ACTIVE">Active</option>
+                    <option value="CHECKED_OUT">Checked Out</option>
+                    <option value="PENDING">Pending</option>
                 </select>
 
                 <select
-                    name="type"
-                    value={filters.type}
+                    name="tenantType"
+                    value={filters.tenantType}
                     onChange={handleInputChange}
                     disabled={isLoading}
                     aria-label="Filter by type"
                  >
                     <option value="">All Types</option>
-                    <option value="faculty">Faculty</option>
-                    <option value="staff">Staff</option>
-                    {/* Add other types if they exist */}
+                    {/* Populate dynamically if needed from tenantTypes prop */}
+                    <option value="FACULTY">Faculty</option>
+                    <option value="RENTER">Renter</option>
                 </select>
 
                 <select
                     name="buildingId"
                     value={filters.buildingId}
                     onChange={handleInputChange}
-                    disabled={isLoading || buildings.length === 0} // Also disable if buildings haven't loaded
+                    disabled={isLoading || buildings.length === 0}
                     aria-label="Filter by building"
                  >
                     <option value="">All Buildings</option>
                     {buildings.map(building => (
-                        // Key should be unique, value should be string
                         <option key={building.id} value={String(building.id)}>
-                            {/* Provide more context if needed, e.g., Bldg Number */}
                             {building.buildingNumber || `ID: ${building.id}`}
                         </option>
                     ))}

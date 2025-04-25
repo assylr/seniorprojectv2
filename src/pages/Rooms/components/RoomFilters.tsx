@@ -1,11 +1,12 @@
-import React, { ChangeEvent } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Building } from '@/types';
+import React, { ChangeEvent } from 'react';
 import styles from './RoomFilters.module.css';
 
 export interface RoomFilterState {
     buildingId: string;
-    availability: 'available' | 'occupied' | '';
-    bedrooms: string;
+    status: 'AVAILABLE' | 'OCCUPIED' | 'MAINTENANCE' | '';
+    bedroomCount: string;
 }
 
 interface RoomFiltersProps {
@@ -23,6 +24,7 @@ const RoomFilters: React.FC<RoomFiltersProps> = ({
     uniqueBedroomCounts,
     isLoading
 }) => {
+    const { t } = useLanguage();
 
     // Generic handler for select changes
     const handleInputChange = (e: ChangeEvent<HTMLSelectElement>) => {
@@ -39,44 +41,45 @@ const RoomFilters: React.FC<RoomFiltersProps> = ({
                 value={filters.buildingId}
                 onChange={handleInputChange}
                 disabled={isLoading}
-                aria-label="Filter by building"
+                aria-label={t('rooms.filters.building')}
             >
-                <option value="">All Buildings</option>
+                <option value="">{t('rooms.filters.all')} {t('rooms.filters.building')}</option>
 
                 {buildings.map(building => (
                     // Convert building ID to string for the value attribute
                     <option key={building.id} value={String(building.id)}>
-                        Building {building.buildingNumber}
+                        {t('nav.blocks')} {building.buildingNumber}
                     </option>
                 ))}
             </select>
 
             {/* Availability Filter */}
             <select
-                name="availability"
-                value={filters.availability}
+                name="status"
+                value={filters.status}
                 onChange={handleInputChange}
                 disabled={isLoading}
-                aria-label="Filter by status"
+                aria-label={t('rooms.filters.status')}
             >
-                <option value="">All Status</option>
-                <option value="available">Available</option>
-                <option value="occupied">Occupied</option>
+                <option value="">{t('rooms.filters.all')} {t('rooms.filters.status')}</option>
+                <option value="AVAILABLE">{t('rooms.status.available')}</option>
+                <option value="OCCUPIED">{t('rooms.status.occupied')}</option>
+                <option value="MAINTENANCE">{t('rooms.status.maintenance')}</option>
             </select>
 
             {/* Bedrooms Filter */}
             <select
-                name="bedrooms"
-                value={filters.bedrooms}
+                name="bedroomCount"
+                value={filters.bedroomCount}
                 onChange={handleInputChange}
                 disabled={isLoading}
-                aria-label="Filter by bedroom count"
+                aria-label={t('rooms.filters.bedroomCount')}
             >
-                <option value="">All Sizes</option>
+                <option value="">{t('rooms.filters.all')} {t('rooms.filters.bedroomCount')}</option>
                 {uniqueBedroomCounts.map(count => (
                     // Convert count to string for the value attribute
                     <option key={count} value={String(count)}>
-                        {count} Bedroom(s)
+                        {count} {t('rooms.filters.bedroomCount')}
                     </option>
                 ))}
             </select>

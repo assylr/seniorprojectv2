@@ -1,0 +1,140 @@
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modalContent {
+    background-color: white;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.modalHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.modalHeader h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.closeButton {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #718096;
+    cursor: pointer;
+    padding: 0.25rem;
+    line-height: 1;
+}
+
+.closeButton:hover {
+    color: #2d3748;
+}
+
+.modalBody {
+    padding: 1.5rem;
+}
+
+.section {
+    margin-bottom: 1.5rem;
+}
+
+.section:last-child {
+    margin-bottom: 0;
+}
+
+.section h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.detailsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.detailItem {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.label {
+    font-size: 0.875rem;
+    color: #718096;
+}
+
+.value {
+    font-size: 1rem;
+    color: #2d3748;
+    font-weight: 500;
+}
+
+.statusBadge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.available {
+    background-color: rgba(54, 225, 23, 0.864);
+    color: #f5f7f6;
+    border: 1px solid rgba(9, 247, 108, 0.922);
+}
+
+.occupied {
+    background-color: #ffe6e6;
+    color: #cc0000;
+}
+
+.maintenance {
+    background-color: #fff3e6;
+    color: #cc5500;
+}
+
+.occupancyInfo {
+    background-color: #f8fafc;
+    padding: 1rem;
+    border-radius: 6px;
+}
+
+.occupancyCount {
+    font-size: 0.875rem;
+    color: #4a5568;
+}
+
+@media (max-width: 640px) {
+    .modalContent {
+        width: 95%;
+        margin: 1rem;
+    }
+
+    .detailsGrid {
+        grid-template-columns: 1fr;
+    }
+} 

@@ -1,62 +1,23 @@
 // src/pages/Tenants/components/TenantTable.tsx
 import React from 'react';
-// import { Link } from 'react-router-dom'; // Import Link for potential detail views
-import { Tenant, Room, Building } from '../../../types'; // Adjust path
-// import { LoadingSpinner } from '../../../components/common'; // Adjust path
+import { TenantDetailDTO } from '@/types'; // Adjust path if needed
 import styles from './TenantTable.module.css';
+import TenantTableRow from './TenantTableRow'; // Import the new component
 
 interface TenantTableProps {
-    tenants: Tenant[];
-    // Receive maps instead of arrays
-    roomsMap: Map<number, Room>;
-    buildingsMap: Map<number, Building>;
-    isSubmitting: boolean; // For disabling row actions
-    onEditTenant: (tenant: Tenant) => void;
-    onCheckOutTenant: (tenant: Tenant) => void;
-    // Optional: Add handlers for delete, view details etc.
-    // onDeleteTenant?: (tenant: Tenant) => void;
+    tenants: TenantDetailDTO[];
+    isSubmitting: boolean;
+    onCheckOutTenant: (tenant: TenantDetailDTO) => void;
+    onViewTenant: (tenant: TenantDetailDTO) => void;
 }
 
 const TenantTable: React.FC<TenantTableProps> = ({
     tenants,
-    roomsMap,
-    buildingsMap,
     isSubmitting,
-    onEditTenant,
     onCheckOutTenant,
-    // onDeleteTenant,
+    onViewTenant,
 }) => {
-
-    // Helper uses maps now - much faster
-    const getRoomInfo = (roomId: number | null | undefined): string => {
-        if (!roomId) return 'N/A';
-        const room = roomsMap.get(roomId);
-        if (!room) return 'Unknown Room'; // Handle case where room ID is invalid
-        const building = buildingsMap.get(room.buildingId);
-        // Combine building number and room number
-        return `${building?.buildingNumber ?? '?'}-${room.roomNumber}`;
-    };
-
-    // Status calculation remains the same conceptually
-    const getTenantStatus = (tenant: Tenant): { text: string; className: string } => {
-        const isCheckedOut = !!tenant.expectedDepartureDate && new Date(tenant.expectedDepartureDate) <= new Date();
-        if (isCheckedOut) {
-            return { text: 'Checked Out', className: styles.statusCheckedOut };
-        }
-        return { text: 'Active', className: styles.statusActive };
-    };
-
-    // Helper for date formatting
-    const formatDate = (dateInput: Date | string | null | undefined): string => {
-        if (!dateInput) return 'N/A';
-        try {
-            // Handles both Date objects and valid date strings
-            return new Date(dateInput).toLocaleDateString();
-        } catch (e) {
-            return 'Invalid Date';
-        }
-    };
-
+    const columnCount = 7; // Updated: Name, Type, Location, Status, Arrival, Departure, Actions
 
     return (
         <div className={styles.tableContainer}>
@@ -65,7 +26,6 @@ const TenantTable: React.FC<TenantTableProps> = ({
                     <tr>
                         <th>Name</th>
                         <th>Type</th>
-                        <th>Contact</th>
                         <th>Location</th>
                         <th>Status</th>
                         <th>Arrival</th>
@@ -74,82 +34,25 @@ const TenantTable: React.FC<TenantTableProps> = ({
                     </tr>
                 </thead>
                 <tbody>
-                    {/* Loading/No Results handled by parent, only render rows */}
+                    {/* Handle empty state */}
                     {tenants.length === 0 && (
                         <tr>
-                            <td colSpan={8} className={styles.noResultsCell}>
+                            <td colSpan={columnCount} className={styles.noResultsCell}>
                                 No tenants match the current filters.
                             </td>
                         </tr>
                     )}
 
-                    {tenants.map((tenant) => {
-                        const statusInfo = getTenantStatus(tenant);
-                        const locationInfo = getRoomInfo(tenant.currentRoomId);
-
-                        return (
-                            <tr key={tenant.id}>
-                                <td>
-                                    {/* Optional: Link to tenant detail page */}
-                                    {/* <Link to={`/tenants/${tenant.id}`}>{tenant.firstName} {tenant.lastName}</Link> */}
-                                    {tenant.name} {tenant.surname}
-                                </td>
-                                <td>{tenant.tenantType}</td>
-                                <td className={styles.contactCell}>
-                                    {tenant.email && <div>{tenant.email}</div>}
-                                    {tenant.mobile && <div>{tenant.mobile}</div>}
-                                    {!tenant.email && !tenant.mobile && 'N/A'}
-                                </td>
-                                <td>{locationInfo}</td>
-                                <td>
-                                    <span className={`${styles.statusBadge} ${statusInfo.className}`}>
-                                        {statusInfo.text}
-                                    </span>
-                                </td>
-                                <td>{formatDate(tenant.arrivalDate)}</td>
-                                <td>{formatDate(tenant.expectedDepartureDate)}</td>
-                                <td className={styles.actionsCell}>
-                                    <button
-                                        type="button"
-                                        onClick={() => onEditTenant(tenant)}
-                                        className={`${styles.actionButton} ${styles.editButton}`}
-                                        title="Edit Tenant"
-                                        disabled={isSubmitting}
-                                        aria-label={`Edit ${tenant.name} ${tenant.surname}`}
-                                    >
-                                        {/* Use text or icons consistently */}
-                                        Edit
-                                    </button>
-                                    {/* Only show Check Out if tenant is active (not already checked out) */}
-                                    {statusInfo.text === 'Active' && (
-                                        <button
-                                            type="button"
-                                            onClick={() => onCheckOutTenant(tenant)}
-                                            className={`${styles.actionButton} ${styles.checkOutButton}`}
-                                            title="Check Out Tenant"
-                                            disabled={isSubmitting}
-                                            aria-label={`Check out ${tenant.name} ${tenant.surname}`}
-                                        >
-                                             Check Out
-                                        </button>
-                                    )}
-                                    {/* Example Delete Button */}
-                                    {/* {onDeleteTenant && (
-                                        <button
-                                            type="button"
-                                            onClick={() => onDeleteTenant(tenant)}
-                                            className={`${styles.actionButton} ${styles.deleteButton}`}
-                                            title="Delete Tenant"
-                                            disabled={isSubmitting}
-                                            aria-label={`Delete ${tenant.firstName} ${tenant.lastName}`}
-                                        >
-                                            Delete
-                                        </button>
-                                    )} */}
-                                </td>
-                            </tr>
-                        );
-                    })}
+                    {/* Map tenants array to TenantTableRow components */}
+                    {tenants.map((tenant) => (
+                        <TenantTableRow
+                            key={tenant.id}
+                            tenant={tenant}
+                            isSubmitting={isSubmitting}
+                            onCheckOutTenant={onCheckOutTenant}
+                            onViewTenant={onViewTenant}
+                        />
+                    ))}
                 </tbody>
             </table>
         </div>

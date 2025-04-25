@@ -1,75 +1,58 @@
-import { LoadingSpinner } from '@/components/common'
-import { Building, Room, Tenant } from '@/types'
-import React from 'react'
-import styles from './RoomTable.module.css'
-import RoomTableRow from './RoomTableRow'
+import { LoadingSpinner } from '@/components/common';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { RoomDetailDTO } from '@/types';
+import React from 'react';
+import styles from './RoomTable.module.css';
+import RoomTableRow from './RoomTableRow';
 
 interface RoomTableProps {
-    rooms: Room[];
-    buildingsMap: Map<number, Building>;
-    activeTenantsMap: Map<number, Tenant>;
+    rooms: RoomDetailDTO[];
     isLoading: boolean;
-
-    // Optional action handlers (add if functionality is needed)
-    // onEditRoom?: (room: Room) => void;
-    // onDeleteRoom?: (room: Room) => void;
 }
 
 const RoomTable: React.FC<RoomTableProps> = ({
     rooms,
-    buildingsMap,
-    activeTenantsMap,
     isLoading,
-
-    // onEditRoom,
-    // onDeleteRoom,
 }) => {
+    const { t } = useLanguage();
+    const columnCount = 8;
 
     return (
         <div className={styles.tableContainer}>
             <table className={styles.roomTable}>
                 <thead>
                     <tr>
-                        <th>Room #</th>
-                        <th>Building</th>
-                        <th>Floor</th>
-                        <th>Bedrooms</th>
-                        <th>Area (m²)</th>
-                        <th>Base Rent</th>
-                        <th>Status</th>
-                        <th>Occupant</th>
-
-                        {/* Uncomment if actions are added */}
-                        {/* <th>Actions</th> */}
+                        <th>{t('rooms.table.building')}</th>
+                        <th>{t('rooms.table.number')}</th>
+                        <th>{t('rooms.table.floor')}</th>
+                        <th>{t('rooms.table.capacity')}</th>
+                        <th>{t('rooms.table.area')}</th>
+                        <th>{t('rooms.table.status')}</th>
+                        <th>{t('rooms.table.actions')}</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {/* Show loading state row only if parent says it's loading AND table has no data yet */}
                     {isLoading && rooms.length === 0 && (
                          <tr>
-                             <td colSpan={8} className={styles.loadingCell}> {/* Adjust colSpan */}
+                             <td colSpan={columnCount} className={styles.loadingCell}>
                                  <LoadingSpinner size="medium" />
-                                 <span>Loading rooms...</span>
+                                 <span>{t('rooms.loading')}</span>
                              </td>
                          </tr>
                     )}
 
-                    {/* Show "no results" row if not loading and the filtered list is empty */}
                     {!isLoading && rooms.length === 0 && (
                         <tr>
-                            <td colSpan={8} className={styles.noResultsCell}> {/* Adjust colSpan */}
-                                No rooms match the current filters.
+                            <td colSpan={columnCount} className={styles.noResultsCell}>
+                                {t('rooms.table.noData')}
                             </td>
                         </tr>
                     )}
 
-                    {/* Render room rows if not loading or if rows exist */}
-                    {rooms.map((room) => (
+                    {!isLoading && rooms.map((room) => (
                         <RoomTableRow
                             key={room.id}
                             room={room}
-                            building={buildingsMap.get(room.buildingId)} // TODO: buildingId or Building
-                            tenant={activeTenantsMap.get(room.id)}
                         />
                     ))}
                 </tbody>

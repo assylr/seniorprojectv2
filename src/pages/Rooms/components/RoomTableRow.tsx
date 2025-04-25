@@ -1,34 +1,58 @@
-import React from 'react';
-import { Room, Tenant, Building } from '@/types';
-import styles from './RoomTable.module.css';
+import React, { useState } from 'react';
+import { RoomDetailDTO } from '@/types'; // Use the DTO type
+import styles from './RoomTableRow.module.css'; // Assuming styles are in RoomTableRow.module.css
+import RoomDetailsModal from './RoomDetailsModal';
 
 interface RoomTableRowProps {
-  room: Room;
-  building: Building | undefined;
-  tenant: Tenant | undefined;
+  room: RoomDetailDTO;
+  onView?: (room: RoomDetailDTO) => void;
 }
 
-const RoomTableRow: React.FC<RoomTableRowProps> = ({ room, building, tenant }) => {
-  const isOccupied = !!tenant;
-  const statusText = isOccupied ? 'Occupied' : 'Available';
-  const statusClass = isOccupied ? styles.statusOccupied : styles.statusAvailable;
+// Helper function to get status class (optional, can do inline)
+const getStatusClass = (status: RoomDetailDTO['status']): string => {
+    switch (status) {
+        case 'OCCUPIED': return styles.statusOccupied;
+        case 'MAINTENANCE': return styles.statusMaintenance;
+        case 'AVAILABLE':
+        default: return styles.statusAvailable;
+    }
+}
+
+const RoomTableRow: React.FC<RoomTableRowProps> = ({ room }) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleViewClick = () => {
+    setIsModalOpen(true);
+  };
+
+  const statusText = room.status;
+  const statusClass = getStatusClass(room.status);
 
   return (
-    <tr>
-      <td>{room.roomNumber}</td>
-      <td>{building ? building.buildingNumber : `ID: ${room.buildingId}`}</td>
-      <td>{room.floorNumber ?? 'N/A'}</td>
-      <td className={styles.centerAlign}>{room.bedroomCount}</td>
-      <td className={styles.rightAlign}>{room.totalArea}</td>
-      <td className={styles.rightAlign}>
-        {room.baseRent != null ? `$${room.baseRent.toFixed(2)}` : 'N/A'}
-      </td>
-      <td>
-        <span className={`${styles.statusBadge} ${statusClass}`}>{statusText}</span>
-      </td>
-      <td>{tenant ? `${tenant.name} ${tenant.surname}` : '---'}</td>
-    </tr>
+    <>
+      <tr>
+        <td>{room.buildingName}</td>
+        <td>{room.roomNumber}</td>
+        <td>{room.floorNumber ?? 'N/A'}</td>
+        <td>{room.bedroomCount}</td>
+        <td>{room.totalArea ?? 'N/A'}</td>
+        <td>
+          <span className={`${styles.statusBadge} ${statusClass}`}>{statusText}</span>
+        </td>
+        
+        <td className={styles.actionsCell}>
+          <button onClick={handleViewClick} className={styles.actionButton}>View</button>
+        </td>
+       
+      </tr>
+      <RoomDetailsModal
+        room={room}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
+    </>
   );
 };
 
+// Memoization can be useful for table rows if props don't change often
 export default React.memo(RoomTableRow);

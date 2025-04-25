@@ -1,158 +1,139 @@
-import { Building, Room, Tenant } from '@/types'
-import React, { useEffect, useMemo, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
-import { AlertMessage, LoadingSpinner } from '../../components/common'
-import { getBuildings, getRooms, getTenants } from '../../services/api'
-import RoomFilters from './components/RoomFilters'
-import RoomTable from './components/RoomTable'
-import styles from './RoomsPage.module.css'
+import { AlertMessage, LoadingSpinner } from '@/components/common';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getBuildings, getRoomDetails } from '@/services/api'; // Use new API functions
+import { Building, RoomDetailDTO } from '@/types'; // Import RoomDetailDto
+import React, { useCallback, useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import RoomFilters, { RoomFilterState } from './components/RoomFilters'; // RoomFilterState might need adjustment
+import RoomTable from './components/RoomTable';
+import styles from './RoomsPage.module.css';
 
-const createMapById = <T extends { id: number }>(items: T[]): Map<number, T> => {
-    return new Map(items.map(item => [item.id, item]));
+// Initial filter state remains similar
+const initialFilters: RoomFilterState = {
+    buildingId: '',
+    status: '', // This now maps to backend 'status' filter
+    bedroomCount: '' // change to bedroomCount
 };
 
-interface RoomFilterState {
-    buildingId: string;
-    availability: 'available' | 'occupied' | '';
-    bedrooms: string;
-}
+const STATIC_BEDROOM_COUNTS: number[] = [1, 2, 3, 4, 5];
 
 const RoomsPage: React.FC = () => {
+    const { t } = useLanguage();
+    const [rooms, setRooms] = useState<RoomDetailDTO[]>([]);
+    const [filterBuildings, setFilterBuildings] = useState<Building[]>([]);
 
-    const [rooms, setRooms] = useState<Room[]>([]);
-    const [buildingsMap, setBuildingsMap] = useState<Map<number, Building>>(new Map());
-    const [activeTenantsMap, setActiveTenantsMap] = useState<Map<number, Tenant>>(new Map());
+    const [uniqueBedroomCounts, setUniqueBedroomCounts] = useState<number[]>(STATIC_BEDROOM_COUNTS);
+
     const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [isFetchingFilters, setIsFetchingFilters] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
-    const [filters, setFilters] = useState<RoomFilterState>({
-        buildingId: '', availability: '', bedrooms: ''
-    });
+
+    const [filters, setFilters] = useState<RoomFilterState>(initialFilters);
 
     const location = useLocation();
     const navigate = useNavigate();
 
-    useEffect(() => { /* ... fetchData logic ... */
-        const fetchData = async () => {
-            setIsLoading(true);
-            setError(null);
+    useEffect(() => {
+        const fetchFilterData = async () => {
+            setIsFetchingFilters(true);
             try {
-                const [roomsData, tenantsData, buildingsData] = await Promise.all([ getRooms(), getTenants(), getBuildings() ]);
-                setRooms(roomsData);
-                setBuildingsMap(createMapById(buildingsData));
-                const tenantMap = new Map<number, Tenant>();
-                tenantsData.forEach(tenant => {
-                    const isCheckedOut = !!tenant.expectedDepartureDate && new Date(tenant.expectedDepartureDate) <= new Date();
-                    if (tenant.currentRoomId && !isCheckedOut) {
-                        tenantMap.set(tenant.currentRoomId, tenant);
-                    }
-                });
-                setActiveTenantsMap(tenantMap);
+                const buildingsData = await getBuildings();
+                setFilterBuildings(buildingsData);
+                setUniqueBedroomCounts(STATIC_BEDROOM_COUNTS);
             } catch (err: unknown) {
-                
-                let message = 'Failed to fetch room data';
-
-                if (err instanceof Error) {
-                    message = err?.message;
-                    console.error(err.stack);
-                }
-                console.error("RoomsPage: Fetch error -", err);
-                setError(message);
-
+                console.error("Failed to fetch filter data:", err);
+                setError(t('rooms.error.filters'));
             } finally {
-                setIsLoading(false);
+                setIsFetchingFilters(false);
             }
         };
-        fetchData();
-     }, []);
+        fetchFilterData();
+    }, [t]);
 
-    useEffect(() => { /* ... query param logic ... */
+    // Effect to synchronize URL query parameters to filter state
+    useEffect(() => {
         const params = new URLSearchParams(location.search);
-        const buildingIdFromQuery = params.get('buildingId') || '';
-        const availabilityFromQuery = params.get('availability') as 'available' | 'occupied' | '' || '';
-        const bedroomsFromQuery = params.get('bedrooms') || '';
-
         setFilters({
-            buildingId: buildingIdFromQuery,
-            availability: availabilityFromQuery,
-            bedrooms: bedroomsFromQuery,
+            buildingId: params.get('buildingId') || '',
+            status: (params.get('status') as RoomFilterState['status']) || '',
+            bedroomCount: params.get('bedroomCount') || '',
         });
     }, [location.search]);
 
-    const filteredRooms = useMemo(() => { /* ... filtering logic ... */
-         return rooms.filter(room => {
-            const isOccupied = activeTenantsMap.has(room.id);
-            const roomAvailability = isOccupied ? 'occupied' : 'available';
-            const buildingMatch = !filters.buildingId || room.buildingId.toString() === filters.buildingId;
-            const availabilityMatch = !filters.availability || roomAvailability === filters.availability;
-            const bedroomMatch = !filters.bedrooms || room.bedroomCount.toString() === filters.bedrooms;
-            return buildingMatch && availabilityMatch && bedroomMatch;
-        });
-    }, [rooms, filters, activeTenantsMap]);
+    const fetchRooms = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const queryParams = new URLSearchParams();
+            if (filters.buildingId) queryParams.set('buildingId', filters.buildingId);
+            if (filters.status) queryParams.set('status', filters.status);
+            if (filters.bedroomCount) queryParams.set('bedroomCount', filters.bedroomCount);
 
-    const uniqueBedroomCounts = useMemo(() => { /* ... unique counts logic ... */
-        const counts = new Set(rooms.map(room => room.bedroomCount));
-        const sortedCounts = Array.from(counts).sort((a, b) => a - b);
-        return sortedCounts;
-    }, [rooms]);
+            // Call the new API function
+            const roomsData = await getRoomDetails(queryParams);
+            setRooms(roomsData);
+            setError(null);
+        } catch (err: unknown) {
+            let message = t('rooms.error.fetch');
+            if (err instanceof Error) message = err.message;
+            console.error("RoomsPage: Fetch error -", err);
+            setError(message);
+            setRooms([]);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [filters, t]);
 
-    // --- Action Handlers --- (No changes)
+    useEffect(() => {
+        if (!isFetchingFilters) {
+            fetchRooms();
+        }
+    }, [fetchRooms, isFetchingFilters]);
+
+
     const handleFilterChange = <K extends keyof RoomFilterState>(key: K, value: RoomFilterState[K]) => {
-        setFilters(prevFilters => {
-            const updatedFilters = {...prevFilters, [key]: value};
+        // const updatedFilters = { ...filters, [key]: value };
 
-            // Sync updated filters to the URL
-            const query = new URLSearchParams();
+        const query = new URLSearchParams(location.search);
+        if (value) {
+            query.set(key, value);
+        } else {
+            query.delete(key);
+        }
+        navigate(`?${query.toString()}`, { replace: true });
 
-            if (updatedFilters.buildingId) query.set('buildingId', updatedFilters.buildingId);
-            if (updatedFilters.availability) query.set('availability', updatedFilters.availability);
-            if (updatedFilters.bedrooms) query.set('bedrooms', updatedFilters.bedrooms);
-
-            navigate(`?${query.toString()}`);
-
-            return updatedFilters;
-        })
+        // Setting filters state is handled by the useEffect listening to location.search
+        // setFilters(updatedFilters); // No longer needed here if using location.search effect
     };
-    // const handleEditRoom = (room: Room) => { /* ... */ };
-    // const handleDeleteRoom = (room: Room) => { /* ... */ };
 
+    const showInitialLoading = isLoading && rooms.length === 0 && !error;
+    const filtersDisabled = isFetchingFilters || isLoading;
 
-    // --- Render Logic ---
     return (
         <div className={styles.pageContainer}>
-
             <AlertMessage message={error} type="error" onClose={() => setError(null)} />
 
             <div className={styles.headerActions}>
-                <h1>Rooms</h1>
-                {/* !TODO: Add Create button if rooms are manageable */}
-                {/* <button className={styles.primaryButton} disabled={isLoading}>+ Add Room</button> */}
+                <h1>{t('rooms.title')}</h1>
+                {/* Add Create button later */}
             </div>
 
-            {/* Integrate RoomFilters */}
             <RoomFilters
                 filters={filters}
                 onFilterChange={handleFilterChange}
-                buildings={Array.from(buildingsMap.values())}
+                buildings={filterBuildings}
                 uniqueBedroomCounts={uniqueBedroomCounts}
-                isLoading={isLoading} // Disable filters while initially loading
+                isLoading={filtersDisabled}
             />
 
-            {/* Integrate RoomTable */}
-            {/* Conditionally render table or initial loading spinner */}
-            {isLoading && rooms.length === 0 ? (
+            {showInitialLoading ? (
                 <div className={styles.loadingContainer}>
                     <LoadingSpinner size="large" />
-                    <p>Loading rooms...</p>
+                    <p>{t('rooms.loading')}</p>
                 </div>
             ) : (
                 <RoomTable
-                    rooms={filteredRooms} // Pass the memoized filtered list
-                    buildingsMap={buildingsMap}
-                    activeTenantsMap={activeTenantsMap}
-                    isLoading={isLoading} // Let table know if parent is still loading (e.g., for refetch)
-                    // Pass action handlers if implemented
-                    // onEditRoom={handleEditRoom}
-                    // onDeleteRoom={handleDeleteRoom}
+                    rooms={rooms}
+                    isLoading={isLoading}
                 />
             )}
         </div>

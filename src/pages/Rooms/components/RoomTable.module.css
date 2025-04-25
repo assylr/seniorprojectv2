@@ -2,68 +2,192 @@
 .tableContainer {
     overflow-x: auto;
     margin-top: 1.5rem;
-    border: 1px solid #dee2e6;
-    border-radius: 4px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    background-color: #fff;
 }
 
 .roomTable {
     width: 100%;
-    border-collapse: collapse;
-    font-size: 0.9rem;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.875rem;
     background-color: #fff;
 }
 
 .roomTable th,
 .roomTable td {
-    padding: 0.8rem 1rem;
-    text-align: left;
-    border-bottom: 1px solid #dee2e6;
+    padding: 0.75rem 1rem;
+    text-align: center;
+    border-bottom: 1px solid #e2e8f0;
     vertical-align: middle;
     white-space: nowrap;
+    transition: all 0.2s ease;
 }
-.roomTable td:nth-child(1) { white-space: normal; }
-.roomTable td:nth-child(8) { white-space: normal; }
 
+.roomTable td:nth-child(1),
+.roomTable td:nth-child(8) { 
+    white-space: normal; 
+}
 
 .roomTable th {
-    background-color: #f8f9fa;
+    background-color: #f8fafc;
     font-weight: 600;
-    color: #495057;
+    color: #1a202c;
     position: sticky;
     top: 0;
     z-index: 1;
+    border-bottom: 2px solid #e2e8f0;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+    padding: 0.875rem 1rem;
+}
+
+.roomTable th:first-child {
+    border-top-left-radius: 8px;
+}
+
+.roomTable th:last-child {
+    border-top-right-radius: 8px;
 }
 
 .roomTable tbody tr:nth-of-type(odd) {
-    background-color: rgba(0, 0, 0, 0.02);
+    background-color: #f8fafc;
 }
 
 .roomTable tbody tr:hover {
-    background-color: rgba(0, 123, 255, 0.05);
+    background-color: #edf2f7;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
-
-.centerAlign { text-align: center; }
-.rightAlign { text-align: right; }
 
 .loadingCell,
 .noResultsCell {
     text-align: center;
-    padding: 2rem;
-    color: #6c757d;
+    padding: 3rem 2rem;
+    color: #718096;
     font-style: italic;
+    font-size: 0.95rem;
+    background-color: #fff;
+    animation: fadeIn 0.3s ease;
 }
-.loadingCell span { margin-left: 0.5rem; vertical-align: middle; }
+
+.loadingCell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+.loadingCell span { 
+    margin-left: 0.5rem; 
+    vertical-align: middle;
+    color: #4a5568;
+    font-weight: 500;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
 
 .statusBadge {
-    padding: 0.25em 0.6em;
-    font-size: 0.75rem; font-weight: 700; line-height: 1;
-    color: #fff; text-align: center; white-space: nowrap;
-    vertical-align: baseline; border-radius: 0.25rem; display: inline-block;
+    padding: 0.35em 0.75em;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: #fff;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 6px;
+    display: inline-block;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    min-width: 100px;
 }
-.statusAvailable { background-color: #28a745; }
-.statusOccupied { background-color: #dc3545; }
 
-.actionsCell { white-space: nowrap; text-align: right; }
+.statusAvailable { 
+    background-color: #48bb78;
+    background-image: linear-gradient(to right, #48bb78, #38a169);
+}
 
-/* .actionButton { styles... } */
-/* .deleteButton { styles... } */
+.statusOccupied { 
+    background-color: #f56565;
+    background-image: linear-gradient(to right, #f56565, #e53e3e);
+}
+
+.statusMaintenance { 
+    background-color: #ed8936;
+    background-image: linear-gradient(to right, #ed8936, #dd6b20);
+}
+
+.actionsCell { 
+    white-space: nowrap; 
+    text-align: center;
+    padding-right: 1.5rem !important;
+}
+
+.actionButton {
+    padding: 0.5rem 1rem;
+    background-color: #4299e1;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    min-width: 80px;
+}
+
+.actionButton:hover {
+    background-color: #3182ce;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.actionButton:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+@media (max-width: 768px) {
+    .roomTable th,
+    .roomTable td {
+        padding: 0.625rem 0.875rem;
+        font-size: 0.8rem;
+    }
+    
+    .roomTable th {
+        padding: 0.75rem 0.875rem;
+    }
+    
+    .statusBadge {
+        padding: 0.25em 0.5em;
+        font-size: 0.7rem;
+        min-width: 80px;
+    }
+    
+    .actionButton {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+        min-width: 70px;
+    }
+    
+    .loadingCell,
+    .noResultsCell {
+        padding: 2.5rem 1.5rem;
+    }
+}

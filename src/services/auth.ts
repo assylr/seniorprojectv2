@@ -1,11 +1,17 @@
 // src/services/auth.ts
 import { apiClient } from './api'
 
-const AUTH_TOKEN_KEY = 'token'
+export const AUTH_TOKEN_KEY = 'token'
 export const USER_DATA_KEY = "user";
 
 interface LoginResponse {
   token: string
+  email: string
+  role: 'ADMIN' | 'USER'
+  user: User
+}
+
+interface User {
   email: string
   role: 'ADMIN' | 'USER'
 }

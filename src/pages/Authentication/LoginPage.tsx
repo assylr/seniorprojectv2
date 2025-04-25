@@ -79,8 +79,8 @@ const LoginPage = () => {
 
         <div className={styles['login-help']}>
           <p>For demo purposes, use:</p>
-          <p><strong>Username:</strong> admin</p>
-          <p><strong>Password:</strong> admin123</p>
+          <p><strong>Username:</strong> testuser@example.com</p>
+          <p><strong>Password:</strong> securePassword123</p>
         </div>
       </div>
     </div>

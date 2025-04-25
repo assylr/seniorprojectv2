@@ -1,85 +1,109 @@
 /* src/pages/Tenants/components/TenantFilters.module.css */
 .filtersContainer {
-    background-color: #f8f9fa;
-    padding: 1rem 1.5rem; /* Adjust padding */
-    border-radius: 6px;
+    background-color: #fff;
+    padding: 1.5rem;
+    border-radius: 8px;
     margin-bottom: 1.5rem;
-    display: flex; /* Use flexbox for layout */
-    flex-wrap: wrap; /* Allow wrapping on smaller screens */
-    gap: 1.5rem; /* Space between search and selects */
-    align-items: center; /* Align items vertically */
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    align-items: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .searchBox {
-    position: relative; /* For positioning clear button and icon */
-    flex-grow: 1; /* Allow search box to take available space */
-    min-width: 250px; /* Minimum width */
+    position: relative;
+    flex-grow: 1;
+    min-width: 250px;
 }
 
 .searchBox input {
     width: 100%;
-    padding: 0.6rem 2.5rem 0.6rem 0.75rem; /* Padding for icon/button */
-    border: 1px solid #ced4da;
-    border-radius: 4px;
+    padding: 0.75rem 2.5rem 0.75rem 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
     font-size: 0.9rem;
+    background-color: #f9fafb;
+    transition: all 0.2s ease;
 }
+
 .searchBox input:focus {
     outline: none;
-    border-color: #80bdff;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    background-color: #fff;
+}
+
+.searchBox input:disabled {
+    background-color: #f3f4f6;
+    cursor: not-allowed;
+    opacity: 0.7;
 }
 
 .clearSearch {
     position: absolute;
-    right: 2.2rem; /* Position before the search icon */
+    right: 2.2rem;
     top: 50%;
     transform: translateY(-50%);
     background: none;
     border: none;
     font-size: 1.4rem;
-    color: #6c757d;
+    color: #9ca3af;
     cursor: pointer;
     padding: 0 0.3rem;
     line-height: 1;
+    transition: color 0.2s ease;
 }
+
 .clearSearch:hover {
-    color: #343a40;
+    color: #374151;
+}
+
+.clearSearch:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
 }
 
 .searchIcon {
     position: absolute;
-    right: 0.75rem;
+    right: 1rem;
     top: 50%;
     transform: translateY(-50%);
-    color: #6c757d;
-    pointer-events: none; /* Don't interfere with input focus */
+    color: #9ca3af;
+    pointer-events: none;
 }
-
 
 .selectFilters {
     display: flex;
-    flex-wrap: wrap; /* Allow selects to wrap */
-    gap: 1rem; /* Space between select dropdowns */
+    flex-wrap: wrap;
+    gap: 1rem;
 }
 
 .selectFilters select {
-    padding: 0.6rem 0.75rem;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
+    padding: 0.75rem 2.5rem 0.75rem 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
     font-size: 0.9rem;
     cursor: pointer;
-    background-color: #fff; /* Ensure background color */
-    min-width: 150px; /* Give selects some minimum width */
+    background-color: #f9fafb;
+    min-width: 150px;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239CA3AF'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+.selectFilters select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    background-color: #fff;
 }
 
 .selectFilters select:disabled {
-    background-color: #e9ecef;
+    background-color: #f3f4f6;
     cursor: not-allowed;
-}
-
-/* Optional: Add focus styles for selects */
-.selectFilters select:focus {
-     outline: none;
-    border-color: #80bdff;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    opacity: 0.7;
 }

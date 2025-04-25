@@ -1,269 +1,254 @@
+// src/pages/Tenants/components/TenantForm.tsx
 import React, { useEffect, useMemo } from 'react';
-import { useForm, SubmitHandler, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { tenantFormSchema } from '../../../services/validation';
+import { useForm, Controller } from 'react-hook-form';
+import { TenantDetailDTO, TenantFormData, Room, TenantType, Building } from '@/types';
 import styles from './TenantForm.module.css';
 
 
 interface TenantFormProps {
-    onSubmit: (data: TenantFormData) => Promise<void>; // Or just Promise<Tenant> if API returns it
+    onSubmit: (data: TenantFormData) => Promise<void>;
     onCancel: () => void;
-    initialData?: Tenant | null;
+    initialData?: TenantDetailDTO | null;
     isSubmitting: boolean;
     buildings: Building[];
     rooms: Room[];
 }
 
+type FormState = {
+    name: string;
+    surname: string;
+    mobile: string;
+    email: string;
+    school: string | null;
+    position: string | null;
+    tenantType: TenantType;
+    buildingId: number | null;
+    roomId: number;
+    arrivalDate: string | null;
+    departureDate: string | null;
+    visitingGuests: string | null;
+    deposit: number | null;
+};
+
 const TenantForm: React.FC<TenantFormProps> = ({
     onSubmit,
     onCancel,
     initialData = null,
-    isSubmitting,
     buildings,
     rooms,
 }) => {
-    // Helper to find initial building ID
-    const getInitialBuildingId = (tenant: Tenant | null, allRooms: Room[]): string => {
-        if (tenant?.currentRoomId) {
-            const room = allRooms.find(r => r.id === tenant.currentRoomId);
-            return room?.buildingId?.toString() || '';
-        }
-        return '';
-    };
+    const defaultValues = useMemo(() => ({
+        name: '',
+        surname: '',
+        mobile: '',
+        email: '',
+        school: null,
+        position: null,
+        tenantType: TenantType.FACULTY,
+        buildingId: null,
+        roomId: 0,
+        arrivalDate: null,
+        departureDate: null,
+        visitingGuests: null,
+        deposit: null,
+    }), []);
 
-    // Fix the defaultValues in useForm
-    const { register, handleSubmit, control, formState: { errors }, reset, watch, setValue } = useForm<TenantFormData>({
-        resolver: zodResolver(tenantFormSchema) as any,
-        defaultValues: useMemo(() => {
-            const initialBuildingId = getInitialBuildingId(initialData, rooms);
-            return initialData ? {
-                name: initialData.name,  // Fixed: was swapped with surname
-                surname: initialData.surname,  // Fixed: was swapped with name
-                schoolOrDepartment: initialData.schoolOrDepartment ?? '', // Ensure nulls become empty strings if needed by input
-                position: initialData.position ?? '',
-                tenantType: initialData.tenantType,
-                mobile: initialData.mobile ?? '',
-                email: initialData.email ?? '',
-                arrivalDate: initialData.arrivalDate ? new Date(initialData.arrivalDate).toISOString().split('T')[0] : '',
-                expectedDepartureDate: initialData.expectedDepartureDate ? new Date(initialData.expectedDepartureDate).toISOString().split('T')[0] : '',
-                buildingId: initialBuildingId || '',  // Ensure string type
-                roomId: initialData.currentRoomId
-            } : {
-                // Defaults for create mode
-                name: '', surname: '', schoolOrDepartment: '', position: '',
-                tenantType: undefined, mobile: '', email: '',
-                arrivalDate: '', expectedDepartureDate: '',
-                buildingId: null, // Default building to empty
-                roomId: null,
-            };
-        }, [initialData, rooms]) // Recalculate defaults if initialData or rooms change
+    const {
+        register,
+        handleSubmit,
+        control,
+        formState: { errors, isSubmitting: formIsSubmitting },
+        reset,
+        watch,
+    } = useForm<FormState>({
+        defaultValues,
     });
 
-    // Watch the selected building ID directly from the form state
-    const watchedBuildingId = watch('buildingId');
-    
-    console.log('Buildings from props:', buildings);
-    console.log('Rooms from props:', rooms);
-    console.log('Selected Building ID:', watchedBuildingId);
+    const selectedBuildingId = watch('buildingId');
+    const selectedRoomId = watch('roomId');
 
-    // Filter available rooms based on the watched building ID
-    const availableRoomsForSelectedBuilding = useMemo(() => {
-        console.log('Filtering rooms for building:', watchedBuildingId);
-        
-        if (!watchedBuildingId) {
-            console.log('No building selected');
-            return [];
-        }
-        
-        const buildingId = Number(watchedBuildingId);
-        console.log('Converted building ID:', buildingId);
-        
-        const filteredRooms = rooms.filter(room => {
-            console.log('Checking room:', room);
-            // Access buildingId through the building object
-            const roomBuildingId = room.building?.id;
-            console.log('Room building ID:', roomBuildingId);
-            console.log('Room available:', room.available);
-            
-            return roomBuildingId === buildingId && 
-                   (room.available || room.id === initialData?.currentRoomId);
-        });
-        
-        console.log('Filtered rooms:', filteredRooms);
-        return filteredRooms;
-    }, [watchedBuildingId, rooms, initialData?.currentRoomId]);
+    // Filter available rooms based on selected building
+    const availableRooms = useMemo(() => {
+        return rooms.filter(room => 
+            room.status === 'AVAILABLE' && 
+            (!selectedBuildingId || room.buildingId === selectedBuildingId)
+        );
+    }, [rooms, selectedBuildingId]);
 
-    // Effect to reset room selection when building changes
+    // Reset room selection when building changes
     useEffect(() => {
-        // Don't reset if it's the initial render with pre-selected values matching
-        if (watch('buildingId') !== getInitialBuildingId(initialData, rooms)) {
-             // Check if the current room ID is still valid for the new building
-             const currentRoomId = watch('roomId');
-             const roomIsValidInNewBuilding = availableRoomsForSelectedBuilding.some(r => r.id === currentRoomId);
-
-             if (!roomIsValidInNewBuilding) {
-                 setValue('roomId', null); // Reset room if building changes and current room is no longer valid/available
-             }
+        if (selectedBuildingId) {
+            const currentRoom = rooms.find(r => r.id === selectedRoomId);
+            if (!currentRoom || currentRoom.buildingId !== selectedBuildingId) {
+                reset({ ...watch(), roomId: 0 });
+            }
         }
-        // This effect primarily handles user interaction changing the building
-    }, [watchedBuildingId, setValue, initialData, rooms, watch, availableRoomsForSelectedBuilding]); // Add necessary dependencies
+    }, [selectedBuildingId, selectedRoomId, rooms, reset, watch]);
 
-
-    // Reset form completely if initialData itself changes (e.g., switching from create to edit)
     useEffect(() => {
-        const initialBuildingId = getInitialBuildingId(initialData, rooms);
-        reset({
-            // Use the same logic as defaultValues Memo
-            ...(initialData ? {
-                name: initialData.name, surname: initialData.surname, schoolOrDepartment: initialData.schoolOrDepartment ?? '',
-                position: initialData.position ?? '', tenantType: initialData.tenantType, mobile: initialData.mobile ?? '', email: initialData.email ?? '',
-                arrivalDate: initialData.arrivalDate ? new Date(initialData.arrivalDate).toISOString().split('T')[0] : '',
-                expectedDepartureDate: initialData.expectedDepartureDate ? new Date(initialData.expectedDepartureDate).toISOString().split('T')[0] : '',
-                buildingId: initialBuildingId, roomId: initialData.currentRoomId ?? null,
-            } : {
-                 name: '', surname: '', schoolOrDepartment: '', position: '', tenantType: undefined, mobile: '', email: '',
-                 arrivalDate: '', expectedDepartureDate: '', buildingId: null, roomId: null,
-            })
-        });
-    }, [initialData, reset, rooms]); // Dependency on initialData and potentially rooms
+        reset(defaultValues);
+    }, [reset, defaultValues]);
 
+    const handleFormSubmit = (formData: FormState) => {
+        console.log("Internal Form State Submitted:", formData);
 
-    // Submit handler remains the same conceptually
-    const handleFormSubmit: SubmitHandler<TenantFormData> = async (data) => {
-        try {
-            console.log('Form data before submission:', data);
-            
-            // Ensure proper type conversion
-            const formData = {
-                ...data,
-                buildingId: data.buildingId ? Number(data.buildingId) : null,
-                roomId: data.roomId ? Number(data.roomId) : null,
-                id: initialData?.id || undefined
-            };
-            
-            console.log('Processed form data:', formData);
-            await onSubmit(formData);
-        } catch (error) {
-            console.error('Form submission error:', error);
-            throw error;
-        }
+        const dataToSubmit: TenantFormData = {
+            ...formData,
+            // Ensure roomId is a number
+            roomId: Number(formData.roomId),
+            // Ensure buildingId is a number or null
+            buildingId: formData.buildingId ? Number(formData.buildingId) : null,
+            // Ensure deposit is a number or null
+            deposit: formData.deposit ? Number(formData.deposit) : null,
+        };
+
+        console.log("Data Prepared for API (TenantFormData):", dataToSubmit);
+        onSubmit(dataToSubmit);
     };
 
     return (
         <form onSubmit={handleSubmit(handleFormSubmit)} className={styles.tenantForm}>
             <div className={styles.formGrid}>
-                {/* Tenant Details (Fields remain mostly the same, ensure 'name' matches RHF register) */}
-                 <div className={styles.formGroup}>
-                    <label htmlFor="name">First Name *</label>
-                    <input id="name" {...register('name')} disabled={isSubmitting} aria-invalid={errors.name ? "true" : "false"}/>
-                    {errors.name && <p role="alert" className={styles.errorMessage}>{errors.name.message}</p>}
+                <div className={styles.formGroup}>
+                    <label htmlFor="name">First Name</label>
+                    <input id="name" {...register('name')} disabled={formIsSubmitting} />
+                    {errors.name && <p className={styles.errorMessage}>{errors.name.message}</p>}
                 </div>
-                 <div className={styles.formGroup}>
-                    <label htmlFor="surname">Last Name *</label>
-                    <input id="surname" {...register('surname')} disabled={isSubmitting} aria-invalid={errors.surname ? "true" : "false"}/>
-                    {errors.surname && <p role="alert" className={styles.errorMessage}>{errors.surname.message}</p>}
+                <div className={styles.formGroup}>
+                    <label htmlFor="surname">Last Name</label>
+                    <input id="surname" {...register('surname')} disabled={formIsSubmitting} />
+                    {errors.surname && <p className={styles.errorMessage}>{errors.surname.message}</p>}
                 </div>
-                 <div className={styles.formGroup}>
-                    <label htmlFor="tenantType">Type *</label>
-                    <select id="tenantType" {...register('tenantType')} disabled={isSubmitting} aria-invalid={errors.tenantType ? "true" : "false"}>
-                        <option value="">-- Select Type --</option>
-                        <option value="faculty">Faculty</option>
-                        <option value="staff">Staff</option>
-                        {/* Add other types */}
+                <div className={styles.formGroup}>
+                    <label htmlFor="tenantType">Type</label>
+                    <select id="tenantType" {...register('tenantType')} disabled={formIsSubmitting}>
+                        <option value="">Select Type</option>
+                        <option value="FACULTY">Faculty</option>
+                        <option value="RENTER">Renter</option>
                     </select>
-                    {errors.tenantType && <p role="alert" className={styles.errorMessage}>{errors.tenantType.message}</p>}
+                    {errors.tenantType && <p className={styles.errorMessage}>{errors.tenantType.message}</p>}
                 </div>
                 <div className={styles.formGroup}>
                     <label htmlFor="email">Email</label>
-                    <input id="email" type="email" {...register('email')} disabled={isSubmitting} aria-invalid={errors.email ? "true" : "false"}/>
-                    {errors.email && <p role="alert" className={styles.errorMessage}>{errors.email.message}</p>}
-                </div>
-                 <div className={styles.formGroup}>
-                    <label htmlFor="mobile">Mobile</label>
-                    <input id="mobile" type="tel" {...register('mobile')} disabled={isSubmitting} aria-invalid={errors.mobile ? "true" : "false"}/>
-                    {errors.mobile && <p role="alert" className={styles.errorMessage}>{errors.mobile.message}</p>}
+                    <input id="email" type="email" {...register('email')} disabled={formIsSubmitting} />
+                    {errors.email && <p className={styles.errorMessage}>{errors.email.message}</p>}
                 </div>
                 <div className={styles.formGroup}>
-                    <label htmlFor="schoolOrDepartment">School / Department</label>
-                    <input id="schoolOrDepartment" {...register('schoolOrDepartment')} disabled={isSubmitting} />
+                    <label htmlFor="mobile">Mobile</label>
+                    <input id="mobile" type="tel" {...register('mobile')} disabled={formIsSubmitting} />
+                    {errors.mobile && <p className={styles.errorMessage}>{errors.mobile.message}</p>}
+                </div>
+                <div className={styles.formGroup}>
+                    <label htmlFor="school">School / Dept</label>
+                    <input id="school" {...register('school')} disabled={formIsSubmitting} />
+                    {errors.school && <p className={styles.errorMessage}>{errors.school.message}</p>}
                 </div>
                 <div className={styles.formGroup}>
                     <label htmlFor="position">Position</label>
-                    <input id="position" {...register('position')} disabled={isSubmitting} />
+                    <input id="position" {...register('position')} disabled={formIsSubmitting} />
+                    {errors.position && <p className={styles.errorMessage}>{errors.position.message}</p>}
                 </div>
-                 <div className={styles.formGroup}>
+                <div className={styles.formGroup}>
                     <label htmlFor="arrivalDate">Arrival Date</label>
-                    <input id="arrivalDate" type="date" {...register('arrivalDate')} disabled={isSubmitting} aria-invalid={errors.arrivalDate ? "true" : "false"}/>
-                     {errors.arrivalDate && <p role="alert" className={styles.errorMessage}>{errors.arrivalDate.message}</p>}
+                    <input id="arrivalDate" type="date" {...register('arrivalDate')} disabled={formIsSubmitting} />
+                    {errors.arrivalDate && <p className={styles.errorMessage}>{errors.arrivalDate.message}</p>}
                 </div>
-                 <div className={styles.formGroup}>
-                    <label htmlFor="expectedDepartureDate">Expected Departure</label>
-                    <input id="expectedDepartureDate" type="date" {...register('expectedDepartureDate')} disabled={isSubmitting} aria-invalid={errors.expectedDepartureDate ? "true" : "false"}/>
-                     {errors.expectedDepartureDate && <p role="alert" className={styles.errorMessage}>{errors.expectedDepartureDate.message}</p>}
-                 </div>
+                <div className={styles.formGroup}>
+                    <label htmlFor="departureDate">Expected Departure</label>
+                    <input id="departureDate" type="date" {...register('departureDate')} disabled={formIsSubmitting} />
+                    {errors.departureDate && <p className={styles.errorMessage}>{errors.departureDate.message}</p>}
+                </div>
 
-                 {/* --- Room Assignment --- */}
+                <div className={styles.formGroup}>
+                    <label htmlFor="deposit">Deposit</label>
+                    <input 
+                        id="deposit" 
+                        type="number" 
+                        min="0" 
+                        step="0.01" 
+                        {...register('deposit')} 
+                        disabled={formIsSubmitting} 
+                    />
+                    {errors.deposit && <p className={styles.errorMessage}>{errors.deposit.message}</p>}
+                </div>
+
+                <div className={styles.formGroup}>
+                    <label htmlFor="visitingGuests">Visiting Guests</label>
+                    <textarea 
+                        id="visitingGuests" 
+                        {...register('visitingGuests')} 
+                        disabled={formIsSubmitting}
+                        placeholder="Enter details about visiting guests (optional)"
+                        rows={3}
+                    />
+                    {errors.visitingGuests && <p className={styles.errorMessage}>{errors.visitingGuests.message}</p>}
+                </div>
+
+                <div className={`${styles.formGroup} ${styles.spanFull}`}>
+                    <hr className={styles.divider} />
+                    <h3 className={styles.subheading}>Building Assignment</h3>
+                </div>
+
+                <div className={styles.formGroup}>
+                    <label htmlFor="buildingId">Building *</label>
+                    <Controller
+                        name="buildingId"
+                        control={control}
+                        render={({ field }) => (
+                            <select
+                                {...field}
+                                value={field.value ?? ''}
+                                onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
+                                disabled={formIsSubmitting}
+                            >
+                                <option value="">Select Building</option>
+                                {buildings.map(building => (
+                                    <option key={building.id} value={building.id}>
+                                        {building.buildingNumber}
+                                    </option>
+                                ))}
+                            </select>
+                        )}
+                    />
+                    {errors.buildingId && <p className={styles.errorMessage}>{errors.buildingId.message}</p>}
+                </div>
+
                 <div className={`${styles.formGroup} ${styles.spanFull}`}>
                     <hr className={styles.divider} />
                     <h3 className={styles.subheading}>Room Assignment</h3>
-                 </div>
-
-                 // Building Selection
-                <div className={styles.formGroup}>
-                    <label htmlFor="buildingId">Building *</label>
-                    <select
-                        id="buildingId"
-                        {...register('buildingId', {
-                            setValueAs: (value) => value ? Number(value) : null
-                        })}
-                        disabled={isSubmitting}
-                    >
-                        <option value="">-- Select Building --</option>
-                        {buildings.map(building => (
-                            <option key={building.id} value={building.id}>
-                                {building.buildingNumber}
-                            </option>
-                        ))}
-                    </select>
-                    {errors.buildingId && 
-                        <p role="alert" className={styles.errorMessage}>
-                            {errors.buildingId.message}
-                        </p>
-                    }
                 </div>
 
-                {/* Room Selection */}
                 <div className={styles.formGroup}>
                     <label htmlFor="roomId">Room *</label>
-                    <select
-                        id="roomId"
-                        {...register('roomId', {
-                            setValueAs: (value) => value ? Number(value) : null
-                        })}
-                        disabled={isSubmitting}
-                    >
-                        <option value="">-- Select Room --</option>
-                        {availableRoomsForSelectedBuilding.map(room => (
-                            <option key={room.id} value={room.id}>
-                                Room {room.roomNumber}
-                            </option>
-                        ))}
-                    </select>
-                    {errors.roomId && 
-                        <p role="alert" className={styles.errorMessage}>
-                            {errors.roomId.message}
-                        </p>
-                    }
+                    <Controller
+                        name="roomId"
+                        control={control}
+                        render={({ field }) => (
+                            <select
+                                {...field}
+                                value={field.value ?? ''}
+                                onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : 0)}
+                                disabled={formIsSubmitting || !selectedBuildingId || availableRooms.length === 0}
+                            >
+                                <option value="">Select Room</option>
+                                {availableRooms.map(room => (
+                                    <option key={room.id} value={room.id}>
+                                        {room.roomNumber}
+                                    </option>
+                                ))}
+                            </select>
+                        )}
+                    />
+                    {errors.roomId && <p className={styles.errorMessage}>{errors.roomId.message}</p>}
                 </div>
             </div>
 
-            {/* Form Actions */}
             <div className={styles.formActions}>
-                <button type="button" onClick={onCancel} className={styles.cancelButton} disabled={isSubmitting}>
+                <button type="button" onClick={onCancel} className={styles.cancelButton} disabled={formIsSubmitting}>
                     Cancel
                 </button>
-                <button type="submit" className={styles.submitButton} disabled={isSubmitting}>
-                    {isSubmitting ? 'Saving...' : (initialData ? 'Update Tenant' : 'Create & Check In')}
+                <button type="submit" className={styles.submitButton} disabled={formIsSubmitting}>
+                    {formIsSubmitting ? 'Saving...' : (initialData ? 'Update Tenant' : 'Create & Check In')}
                 </button>
             </div>
         </form>
