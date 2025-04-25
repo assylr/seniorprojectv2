@@ -12,7 +12,7 @@ import styles from './RoomsPage.module.css';
 const initialFilters: RoomFilterState = {
     buildingId: '',
     status: '', // This now maps to backend 'status' filter
-    bedrooms: '' // change to bedroomCount
+    bedroomCount: '' // change to bedroomCount
 };
 
 const STATIC_BEDROOM_COUNTS: number[] = [1, 2, 3, 4, 5];
@@ -56,7 +56,7 @@ const RoomsPage: React.FC = () => {
         setFilters({
             buildingId: params.get('buildingId') || '',
             status: (params.get('status') as RoomFilterState['status']) || '',
-            bedrooms: params.get('bedrooms') || '',
+            bedroomCount: params.get('bedroomCount') || '',
         });
     }, [location.search]);
 
@@ -66,7 +66,7 @@ const RoomsPage: React.FC = () => {
             const queryParams = new URLSearchParams();
             if (filters.buildingId) queryParams.set('buildingId', filters.buildingId);
             if (filters.status) queryParams.set('status', filters.status);
-            if (filters.bedrooms) queryParams.set('bedrooms', filters.bedrooms);
+            if (filters.bedroomCount) queryParams.set('bedroomCount', filters.bedroomCount);
 
             // Call the new API function
             const roomsData = await getRoomDetails(queryParams);

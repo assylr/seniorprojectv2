@@ -6,7 +6,7 @@ import styles from './RoomFilters.module.css';
 export interface RoomFilterState {
     buildingId: string;
     status: 'AVAILABLE' | 'OCCUPIED' | 'MAINTENANCE' | '';
-    bedrooms: string;
+    bedroomCount: string;
 }
 
 interface RoomFiltersProps {
@@ -69,17 +69,17 @@ const RoomFilters: React.FC<RoomFiltersProps> = ({
 
             {/* Bedrooms Filter */}
             <select
-                name="bedrooms"
-                value={filters.bedrooms}
+                name="bedroomCount"
+                value={filters.bedroomCount}
                 onChange={handleInputChange}
                 disabled={isLoading}
-                aria-label={t('rooms.filters.bedrooms')}
+                aria-label={t('rooms.filters.bedroomCount')}
             >
-                <option value="">{t('rooms.filters.all')} {t('rooms.filters.bedrooms')}</option>
+                <option value="">{t('rooms.filters.all')} {t('rooms.filters.bedroomCount')}</option>
                 {uniqueBedroomCounts.map(count => (
                     // Convert count to string for the value attribute
                     <option key={count} value={String(count)}>
-                        {count} {t('rooms.filters.bedrooms')}
+                        {count} {t('rooms.filters.bedroomCount')}
                     </option>
                 ))}
             </select>

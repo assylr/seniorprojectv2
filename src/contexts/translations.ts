@@ -32,7 +32,7 @@ export type TranslationKey =
     | 'rooms.error.filters'
     | 'rooms.filters.building'
     | 'rooms.filters.status'
-    | 'rooms.filters.bedrooms'
+    | 'rooms.filters.bedroomCount'
     | 'rooms.filters.all'
     | 'rooms.status.available'
     | 'rooms.status.occupied'
@@ -118,7 +118,7 @@ export const translations: Translations = {
         'rooms.error.filters': 'Could not load filter options.',
         'rooms.filters.building': 'Building',
         'rooms.filters.status': 'Status',
-        'rooms.filters.bedrooms': 'Bedrooms',
+        'rooms.filters.bedroomCount': 'Bedrooms',
         'rooms.filters.all': 'All',
         'rooms.status.available': 'Available',
         'rooms.status.occupied': 'Occupied',
@@ -196,7 +196,7 @@ export const translations: Translations = {
         'rooms.error.filters': 'Сүзгі параметрлерін жүктеу мүмкін емес.',
         'rooms.filters.building': 'Ғимарат',
         'rooms.filters.status': 'Күйі',
-        'rooms.filters.bedrooms': 'Жатын бөлмелер',
+        'rooms.filters.bedroomCount': 'Жатын бөлмелер',
         'rooms.filters.all': 'Барлық',
         'rooms.status.available': 'Бос',
         'rooms.status.occupied': 'Бос емес',
@@ -281,7 +281,7 @@ export const translations: Translations = {
         'rooms.error.filters': 'Ошибка загрузки фильтров.',
         'rooms.filters.building': 'Здание',
         'rooms.filters.status': 'Статус',
-        'rooms.filters.bedrooms': 'Спальни',
+        'rooms.filters.bedroomCount': 'Спальни',
         'rooms.filters.all': 'Все',
         'rooms.status.available': 'Свободно',
         'rooms.status.occupied': 'Занято',
