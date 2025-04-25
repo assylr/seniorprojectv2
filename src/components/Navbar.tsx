@@ -1,11 +1,11 @@
-import { useLanguage } from "@/contexts/LanguageContext";
-import { useEffect, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLanguage } from "@/contexts/LanguageContext"
+import { useEffect, useState } from "react"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 import { getCurrentUser, logout } from "../services/auth"; // Assuming these are still correct
-import styles from './Navbar.module.css';
+import styles from './Navbar.module.css'
 
 // --- Import the new component ---
-import LogoutButton from "@/pages/Authentication/components/LogoutButton";
+import LogoutButton from "@/pages/Authentication/components/LogoutButton"
 
 const Navbar = () => {
     const location = useLocation();
@@ -29,8 +29,15 @@ const Navbar = () => {
     };
 
     const toggleLanguage = () => {
-        setLanguage(language === 'en' ? 'kk' : 'en');
+        if (language === 'en') {
+            setLanguage('kk');
+        } else if (language === 'kk') {
+            setLanguage('ru');
+        } else {
+            setLanguage('en');
+        }
     };
+    
 
     return (
         <nav>
@@ -71,13 +78,14 @@ const Navbar = () => {
                     </li>
                 </ul>
                 <div className={styles.navUser}>
-                    <button 
-                        onClick={toggleLanguage} 
-                        className={styles.languageButton}
-                        title={t('language')}
-                    >
-                        {language === 'en' ? 'Қаз' : 'En'}
-                    </button>
+                <button 
+    onClick={toggleLanguage} 
+    className={styles.languageButton}
+    title={t('language')}
+>
+    {language === 'en' ? 'Қаз' : language === 'kk' ? 'Рус' : 'En'}
+</button>
+
                     {currentUser ? (
                         <LogoutButton
                             onLogout={handleLogout}

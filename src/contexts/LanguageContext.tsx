@@ -1,6 +1,6 @@
-import React, { createContext, ReactNode, useContext, useState } from 'react';
+import React, { createContext, ReactNode, useContext, useState } from 'react'
 
-export type Language = 'en' | 'kk';
+export type Language = 'en' | 'kk' | 'ru';
 
 type TranslationKey = 
     | 'login'
@@ -266,7 +266,92 @@ export const translations: Translations = {
         'maintenance.notScheduled': 'Жоспарланбаған',
         'maintenance.notCompleted': 'Аяқталмаған',
         'maintenance.unknown': 'Белгісіз',
+    },
+    ru: {
+        'login': 'Войти',
+        'logout': 'Выйти',
+        'language': 'Язык',
+        'english': 'Английский',
+        'kazakh': 'Казахский',
+    
+        // Navigation
+        'nav.blocks': 'Блоки',
+        'nav.rooms': 'Комнаты',
+        'nav.tenants': 'Жильцы',
+        'nav.maintenance': 'Обслуживание',
+        'nav.utilityBilling': 'Коммунальные счета',
+        'nav.reports': 'Отчеты',
+    
+        // Buildings Page
+        'buildings.title': 'Блоки',
+        'buildings.sortBy': 'Сортировать по:',
+        'buildings.buildingNumber': 'Номер здания',
+        'buildings.occupancyHighest': 'Заполняемость (Наибольшая)',
+        'buildings.totalRoomsHighest': 'Всего комнат (Наибольшее)',
+        'buildings.loading': 'Загрузка блоков...',
+        'buildings.noData': 'Блоки не найдены.',
+        'buildings.error': 'Ошибка загрузки данных блока',
+        'buildings.floors': 'Этажи',
+        'buildings.totalRooms': 'Всего комнат',
+        'buildings.occupied': 'Занято',
+        'buildings.occupancy': 'Заполняемость',
+    
+        // Rooms Page
+        'rooms.title': 'Комнаты',
+        'rooms.loading': 'Загрузка комнат...',
+        'rooms.error.fetch': 'Ошибка загрузки комнат',
+        'rooms.error.filters': 'Ошибка загрузки фильтров.',
+        'rooms.filters.building': 'Здание',
+        'rooms.filters.status': 'Статус',
+        'rooms.filters.bedrooms': 'Спальни',
+        'rooms.filters.all': 'Все',
+        'rooms.status.available': 'Свободно',
+        'rooms.status.occupied': 'Занято',
+        'rooms.status.maintenance': 'На обслуживании',
+        'rooms.table.number': 'Номер комнаты',
+        'rooms.table.building': 'Здание',
+        'rooms.table.type': 'Тип',
+        'rooms.table.bedrooms': 'Спальни',
+        'rooms.table.status': 'Статус',
+        'rooms.table.tenant': 'Жилец',
+        'rooms.table.actions': 'Действия',
+        'rooms.table.noData': 'Комнаты не найдены',
+    
+        // Maintenance
+        'maintenance.management': 'Управление обслуживанием',
+        'maintenance.newRequest': 'Новый запрос на обслуживание',
+        'maintenance.cancel': 'Отмена',
+        'maintenance.room': 'Комната',
+        'maintenance.tenant': 'Жилец',
+        'maintenance.category': 'Категория',
+        'maintenance.priority': 'Приоритет',
+        'maintenance.description': 'Описание',
+        'maintenance.notes': 'Дополнительные примечания',
+        'maintenance.submit': 'Отправить',
+        'maintenance.submitting': 'Отправка...',
+        'maintenance.filters': 'Фильтры',
+        'maintenance.allStatuses': 'Все статусы',
+        'maintenance.allCategories': 'Все категории',
+        'maintenance.allPriorities': 'Все приоритеты',
+        'maintenance.requestDetails': 'Детали запроса',
+        'maintenance.requestId': 'ID запроса',
+        'maintenance.status': 'Статус',
+        'maintenance.submittedDate': 'Дата подачи',
+        'maintenance.assignedTo': 'Назначено',
+        'maintenance.scheduledDate': 'Плановая дата',
+        'maintenance.completedDate': 'Дата завершения',
+        'maintenance.updateRequest': 'Обновить запрос',
+        'maintenance.noChange': 'Без изменений',
+        'maintenance.requestHistory': 'История запроса',
+        'maintenance.noUpdates': 'Нет обновлений',
+        'maintenance.updatedBy': 'Обновил',
+        'maintenance.view': 'Просмотр',
+        'maintenance.notAssigned': 'Не назначено',
+        'maintenance.notScheduled': 'Не запланировано',
+        'maintenance.notCompleted': 'Не завершено',
+        'maintenance.unknown': 'Неизвестно',
     }
+    
 };
 
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
