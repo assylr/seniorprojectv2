@@ -28,10 +28,6 @@ const Navbar = () => {
         navigate('/login');
     };
 
-    const toggleLanguage = () => {
-        setLanguage(language === 'en' ? 'kk' : 'en');
-    };
-
     return (
         <nav>
             <div className={styles.navContainer}>
@@ -66,13 +62,18 @@ const Navbar = () => {
                     </li>
                 </ul>
                 <div className={styles.navUser}>
-                    <button 
-                        onClick={toggleLanguage} 
-                        className={styles.languageButton}
-                        title={t('language')}
-                    >
-                        {language === 'en' ? 'Қаз' : 'En'}
-                    </button>
+                    <div className={styles.languageDropdown}>
+                        <select 
+                            value={language}
+                            onChange={(e) => setLanguage(e.target.value as 'en' | 'kk' | 'ru')}
+                            className={styles.languageSelect}
+                            title={t('language')}
+                        >
+                            <option value="en">{t('english')}</option>
+                            <option value="kk">{t('kazakh')}</option>
+                            <option value="ru">Русский</option>
+                        </select>
+                    </div>
                     {currentUser ? (
                         <LogoutButton
                             onLogout={handleLogout}

@@ -90,4 +90,22 @@ nav {
 
 .loginButton:hover {
     background-color: rgba(255, 255, 255, 0.1);
+}
+
+.languageDropdown {
+    margin-right: 1rem;
+}
+
+.languageSelect {
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: white;
+    font-size: 0.9rem;
+    cursor: pointer;
+    outline: none;
+}
+
+.languageSelect:hover {
+    border-color: #666;
 } 
