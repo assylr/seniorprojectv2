@@ -1,10 +1,18 @@
 import type { Room } from "./room";
 import { FamilyMember } from "./familyMember";
 
-export type TenantType = 'FACULTY' | 'STAFF' | 'RENTOR';
-export type TenantStatus = 'ACTIVE' | 'CHECKED_OUT' | 'PENDING';
+export enum TenantType {
+  FACULTY = 'FACULTY',
+  RENTOR = 'RENTER'
+}
 
-/** Base tenant information */
+export enum TenantStatusType {
+  ACTIVE = 'ACTIVE',
+  CHECKED_OUT = 'CHECKED_OUT',
+  PENDING = 'PENDING'
+}
+
+// Tenant Entity from spring boot models
 export interface Tenant {
   id: number;
   name: string;
@@ -12,24 +20,26 @@ export interface Tenant {
   school: string | null;
   position: string | null;
   tenantType: TenantType;
+  status: TenantStatusType;
   mobile: string;
   email: string;
-  status: TenantStatus;
+  arrivalDate: string; // ISO date string
+  departureDate: string | null; // ISO date string
+  visitingGuests: string | null;
+  deposit: number;
+  room: Room;
   familyMembers: FamilyMember[] | null;
-  room?: Room;
 }
 
-/** Detailed tenant information including room and building details */
+// Tenant Detail DTO
 export interface TenantDetailDTO extends Omit<Tenant, 'room'> {
-  checkInDate: string;  // ISO date string
-  expectedDepartureDate: string;  // ISO date string
   roomId: number;
   roomNumber: string;
   buildingId: number;
   buildingName: string;
 }
 
-/** Data structure for tenant creation/update forms */
+// Tenant Form Data
 export interface TenantFormData {
   name: string;
   surname: string;
@@ -38,8 +48,9 @@ export interface TenantFormData {
   tenantType: TenantType;
   mobile: string;
   email: string;
+  arrivalDate: string; // ISO date string
+  departureDate: string | null; // ISO date string
+  visitingGuests: string | null;
+  deposit: number;
   familyMembers: FamilyMember[] | null;
-  checkInDate: string | null;
-  expectedDepartureDate: string | null;
-  roomId: number;
 }

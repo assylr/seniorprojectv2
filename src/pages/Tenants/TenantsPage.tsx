@@ -38,7 +38,7 @@ type PageAction =
 
 // Default filters - adjust 'active' based on backend default or desired initial view
 const initialFilters: TenantFilterState = {
-    status: 'Active', // Match backend status string, e.g., 'Active', 'Checked-Out', 'Pending'
+    status: '', // Match backend status string, e.g., 'Active', 'Checked-Out', 'Pending'
     type: '',
     buildingId: '',
     searchQuery: ''

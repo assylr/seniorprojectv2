@@ -108,30 +108,24 @@ export const getBuildings = async (): Promise<Building[]> => {
     return response.data;
 };
 
+
 // --- Rooms ---
 export const getRooms = async (): Promise<Room[]> => {
-    const endpoint = '/rooms';
-    const response = await apiClient.get<Room[]>(endpoint);
+    const response = await apiClient.get<Room[]>('/rooms');
     return response.data;
 };
 
-/**
- * Fetches a list of rooms with detailed information, supporting server-side filtering and sorting using Axios.
- * @param params URLSearchParams containing filter/sort criteria (e.g., buildingId, status, bedrooms, sortBy)
- * @returns Promise resolving to an array of RoomDetailDto
- * @throws Error if the API request fails
- */
+
 export const getRoomDetails = async (params: URLSearchParams): Promise<RoomDetailDTO[]> => {
     const endpoint = '/rooms/view'; // Relative to baseURL
     console.log(`Fetching rooms from: ${apiClient.defaults.baseURL}${endpoint}?${params.toString()}`); // For debugging
-
     try {
         const response = await apiClient.get<RoomDetailDTO[]>(endpoint, {
-            params: params, // Axios automatically handles URLSearchParams or objects as query params
+            params: params,
         });
         return handleAxiosResponse(response);
     } catch (error) {
-        throw handleAxiosError(error); // Process and re-throw the standardized error
+        throw handleAxiosError(error);
     }
 };
 
@@ -139,6 +133,7 @@ export const updateRoom = async (id: number, roomData: Partial<RoomFormData>): P
     const response = await apiClient.patch<Room>(`/rooms/${id}`, roomData);
     return response.data;
 };
+
 
 // --- Tenants ---
 export const getTenants = async (): Promise<Tenant[]> => {
@@ -165,27 +160,15 @@ export const createTenant = async (tenantData: TenantFormData): Promise<TenantDe
     return response.data;
 };
 
-/**
- * Sends a request to check out a specific tenant.
- * Assumes the backend handles setting the actualDepartureDate.
- * @param tenantId The ID of the tenant to check out.
- * @returns Promise resolving to void on success.
- * @throws Error if the API request fails.
- */
 export const checkOutTenant = async (tenantId: number): Promise<void> => {
-    // Use POST for actions that change state. PUT could also be argued if idempotent.
-    // Endpoint includes the tenant ID.
     const endpoint = `/tenants/${tenantId}/checkout`;
     console.log(`Checking out tenant from: ${apiClient.defaults.baseURL}${endpoint}`);
 
     try {
-        // No request body needed for this specific action
-        // We expect a 2xx response (e.g., 200 OK or 204 No Content) on success
         await apiClient.post(endpoint);
-        // No explicit data handling needed if backend returns 204 or if we don't need the response body for 200
-        return; // Resolve promise with void
+        return;
     } catch (error) {
-        throw handleAxiosError(error); // Process and re-throw the standardized error
+        throw handleAxiosError(error);
     }
 };
 
@@ -198,5 +181,4 @@ export const deleteTenant = async (id: number): Promise<void> => {
     await apiClient.delete(`/tenants/${id}`);
 };
 
-// Keep Axios client export
 export { apiClient }

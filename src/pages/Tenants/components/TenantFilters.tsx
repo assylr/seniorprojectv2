@@ -1,12 +1,12 @@
 // src/pages/Tenants/components/TenantFilters.tsx
 import React, { ChangeEvent } from 'react';
-import { Building } from '@/types';
+import { Building, TenantStatusType, TenantType } from '@/types';
 import styles from './TenantFilters.module.css';
 
 export interface TenantFilterState {
     // --- Match backend status values ---
-    status: 'Active' | 'Checked-Out' | 'Pending' | ''; // Example: Use backend values
-    type: 'faculty' | 'staff' | ''; // Assuming these are your types
+    status: TenantStatusType | ''; // Example: Use backend values
+    type: TenantType | ''; // Assuming these are your types
     buildingId: string;
     searchQuery: string;
 }
@@ -67,10 +67,9 @@ const TenantFilters: React.FC<TenantFiltersProps> = ({
                     aria-label="Filter by status"
                  >
                     <option value="">All Statuses</option>
-                    {/* --- VALUES MUST MATCH BACKEND STATUS STRINGS --- */}
-                    <option value="Active">Active</option>
-                    <option value="Checked-Out">Checked Out</option>
-                    <option value="Pending">Pending</option>
+                    <option value="ACTIVE">Active</option>
+                    <option value="CHECKED_OUT">Checked Out</option>
+                    <option value="PENDING">Pending</option>
                 </select>
 
                 <select
