@@ -158,6 +158,19 @@ const TenantForm: React.FC<TenantFormProps> = ({
                     {errors.departureDate && <p className={styles.errorMessage}>{errors.departureDate.message}</p>}
                 </div>
 
+                <div className={styles.formGroup}>
+                    <label htmlFor="deposit">Deposit</label>
+                    <input 
+                        id="deposit" 
+                        type="number" 
+                        min="0" 
+                        step="0.01" 
+                        {...register('deposit')} 
+                        disabled={formIsSubmitting} 
+                    />
+                    {errors.deposit && <p className={styles.errorMessage}>{errors.deposit.message}</p>}
+                </div>
+
                 <div className={`${styles.formGroup} ${styles.spanFull}`}>
                     <hr className={styles.divider} />
                     <h3 className={styles.subheading}>Building Assignment</h3>

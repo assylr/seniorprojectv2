@@ -1,6 +1,7 @@
-import React, { useEffect, useCallback, useReducer } from 'react';
+import React, { useEffect, useCallback, useReducer, useMemo } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 // Import the DTO type and potentially original types if needed for forms
-import { Building, Room, TenantDetailDTO } from '@/types';
+import { Building, Room, TenantDetailDTO, TenantStatusType, TenantType } from '@/types';
 // Update API service imports
 import { getTenantDetails, getBuildings, getRooms, checkOutTenant } from '@/services/api';
 import { LoadingSpinner, AlertMessage } from '@/components/common';
@@ -94,6 +95,8 @@ const pageReducer = (state: PageState, action: PageAction): PageState => {
 
 const TenantsPage: React.FC = () => {
     const [state, dispatch] = useReducer(pageReducer, initialState);
+    const location = useLocation();
+    const navigate = useNavigate();
 
     // Fetch static data for filters and modal
     useEffect(() => {
@@ -113,33 +116,66 @@ const TenantsPage: React.FC = () => {
         fetchFilterAndModalData();
     }, []);
 
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const status = params.get('status') as TenantStatusType | '';
+        const type = params.get('type') as TenantType | '';
+        
+        dispatch({
+            type: 'SET_FILTERS',
+            payload: {
+                status: status || '',
+                type: type || '',
+                buildingId: params.get('buildingId') || '',
+                searchQuery: params.get('searchQuery') || ''
+            }
+        });
+    }, [location.search]);
+
     // Fetch tenants based on filters
-    const fetchTenants = useCallback(async (showLoadingIndicator = true) => {
-        if (showLoadingIndicator) {
-            dispatch({ type: 'SET_LOADING', payload: true });
-        }
-
+    const fetchTenants = useCallback(async () => {
+        dispatch({ type: 'SET_LOADING', payload: true });
         try {
-            const params = new URLSearchParams();
-            if (state.filters.status) params.set('status', state.filters.status);
-            if (state.filters.type) params.set('type', state.filters.type);
-            if (state.filters.buildingId) params.set('buildingId', state.filters.buildingId);
-            if (state.filters.searchQuery) params.set('searchQuery', state.filters.searchQuery);
+            const queryParams = new URLSearchParams();
+            if (state.filters.status) queryParams.set('status', state.filters.status);
+            if (state.filters.type) queryParams.set('type', state.filters.type);
+            if (state.filters.buildingId) queryParams.set('buildingId', state.filters.buildingId);
 
-            const tenantsData = await getTenantDetails(params);
-            dispatch({ type: 'SET_TENANTS', payload: tenantsData });
+            const tenants = await getTenantDetails(queryParams);
+            dispatch({ type: 'SET_TENANTS', payload: tenants });
             dispatch({ type: 'SET_ERROR', payload: null });
         } catch (err) {
-            const message = err instanceof Error ? err.message : 'Failed to fetch tenants';
-            console.error("Fetch tenants error:", err);
-            dispatch({ type: 'SET_ERROR', payload: message });
+            console.error('Failed to fetch tenants:', err);
+            dispatch({ type: 'SET_ERROR', payload: 'Failed to load tenants' });
             dispatch({ type: 'SET_TENANTS', payload: [] });
         } finally {
-            if (showLoadingIndicator) {
-                dispatch({ type: 'SET_LOADING', payload: false });
-            }
+            dispatch({ type: 'SET_LOADING', payload: false });
         }
-    }, [state.filters]);
+    }, [state.filters.status, state.filters.type, state.filters.buildingId]);
+
+    // Filter tenants based on search query
+    const filteredTenants = useMemo(() => {
+        if (!state.filters.searchQuery) {
+            return state.tenants;
+        }
+
+        const searchQuery = state.filters.searchQuery.toLowerCase();
+        return state.tenants.filter(tenant => {
+            const fullName = `${tenant.name} ${tenant.surname}`.toLowerCase();
+            const email = tenant.email?.toLowerCase() || '';
+            const mobile = tenant.mobile?.toLowerCase() || '';
+            const roomNumber = tenant.roomNumber?.toLowerCase() || '';
+            const buildingName = tenant.buildingName?.toLowerCase() || '';
+
+            return (
+                fullName.includes(searchQuery) ||
+                email.includes(searchQuery) ||
+                mobile.includes(searchQuery) ||
+                roomNumber.includes(searchQuery) ||
+                buildingName.includes(searchQuery)
+            );
+        });
+    }, [state.tenants, state.filters.searchQuery]);
 
     // Effect to trigger fetching tenants when filters change
     useEffect(() => {
@@ -148,7 +184,13 @@ const TenantsPage: React.FC = () => {
 
     // Handlers
     const handleFilterChange = <K extends keyof TenantFilterState>(key: K, value: TenantFilterState[K]) => {
-        dispatch({ type: 'SET_FILTERS', payload: { [key]: value } });
+        const query = new URLSearchParams(location.search);
+        if (value) {
+            query.set(key, value);
+        } else {
+            query.delete(key);
+        }
+        navigate(`?${query.toString()}`, { replace: true });
     };
 
     const handleCheckOut = async (tenant: TenantDetailDTO) => {
@@ -158,6 +200,7 @@ const TenantsPage: React.FC = () => {
 
         dispatch({ type: 'SET_SUBMITTING', payload: true });
         dispatch({ type: 'SET_ERROR', payload: null });
+        dispatch({ type: 'SET_SUCCESS', payload: null });
 
         try {
             await checkOutTenant(tenant.id);
@@ -165,7 +208,7 @@ const TenantsPage: React.FC = () => {
                 type: 'SET_SUCCESS', 
                 payload: `Tenant ${tenant.name} ${tenant.surname} checked out successfully.`
             });
-            fetchTenants(false);
+            fetchTenants();
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to check out tenant.';
             dispatch({ type: 'SET_ERROR', payload: message });
@@ -217,14 +260,11 @@ const TenantsPage: React.FC = () => {
                 isLoading={state.isLoading}
             />
 
-            {state.isLoading && state.tenants.length === 0 ? (
-                <div className={styles.loadingContainer}>
-                    <LoadingSpinner size="large" />
-                    <p>Loading tenant data...</p>
-                </div>
+            {state.isLoading ? (
+                <LoadingSpinner />
             ) : (
                 <TenantTable
-                    tenants={state.tenants}
+                    tenants={filteredTenants}
                     isSubmitting={state.isSubmittingAction}
                     onCheckOutTenant={handleCheckOut}
                     onViewTenant={handleViewTenant}
@@ -241,7 +281,7 @@ const TenantsPage: React.FC = () => {
                             type: 'SET_SUCCESS', 
                             payload: `Tenant "${tenant.name} ${tenant.surname}" checked in successfully!`
                         });
-                        fetchTenants(false);
+                        fetchTenants();
                     }}
                     buildings={state.filterBuildings}
                     rooms={state.allRooms}
