@@ -6,7 +6,7 @@ import styles from './TenantFilters.module.css';
 export interface TenantFilterState {
     // --- Match backend status values ---
     status: TenantStatusType | ''; // Example: Use backend values
-    type: TenantType | ''; // Assuming these are your types
+    tenantType: TenantType | ''; // Assuming these are your types
     buildingId: string;
     searchQuery: string;
 }
@@ -73,8 +73,8 @@ const TenantFilters: React.FC<TenantFiltersProps> = ({
                 </select>
 
                 <select
-                    name="type"
-                    value={filters.type}
+                    name="tenantType"
+                    value={filters.tenantType}
                     onChange={handleInputChange}
                     disabled={isLoading}
                     aria-label="Filter by type"

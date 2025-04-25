@@ -43,7 +43,7 @@ type PageAction =
 // Default filters - adjust 'active' based on backend default or desired initial view
 const initialFilters: TenantFilterState = {
     status: '', // Match backend status string, e.g., 'Active', 'Checked-Out', 'Pending'
-    type: '',
+    tenantType: '',
     buildingId: '',
     searchQuery: ''
 };
@@ -119,13 +119,13 @@ const TenantsPage: React.FC = () => {
     useEffect(() => {
         const params = new URLSearchParams(location.search);
         const status = params.get('status') as TenantStatusType | '';
-        const type = params.get('type') as TenantType | '';
+        const tenantType = params.get('tenantType') as TenantType | '';
         
         dispatch({
             type: 'SET_FILTERS',
             payload: {
                 status: status || '',
-                type: type || '',
+                tenantType: tenantType || '',
                 buildingId: params.get('buildingId') || '',
                 searchQuery: params.get('searchQuery') || ''
             }
@@ -138,7 +138,7 @@ const TenantsPage: React.FC = () => {
         try {
             const queryParams = new URLSearchParams();
             if (state.filters.status) queryParams.set('status', state.filters.status);
-            if (state.filters.type) queryParams.set('type', state.filters.type);
+            if (state.filters.tenantType) queryParams.set('tenantType', state.filters.tenantType);
             if (state.filters.buildingId) queryParams.set('buildingId', state.filters.buildingId);
 
             const tenants = await getTenantDetails(queryParams);
@@ -151,7 +151,7 @@ const TenantsPage: React.FC = () => {
         } finally {
             dispatch({ type: 'SET_LOADING', payload: false });
         }
-    }, [state.filters.status, state.filters.type, state.filters.buildingId]);
+    }, [state.filters.status, state.filters.tenantType, state.filters.buildingId]);
 
     // Filter tenants based on search query
     const filteredTenants = useMemo(() => {
