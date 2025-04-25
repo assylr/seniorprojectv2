@@ -49,7 +49,6 @@ export interface MaintenanceRequest {
 
 export interface MaintenanceRequestFormData {
     roomId: number;
-    tenantId?: number | null;
     category: MaintenanceCategory;
     description: string;
     priority: MaintenancePriority;

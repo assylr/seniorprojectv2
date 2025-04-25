@@ -19,7 +19,6 @@ import styles from './Maintenance.module.css'
 
 interface MaintenanceFormData {
     roomId: string;
-    tenantId: string;
     category: MaintenanceCategory | '';
     description: string;
     priority: MaintenancePriority | '';
@@ -60,7 +59,6 @@ const Maintenance = () => {
     
     const [requestForm, setRequestForm] = useState<MaintenanceFormData>({
         roomId: '',
-        tenantId: '',
         category: '',
         description: '',
         priority: '',
@@ -160,7 +158,6 @@ const Maintenance = () => {
             
             const requestData: MaintenanceRequestFormData = {
                 roomId: parseInt(requestForm.roomId),
-                tenantId: requestForm.tenantId ? parseInt(requestForm.tenantId) : null,
                 category: requestForm.category as MaintenanceCategory,
                 description: requestForm.description,
                 priority: requestForm.priority as MaintenancePriority,
@@ -172,7 +169,6 @@ const Maintenance = () => {
             setShowRequestForm(false);
             setRequestForm({
                 roomId: '',
-                tenantId: '',
                 category: '',
                 description: '',
                 priority: '',
@@ -368,26 +364,6 @@ const Maintenance = () => {
                                             {room.roomNumber} (Building {room.buildingName})
                                         </option>
                                     ))}
-                                </select>
-                            </div>
-                            
-                            <div className={styles.formGroup}>
-                                <label htmlFor="tenantId">Tenant (if applicable)</label>
-                                <select
-                                    id="tenantId"
-                                    name="tenantId"
-                                    value={requestForm.tenantId}
-                                    onChange={handleRequestInputChange}
-                                >
-                                    <option value="">Select Tenant (Optional)</option>
-                                    {tenants
-                                        .filter(tenant => !tenant.departureDate)
-                                        .map(tenant => (
-                                            <option key={tenant.id} value={tenant.id}>
-                                                {tenant.name} {tenant.surname}
-                                            </option>
-                                        ))
-                                    }
                                 </select>
                             </div>
                             
